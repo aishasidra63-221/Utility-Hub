@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { ArrowLeftRight, Upload, Download, X, RefreshCw, Zap, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
@@ -272,20 +273,19 @@ export default function ImageConverter() {
 
         {targetFmt.quality && (
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-3">
               <label className="text-sm font-medium text-foreground">Quality</label>
               <span className="text-sm font-mono font-semibold text-primary">{quality}%</span>
             </div>
-            <input
-              type="range"
+            <Slider
+              value={[quality]}
+              onValueChange={([v]) => changeQuality(v)}
               min={10}
               max={100}
               step={5}
-              value={quality}
-              onChange={(e) => changeQuality(Number(e.target.value))}
-              className="w-full accent-primary"
+              className="w-full"
             />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <div className="flex justify-between text-xs text-muted-foreground mt-2">
               <span>Smaller file</span>
               <span>Best quality</span>
             </div>
