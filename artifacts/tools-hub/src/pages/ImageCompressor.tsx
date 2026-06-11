@@ -7,6 +7,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
+import { getSettings } from "@/hooks/useSettings";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -47,7 +48,7 @@ export default function ImageCompressor() {
 
   const { count, increment } = useToolCounter("image-compressor");
   const [entries, setEntries] = useState<FileEntry[]>([]);
-  const [quality, setQuality] = useState(80);
+  const [quality, setQuality] = useState(() => getSettings().imageQuality);
   const [dragOver, setDragOver] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);

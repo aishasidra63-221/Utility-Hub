@@ -6,6 +6,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
+import { getSettings } from "@/hooks/useSettings";
 
 type Format = "image/jpeg" | "image/png" | "image/webp";
 
@@ -81,7 +82,10 @@ export default function ImageConverter() {
 
   const { count, increment } = useToolCounter("image-converter");
   const [entries, setEntries] = useState<ConvertedEntry[]>([]);
-  const [targetFormat, setTargetFormat] = useState<Format>("image/webp");
+  const [targetFormat, setTargetFormat] = useState<Format>(() => {
+    const f = getSettings().imageOutputFormat;
+    return f === "jpg" ? "image/jpeg" : f === "png" ? "image/png" : "image/webp";
+  });
   const [quality, setQuality] = useState(90);
   const [dragOver, setDragOver] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);

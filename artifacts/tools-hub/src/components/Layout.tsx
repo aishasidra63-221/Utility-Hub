@@ -1,37 +1,50 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Sun, Moon, Wrench, Menu, X } from "lucide-react";
+import { Sun, Moon, Monitor, Wrench, Menu, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSettings } from "@/hooks/useSettings";
 
 const tools = [
   { href: "/image-compressor", label: "Image Compressor" },
-  { href: "/image-converter", label: "Image Converter" },
-  { href: "/pdf-converter", label: "PDF Converter" },
-  { href: "/qr-generator", label: "QR Generator" },
-  { href: "/text-cleaner", label: "Text Cleaner" },
-  { href: "/whatsapp-link", label: "WhatsApp Link" },
+  { href: "/image-converter",  label: "Image Converter" },
+  { href: "/pdf-converter",    label: "PDF Converter" },
+  { href: "/qr-generator",     label: "QR Generator" },
+  { href: "/text-cleaner",     label: "Text Cleaner" },
+  { href: "/whatsapp-link",    label: "WhatsApp Link" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const [dark, setDark] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("theme") === "dark" ||
-        (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    }
-    return false;
-  });
+  const { settings, update } = useSettings();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [location] = useLocation();
 
   useEffect(() => {
-    if (dark) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
+    const applyTheme = (theme: string) => {
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else if (theme === "light") {
+        document.documentElement.classList.remove("dark");
+      } else {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.classList.toggle("dark", prefersDark);
+      }
+    };
+    applyTheme(settings.theme);
+
+    if (settings.theme === "system") {
+      const mq = window.matchMedia("(prefers-color-scheme: dark)");
+      const listener = (e: MediaQueryListEvent) => document.documentElement.classList.toggle("dark", e.matches);
+      mq.addEventListener("change", listener);
+      return () => mq.removeEventListener("change", listener);
     }
-  }, [dark]);
+  }, [settings.theme]);
+
+  const cycleTheme = () => {
+    const next = settings.theme === "light" ? "dark" : settings.theme === "dark" ? "system" : "light";
+    update({ theme: next });
+  };
+
+  const themeIcon = settings.theme === "dark" ? <Sun className="w-4 h-4" /> : settings.theme === "light" ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -61,17 +74,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setDark(!dark)}
+              onClick={cycleTheme}
               data-testid="button-toggle-theme"
-              aria-label="Toggle dark mode"
+              aria-label={`Theme: ${settings.theme}. Click to cycle.`}
+              title={`Theme: ${settings.theme}`}
               className="w-8 h-8"
             >
-              {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {themeIcon}
             </Button>
+            <Link href="/settings">
+              <Button
+                variant="ghost"
+                size="icon"
+                data-testid="button-settings"
+                aria-label="Settings"
+                className={`w-8 h-8 ${location === "/settings" ? "text-primary" : ""}`}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </Link>
             <Button
               variant="ghost"
               size="icon"
@@ -103,14 +128,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {tool.label}
               </Link>
             ))}
+            <Link href="/settings" onClick={() => setMobileOpen(false)} className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${location === "/settings" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}>
+              <Settings className="w-4 h-4" />Settings
+            </Link>
           </div>
         )}
       </header>
 
       {/* Main */}
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
 
       {/* Footer */}
       <footer className="border-t border-border bg-background py-8">
@@ -123,14 +149,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <nav className="flex flex-wrap justify-center gap-x-4 gap-y-1" aria-label="Footer tools">
               {tools.map((tool) => (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                >
+                <Link key={tool.href} href={tool.href} className="text-xs text-muted-foreground hover:text-primary transition-colors">
                   {tool.label}
                 </Link>
               ))}
+              <Link href="/settings" className="text-xs text-muted-foreground hover:text-primary transition-colors">Settings</Link>
             </nav>
           </div>
         </div>

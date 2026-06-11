@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
+import { getSettings } from "@/hooks/useSettings";
 
 type Mode =
   | "compress-pdf" | "merge-pdf"    | "split-pdf"    | "pdf-to-word"
@@ -131,7 +132,7 @@ export default function PdfConverter() {
 
   // ── Compress ──
   const [compFile, setCompFile] = useState<File | null>(null);
-  const [compLevel, setCompLevel] = useState<CompressLevel>("balanced");
+  const [compLevel, setCompLevel] = useState<CompressLevel>(() => getSettings().pdfCompressLevel);
   const [compLoading, setCompLoading] = useState(false);
   const [compProgress, setCompProgress] = useState(0);
   const [compResult, setCompResult] = useState<{ orig: number; neo: number } | null>(null);
