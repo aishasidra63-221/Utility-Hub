@@ -3,6 +3,7 @@ import imageCompression from "browser-image-compression";
 import { Upload, Download, ImageIcon, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { ShareButton } from "@/components/ShareButton";
 import { useSEO } from "@/hooks/useSEO";
 
 function formatBytes(bytes: number): string {
@@ -11,6 +12,10 @@ function formatBytes(bytes: number): string {
   const sizes = ["B", "KB", "MB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+async function copyCurrentUrl(): Promise<void> {
+  await navigator.clipboard.writeText(window.location.href);
 }
 
 export default function ImageCompressor() {
@@ -26,6 +31,7 @@ export default function ImageCompressor() {
   const [compressed, setCompressed] = useState<{ file: File; url: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback((f: File) => {
@@ -79,6 +85,12 @@ export default function ImageCompressor() {
     setCompressed(null);
   };
 
+  const handleShareLink = async () => {
+    await copyCurrentUrl();
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2500);
+  };
+
   const savings =
     file && compressed
       ? Math.round(((file.size - compressed.file.size) / file.size) * 100)
@@ -87,14 +99,19 @@ export default function ImageCompressor() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-          <ImageIcon className="w-3.5 h-3.5" />
-          <span>Image Tools</span>
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span>Image Tools</span>
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Image Compressor</h1>
+            <p className="text-muted-foreground mt-2">
+              Reduce JPG, PNG, and WebP file sizes — entirely in your browser. Nothing is uploaded to any server.
+            </p>
+          </div>
+          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Image Compressor</h1>
-        <p className="text-muted-foreground mt-2">
-          Reduce JPG, PNG, and WebP file sizes — entirely in your browser. Nothing is uploaded to any server.
-        </p>
       </div>
 
       {!file ? (

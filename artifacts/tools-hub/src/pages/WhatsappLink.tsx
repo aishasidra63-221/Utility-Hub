@@ -2,7 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import QRCode from "qrcode";
 import { MessageCircle, Copy, Check, Download, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ShareButton } from "@/components/ShareButton";
 import { useSEO } from "@/hooks/useSEO";
+import { useShareURL } from "@/hooks/useShareURL";
 
 function buildLink(phone: string, message: string): string {
   const clean = phone.replace(/[^\d+]/g, "");
@@ -18,15 +20,32 @@ export default function WhatsappLink() {
   useSEO({
     title: "WhatsApp Link Generator — Create wa.me Links with QR Code | ToolsHub",
     description:
-      "Generate a clickable WhatsApp chat link with an optional pre-filled message. Also creates a QR code. Free, instant, no signup.",
+      "Generate a direct WhatsApp chat link with an optional pre-filled message. Also creates a QR code. Free, instant, no signup.",
   });
 
-  const [phone, setPhone] = useState("");
-  const [message, setMessage] = useState("");
+  const { initialValues, updateParams, copyShareLink, copied: linkCopied } = useShareURL({
+    phone: "",
+    msg: "",
+  });
+
+  const [phone, setPhone] = useState(initialValues.phone);
+  const [message, setMessage] = useState(initialValues.msg);
   const [copiedLink, setCopiedLink] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const link = buildLink(phone, message);
+
+  // Sync URL params (debounced)
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => {
+      updateParams({ phone, msg: message });
+    }, 400);
+    return () => {
+      if (syncTimer.current) clearTimeout(syncTimer.current);
+    };
+  }, [phone, message, updateParams]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -70,14 +89,19 @@ export default function WhatsappLink() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-          <MessageCircle className="w-3.5 h-3.5" />
-          <span>WhatsApp Tools</span>
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>WhatsApp Tools</span>
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">WhatsApp Link Generator</h1>
+            <p className="text-muted-foreground mt-2">
+              Create a direct chat link with an optional message. Generates a QR code automatically.
+            </p>
+          </div>
+          <ShareButton onCopy={copyShareLink} copied={linkCopied} />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">WhatsApp Link Generator</h1>
-        <p className="text-muted-foreground mt-2">
-          Create a direct chat link with an optional message. Generates a QR code automatically.
-        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

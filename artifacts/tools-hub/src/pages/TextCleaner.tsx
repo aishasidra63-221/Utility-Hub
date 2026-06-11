@@ -1,7 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { AlignLeft, Copy, Check, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ShareButton } from "@/components/ShareButton";
 import { useSEO } from "@/hooks/useSEO";
+import { useShareURL } from "@/hooks/useShareURL";
 
 interface Option {
   id: string;
@@ -52,6 +54,11 @@ function applyTransforms(text: string, enabled: Set<string>): string {
   return result;
 }
 
+function parseOpts(raw: string): Set<string> {
+  if (!raw) return new Set(["spaces", "linebreaks"]);
+  return new Set(raw.split(",").filter(Boolean));
+}
+
 export default function TextCleaner() {
   useSEO({
     title: "Free Text Cleaner & Formatter — Clean Messy Text Online | ToolsHub",
@@ -59,9 +66,26 @@ export default function TextCleaner() {
       "Clean and format messy text online. Remove extra spaces, fix line breaks, change case, and strip emojis. Free, instant, no signup.",
   });
 
-  const [input, setInput] = useState("");
-  const [enabled, setEnabled] = useState<Set<string>>(new Set(["spaces", "linebreaks"]));
+  const { initialValues, updateParams, copyShareLink, copied: linkCopied } = useShareURL({
+    text: "",
+    opts: "spaces,linebreaks",
+  });
+
+  const [input, setInput] = useState(initialValues.text);
+  const [enabled, setEnabled] = useState<Set<string>>(parseOpts(initialValues.opts));
   const [copied, setCopied] = useState(false);
+
+  // Debounced URL sync
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => {
+      updateParams({ text: input, opts: Array.from(enabled).join(",") });
+    }, 500);
+    return () => {
+      if (syncTimer.current) clearTimeout(syncTimer.current);
+    };
+  }, [input, enabled, updateParams]);
 
   const toggle = (id: string) => {
     const next = new Set(enabled);
@@ -100,14 +124,19 @@ export default function TextCleaner() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-          <AlignLeft className="w-3.5 h-3.5" />
-          <span>Text Tools</span>
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              <AlignLeft className="w-3.5 h-3.5" />
+              <span>Text Tools</span>
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Text Cleaner</h1>
+            <p className="text-muted-foreground mt-2">
+              Paste messy text, pick your transforms, copy the cleaned result.
+            </p>
+          </div>
+          <ShareButton onCopy={copyShareLink} copied={linkCopied} />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Text Cleaner</h1>
-        <p className="text-muted-foreground mt-2">
-          Paste messy text, pick your transforms, copy the cleaned result.
-        </p>
       </div>
 
       {/* Options */}

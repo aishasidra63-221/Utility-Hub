@@ -2,7 +2,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import QRCode from "qrcode";
 import { QrCode, Download, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ShareButton } from "@/components/ShareButton";
 import { useSEO } from "@/hooks/useSEO";
+import { useShareURL } from "@/hooks/useShareURL";
 
 const SIZES: Record<string, number> = { Small: 200, Medium: 300, Large: 400 };
 
@@ -13,8 +15,15 @@ export default function QrGenerator() {
       "Generate a QR code for any URL or text for free. Instant preview, download as PNG. No signup needed.",
   });
 
-  const [text, setText] = useState("https://");
-  const [size, setSize] = useState<keyof typeof SIZES>("Medium");
+  const { initialValues, updateParams, copyShareLink, copied: linkCopied } = useShareURL({
+    text: "https://",
+    size: "Medium",
+  });
+
+  const [text, setText] = useState(initialValues.text);
+  const [size, setSize] = useState<keyof typeof SIZES>(
+    (initialValues.size as keyof typeof SIZES) in SIZES ? (initialValues.size as keyof typeof SIZES) : "Medium"
+  );
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -25,18 +34,19 @@ export default function QrGenerator() {
       width: SIZES[size],
       errorCorrectionLevel: "M",
       margin: 2,
-    }).catch(() => {
-      // ignore render errors (e.g., empty string)
-    });
+    }).catch(() => {});
   }, [text, size]);
 
   useEffect(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(generate, 300);
+    timeoutRef.current = setTimeout(() => {
+      generate();
+      updateParams({ text, size });
+    }, 300);
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [generate]);
+  }, [generate, updateParams, text, size]);
 
   const download = () => {
     const canvas = canvasRef.current;
@@ -62,14 +72,19 @@ export default function QrGenerator() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-          <QrCode className="w-3.5 h-3.5" />
-          <span>QR Tools</span>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              <QrCode className="w-3.5 h-3.5" />
+              <span>QR Tools</span>
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">QR Code Generator</h1>
+            <p className="text-muted-foreground mt-2">
+              Turn any URL or text into a scannable QR code instantly. Download as PNG.
+            </p>
+          </div>
+          <ShareButton onCopy={copyShareLink} copied={linkCopied} />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">QR Code Generator</h1>
-        <p className="text-muted-foreground mt-2">
-          Turn any URL or text into a scannable QR code instantly. Download as PNG.
-        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
