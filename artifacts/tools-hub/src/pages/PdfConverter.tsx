@@ -1,14 +1,25 @@
 import { useState, useRef } from "react";
 import { jsPDF } from "jspdf";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, degrees } from "pdf-lib";
 import JSZip from "jszip";
-import { FileText, Upload, Download, X, RefreshCw, Image, Link2, Scissors, Layers, Archive, FileType } from "lucide-react";
+import {
+  FileText, Upload, Download, X, RefreshCw, Image, Link2,
+  Scissors, Layers, Archive, FileType, RotateCw, AlignLeft,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
 
-type Mode = "pdf-to-images" | "images-to-pdf" | "split-pdf" | "merge-pdfs" | "pdf-to-zip" | "docx-to-pdf";
+type Mode =
+  | "pdf-to-images"
+  | "images-to-pdf"
+  | "split-pdf"
+  | "merge-pdfs"
+  | "pdf-to-zip"
+  | "docx-to-pdf"
+  | "rotate-pdf"
+  | "extract-text";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -89,20 +100,22 @@ function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-const TABS: { id: Mode; label: string; icon: React.ReactNode; short: string }[] = [
-  { id: "pdf-to-images", label: "PDF → Images", icon: <Image className="w-3.5 h-3.5" />, short: "PDF to Images" },
-  { id: "images-to-pdf", label: "Images → PDF", icon: <FileText className="w-3.5 h-3.5" />, short: "Images to PDF" },
-  { id: "split-pdf", label: "Split PDF", icon: <Scissors className="w-3.5 h-3.5" />, short: "Split" },
-  { id: "merge-pdfs", label: "Merge PDFs", icon: <Layers className="w-3.5 h-3.5" />, short: "Merge" },
-  { id: "pdf-to-zip", label: "PDF → ZIP", icon: <Archive className="w-3.5 h-3.5" />, short: "ZIP" },
-  { id: "docx-to-pdf", label: "DOCX → PDF", icon: <FileType className="w-3.5 h-3.5" />, short: "DOCX" },
+const TABS: { id: Mode; label: string; icon: React.ReactNode; desc: string }[] = [
+  { id: "pdf-to-images",  label: "PDF → Images",  icon: <Image className="w-5 h-5" />,    desc: "Pages to JPG" },
+  { id: "images-to-pdf",  label: "Images → PDF",  icon: <FileText className="w-5 h-5" />, desc: "Photos to PDF" },
+  { id: "split-pdf",      label: "Split PDF",      icon: <Scissors className="w-5 h-5" />, desc: "Per-page ZIP" },
+  { id: "merge-pdfs",     label: "Merge PDFs",     icon: <Layers className="w-5 h-5" />,   desc: "Combine files" },
+  { id: "pdf-to-zip",     label: "PDF → ZIP",      icon: <Archive className="w-5 h-5" />,  desc: "Images in ZIP" },
+  { id: "rotate-pdf",     label: "Rotate PDF",     icon: <RotateCw className="w-5 h-5" />, desc: "90 / 180 / 270°" },
+  { id: "extract-text",   label: "Extract Text",   icon: <AlignLeft className="w-5 h-5" />,desc: "Copy PDF text" },
+  { id: "docx-to-pdf",    label: "DOCX → PDF",     icon: <FileType className="w-5 h-5" />, desc: "Word to PDF" },
 ];
 
 export default function PdfConverter() {
   useSEO({
-    title: "Free PDF Tools — Convert, Split, Merge, ZIP Online | ToolsHub",
+    title: "Free PDF Tools — Convert, Split, Merge, Rotate Online | ToolsHub",
     description:
-      "Convert, split, merge, and ZIP PDFs in your browser. Also convert DOCX to PDF and images to PDF. Free, no upload to server.",
+      "Convert, split, merge, ZIP, rotate PDFs and extract text — all in your browser. Also convert DOCX and Images to PDF.",
   });
 
   const { count, increment } = useToolCounter("pdf-converter");
@@ -150,6 +163,23 @@ export default function PdfConverter() {
   const [docxError, setDocxError] = useState("");
   const docxInputRef = useRef<HTMLInputElement>(null);
 
+  // Rotate PDF
+  const [rotateFile, setRotateFile] = useState<File | null>(null);
+  const [rotateDeg, setRotateDeg] = useState<90 | 180 | 270>(90);
+  const [rotateLoading, setRotateLoading] = useState(false);
+  const [rotateDone, setRotateDone] = useState(false);
+  const [rotateError, setRotateError] = useState("");
+  const rotateInputRef = useRef<HTMLInputElement>(null);
+
+  // Extract Text
+  const [extractFile, setExtractFile] = useState<File | null>(null);
+  const [extractText, setExtractText] = useState("");
+  const [extractLoading, setExtractLoading] = useState(false);
+  const [extractProgress, setExtractProgress] = useState(0);
+  const [extractError, setExtractError] = useState("");
+  const [extractCopied, setExtractCopied] = useState(false);
+  const extractInputRef = useRef<HTMLInputElement>(null);
+
   const handleShareLink = async () => {
     await navigator.clipboard.writeText(window.location.href);
     setShareCopied(true);
@@ -161,7 +191,6 @@ export default function PdfConverter() {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
     setPdfFile(f); setPdfImages([]); setPdfError("");
   };
-
   const convertPdfToImages = async () => {
     if (!pdfFile) return;
     setPdfLoading(true); setPdfProgress(0); setPdfError("");
@@ -169,14 +198,11 @@ export default function PdfConverter() {
       const images = await pdfToImages(pdfFile, setPdfProgress);
       setPdfImages(images);
       increment();
-    } catch (e) {
-      setPdfError("Failed to convert PDF. Make sure it is a valid PDF file.");
-    } finally { setPdfLoading(false); }
+    } catch { setPdfError("Failed to convert PDF."); }
+    finally { setPdfLoading(false); }
   };
-
   const downloadPdfPage = (dataUrl: string, pageNum: number) => {
-    const a = document.createElement("a");
-    a.href = dataUrl; a.download = `page-${pageNum}.jpg`; a.click();
+    const a = document.createElement("a"); a.href = dataUrl; a.download = `page-${pageNum}.jpg`; a.click();
   };
   const downloadAllPages = () => pdfImages.forEach((src, i) => downloadPdfPage(src, i + 1));
 
@@ -207,7 +233,6 @@ export default function PdfConverter() {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
     setSplitFile(f); setSplitError(""); setSplitDone(false);
   };
-
   const splitPdf = async () => {
     if (!splitFile) return;
     setSplitLoading(true); setSplitProgress(0); setSplitError(""); setSplitDone(false);
@@ -220,46 +245,36 @@ export default function PdfConverter() {
         const newPdf = await PDFDocument.create();
         const [page] = await newPdf.copyPages(srcPdf, [i]);
         newPdf.addPage(page);
-        const pageBytes = await newPdf.save();
-        zip.file(`page-${i + 1}.pdf`, pageBytes);
+        zip.file(`page-${i + 1}.pdf`, await newPdf.save());
         setSplitProgress(Math.round(((i + 1) / total) * 100));
       }
-      const blob = await zip.generateAsync({ type: "blob" });
-      triggerDownload(blob, `${splitFile.name.replace(".pdf", "")}-split.zip`);
+      triggerDownload(await zip.generateAsync({ type: "blob" }), `${splitFile.name.replace(".pdf", "")}-split.zip`);
       setSplitDone(true);
       increment();
-    } catch (e) {
-      setSplitError("Failed to split PDF. Make sure it is a valid PDF.");
-      console.error(e);
-    } finally { setSplitLoading(false); }
+    } catch { setSplitError("Failed to split PDF."); }
+    finally { setSplitLoading(false); }
   };
 
   // ── Merge PDFs ────────────────────────────────────────────
   const handleMergeFiles = (files: FileList | File[]) => {
     const arr = Array.from(files).filter((f) => f.name.toLowerCase().endsWith(".pdf"));
-    setMergeFiles((prev) => [...prev, ...arr]);
-    setMergeError("");
+    setMergeFiles((prev) => [...prev, ...arr]); setMergeError("");
   };
   const removeMergeFile = (idx: number) => setMergeFiles((prev) => prev.filter((_, i) => i !== idx));
-
   const mergePdfs = async () => {
     if (mergeFiles.length < 2) { setMergeError("Please add at least 2 PDF files."); return; }
     setMergeLoading(true); setMergeError("");
     try {
       const merged = await PDFDocument.create();
       for (const file of mergeFiles) {
-        const bytes = await file.arrayBuffer();
-        const pdf = await PDFDocument.load(bytes);
+        const pdf = await PDFDocument.load(await file.arrayBuffer());
         const pages = await merged.copyPages(pdf, pdf.getPageIndices());
         pages.forEach((p) => merged.addPage(p));
       }
-      const mergedBytes = await merged.save();
-      triggerDownload(new Blob([mergedBytes], { type: "application/pdf" }), "merged.pdf");
+      triggerDownload(new Blob([await merged.save()], { type: "application/pdf" }), "merged.pdf");
       increment();
-    } catch (e) {
-      setMergeError("Failed to merge PDFs. Make sure all files are valid PDFs.");
-      console.error(e);
-    } finally { setMergeLoading(false); }
+    } catch { setMergeError("Failed to merge PDFs."); }
+    finally { setMergeLoading(false); }
   };
 
   // ── PDF → ZIP ─────────────────────────────────────────────
@@ -267,7 +282,6 @@ export default function PdfConverter() {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
     setZipFile(f); setZipError("");
   };
-
   const pdfToZip = async () => {
     if (!zipFile) return;
     setZipLoading(true); setZipProgress(0); setZipError("");
@@ -275,17 +289,72 @@ export default function PdfConverter() {
       const images = await pdfToImages(zipFile, setZipProgress);
       const zip = new JSZip();
       const baseName = zipFile.name.replace(".pdf", "");
-      images.forEach((dataUrl, i) => {
-        const base64 = dataUrl.split(",")[1];
-        zip.file(`${baseName}-page-${i + 1}.jpg`, base64, { base64: true });
-      });
-      const blob = await zip.generateAsync({ type: "blob" });
-      triggerDownload(blob, `${baseName}-pages.zip`);
+      images.forEach((dataUrl, i) => zip.file(`${baseName}-page-${i + 1}.jpg`, dataUrl.split(",")[1], { base64: true }));
+      triggerDownload(await zip.generateAsync({ type: "blob" }), `${baseName}-pages.zip`);
       increment();
-    } catch (e) {
-      setZipError("Failed to process PDF.");
-      console.error(e);
-    } finally { setZipLoading(false); }
+    } catch { setZipError("Failed to process PDF."); }
+    finally { setZipLoading(false); }
+  };
+
+  // ── Rotate PDF ────────────────────────────────────────────
+  const handleRotateFile = (f: File) => {
+    if (!f.name.toLowerCase().endsWith(".pdf")) return;
+    setRotateFile(f); setRotateError(""); setRotateDone(false);
+  };
+  const rotatePdf = async () => {
+    if (!rotateFile) return;
+    setRotateLoading(true); setRotateError(""); setRotateDone(false);
+    try {
+      const pdf = await PDFDocument.load(await rotateFile.arrayBuffer());
+      pdf.getPages().forEach((page) => {
+        const current = page.getRotation().angle;
+        page.setRotation(degrees((current + rotateDeg) % 360));
+      });
+      const baseName = rotateFile.name.replace(".pdf", "");
+      triggerDownload(new Blob([await pdf.save()], { type: "application/pdf" }), `${baseName}-rotated.pdf`);
+      setRotateDone(true);
+      increment();
+    } catch { setRotateError("Failed to rotate PDF."); }
+    finally { setRotateLoading(false); }
+  };
+
+  // ── Extract Text ──────────────────────────────────────────
+  const handleExtractFile = (f: File) => {
+    if (!f.name.toLowerCase().endsWith(".pdf")) return;
+    setExtractFile(f); setExtractText(""); setExtractError("");
+  };
+  const extractTextFromPdf = async () => {
+    if (!extractFile) return;
+    setExtractLoading(true); setExtractProgress(0); setExtractError(""); setExtractText("");
+    try {
+      const pdfjsLib = await getPdfjsLib();
+      const pdf = await pdfjsLib.getDocument({ data: await extractFile.arrayBuffer() }).promise;
+      const total = pdf.numPages;
+      const lines: string[] = [];
+      for (let i = 1; i <= total; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items
+          .map((item: unknown) => ("str" in (item as object) ? (item as { str: string }).str : ""))
+          .join(" ")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (pageText) lines.push(`--- Page ${i} ---\n${pageText}`);
+        setExtractProgress(Math.round((i / total) * 100));
+      }
+      setExtractText(lines.join("\n\n"));
+      increment();
+    } catch { setExtractError("Failed to extract text from PDF."); }
+    finally { setExtractLoading(false); }
+  };
+  const copyExtractedText = async () => {
+    await navigator.clipboard.writeText(extractText);
+    setExtractCopied(true);
+    setTimeout(() => setExtractCopied(false), 2000);
+  };
+  const downloadExtractedText = () => {
+    const baseName = extractFile?.name.replace(".pdf", "") ?? "extracted";
+    triggerDownload(new Blob([extractText], { type: "text/plain" }), `${baseName}-text.txt`);
   };
 
   // ── DOCX → PDF ────────────────────────────────────────────
@@ -293,45 +362,36 @@ export default function PdfConverter() {
     if (!f.name.toLowerCase().match(/\.(docx|doc)$/)) return;
     setDocxFile(f); setDocxError("");
   };
-
   const convertDocxToPdf = async () => {
     if (!docxFile) return;
     setDocxLoading(true); setDocxError("");
     try {
       const mammoth = await import("mammoth");
-      const arrayBuffer = await docxFile.arrayBuffer();
-      const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
-
+      const { value: html } = await mammoth.convertToHtml({ arrayBuffer: await docxFile.arrayBuffer() });
       const iframe = document.createElement("iframe");
       iframe.style.cssText = "position:fixed;left:-9999px;top:0;width:210mm;height:297mm;";
       document.body.appendChild(iframe);
       const iDoc = iframe.contentDocument!;
       iDoc.open();
       iDoc.write(`<!DOCTYPE html><html><head><style>
-        body { font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.5; margin: 20mm; color: #000; }
-        h1,h2,h3 { margin: 0.5em 0; } p { margin: 0.3em 0; }
-        table { border-collapse: collapse; width: 100%; }
-        td, th { border: 1px solid #ccc; padding: 4px 8px; }
-        img { max-width: 100%; }
+        body{font-family:Arial,sans-serif;font-size:12pt;line-height:1.5;margin:20mm;color:#000}
+        h1,h2,h3{margin:.5em 0}p{margin:.3em 0}
+        table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px}
+        img{max-width:100%}
       </style></head><body>${html}</body></html>`);
       iDoc.close();
-
       await new Promise((r) => setTimeout(r, 800));
-
-      const iWindow = iframe.contentWindow!;
-      iWindow.focus();
-      iWindow.print();
+      iframe.contentWindow!.focus();
+      iframe.contentWindow!.print();
       document.body.removeChild(iframe);
-
       increment();
-    } catch (e) {
-      setDocxError("Failed to convert. Make sure it is a valid .docx file.");
-      console.error(e);
-    } finally { setDocxLoading(false); }
+    } catch { setDocxError("Failed to convert. Make sure it is a valid .docx file."); }
+    finally { setDocxLoading(false); }
   };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
+      {/* Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
@@ -342,7 +402,7 @@ export default function PdfConverter() {
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">PDF Converter</h1>
             <p className="text-muted-foreground mt-2">
-              Convert, split, merge, ZIP and more — everything runs in your browser.
+              Convert, split, merge, rotate, extract text and more — all in your browser.
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleShareLink} data-testid="button-share-link" className="gap-2 text-xs">
@@ -351,22 +411,24 @@ export default function PdfConverter() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-1 mb-8 bg-muted/30 border border-border rounded-xl p-1">
+      {/* ── Tool Grid Tabs ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setMode(tab.id)}
             data-testid={`tab-${tab.id}`}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-1 justify-center sm:flex-none ${
+            className={`flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-xl border text-center transition-all ${
               mode === tab.id
-                ? "bg-background text-foreground shadow-sm border border-border"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground hover:bg-muted/50"
             }`}
           >
             {tab.icon}
-            <span className="hidden sm:inline">{tab.label}</span>
-            <span className="sm:hidden">{tab.short}</span>
+            <span className="text-xs font-semibold leading-tight">{tab.label}</span>
+            <span className={`text-[10px] leading-tight ${mode === tab.id ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+              {tab.desc}
+            </span>
           </button>
         ))}
       </div>
@@ -375,14 +437,7 @@ export default function PdfConverter() {
       {mode === "pdf-to-images" && (
         <div className="space-y-6">
           {!pdfFile ? (
-            <DropZone
-              icon={<FileText className="w-10 h-10 mx-auto text-muted-foreground mb-3" />}
-              label="Click or drag to upload a PDF"
-              sub="PDF files only"
-              onClick={() => pdfInputRef.current?.click()}
-              onDrop={(f) => handlePdfFile(f)}
-              testId="dropzone-pdf"
-            >
+            <DropZone icon={<FileText className="w-10 h-10 mx-auto text-muted-foreground mb-3" />} label="Click or drag to upload a PDF" sub="PDF files only" onClick={() => pdfInputRef.current?.click()} onDrop={handlePdfFile} testId="dropzone-pdf">
               <input ref={pdfInputRef} type="file" accept="application/pdf" className="hidden" data-testid="input-pdf-file" onChange={(e) => e.target.files?.[0] && handlePdfFile(e.target.files[0])} />
             </DropZone>
           ) : (
@@ -398,15 +453,13 @@ export default function PdfConverter() {
               </div>
               {pdfImages.length > 0 && (
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-foreground">{pdfImages.length} page{pdfImages.length > 1 ? "s" : ""} extracted</p>
+                  <p className="text-sm font-medium">{pdfImages.length} page{pdfImages.length > 1 ? "s" : ""} extracted</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {pdfImages.map((src, i) => (
                       <div key={i} className="group relative rounded-lg border border-border overflow-hidden">
                         <img src={src} alt={`Page ${i + 1}`} className="w-full object-cover" loading="lazy" data-testid={`img-pdf-page-${i + 1}`} />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Button size="sm" variant="secondary" onClick={() => downloadPdfPage(src, i + 1)} data-testid={`button-download-page-${i + 1}`}>
-                            <Download className="w-3.5 h-3.5 mr-1" />Page {i + 1}
-                          </Button>
+                          <Button size="sm" variant="secondary" onClick={() => downloadPdfPage(src, i + 1)}><Download className="w-3.5 h-3.5 mr-1" />Page {i + 1}</Button>
                         </div>
                         <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center py-0.5">Page {i + 1}</div>
                       </div>
@@ -428,7 +481,7 @@ export default function PdfConverter() {
           {imgPreviews.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-foreground">{imgPreviews.length} image{imgPreviews.length > 1 ? "s" : ""} selected</p>
+                <p className="text-sm font-medium">{imgPreviews.length} image{imgPreviews.length > 1 ? "s" : ""} selected</p>
                 <Button variant="ghost" size="sm" onClick={() => { setImgFiles([]); setImgPreviews([]); }}>Clear all</Button>
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
@@ -450,12 +503,9 @@ export default function PdfConverter() {
       {/* ── Split PDF ── */}
       {mode === "split-pdf" && (
         <div className="space-y-6">
-          <div className="bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground flex items-start gap-2">
-            <Scissors className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
-            <span>Splits every page of your PDF into a separate PDF file, then downloads them all as a single ZIP.</span>
-          </div>
+          <InfoBox icon={<Scissors className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />} text="Splits every page into a separate PDF, then downloads them all as a single ZIP." />
           {!splitFile ? (
-            <DropZone icon={<Scissors className="w-10 h-10 mx-auto text-muted-foreground mb-3" />} label="Upload PDF to split" sub="PDF files only" onClick={() => splitInputRef.current?.click()} onDrop={(f) => handleSplitFile(f)} testId="dropzone-split">
+            <DropZone icon={<Scissors className="w-10 h-10 mx-auto text-muted-foreground mb-3" />} label="Upload PDF to split" sub="PDF files only" onClick={() => splitInputRef.current?.click()} onDrop={handleSplitFile} testId="dropzone-split">
               <input ref={splitInputRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleSplitFile(e.target.files[0])} />
             </DropZone>
           ) : (
@@ -463,7 +513,7 @@ export default function PdfConverter() {
               <FileCard name={splitFile.name} size={splitFile.size} onRemove={() => { setSplitFile(null); setSplitDone(false); }} />
               {splitError && <ErrorBox msg={splitError} />}
               {splitLoading && <ProgressBar value={splitProgress} label="Splitting pages..." />}
-              {splitDone && <div className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm px-4 py-3 rounded-lg flex items-center gap-2">✅ ZIP downloaded successfully!</div>}
+              {splitDone && <SuccessBox msg="ZIP downloaded successfully!" />}
               <Button onClick={splitPdf} disabled={splitLoading}>
                 {splitLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Splitting... {splitProgress}%</> : <><Scissors className="w-4 h-4 mr-2" />Split & Download ZIP</>}
               </Button>
@@ -475,10 +525,7 @@ export default function PdfConverter() {
       {/* ── Merge PDFs ── */}
       {mode === "merge-pdfs" && (
         <div className="space-y-6">
-          <div className="bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground flex items-start gap-2">
-            <Layers className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
-            <span>Combine multiple PDF files into one. Pages are added in the order you upload them.</span>
-          </div>
+          <InfoBox icon={<Layers className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />} text="Combine multiple PDF files into one. Pages are added in the order you upload them." />
           <DropZone icon={<Layers className="w-8 h-8 mx-auto text-muted-foreground mb-2" />} label="Drop PDF files here or click to upload" sub="Multiple PDFs allowed · Merged in order" onClick={() => mergeInputRef.current?.click()} onDrop={(f) => handleMergeFiles([f])} testId="dropzone-merge">
             <input ref={mergeInputRef} type="file" accept="application/pdf" multiple className="hidden" onChange={(e) => e.target.files && handleMergeFiles(e.target.files)} />
           </DropZone>
@@ -511,12 +558,9 @@ export default function PdfConverter() {
       {/* ── PDF → ZIP ── */}
       {mode === "pdf-to-zip" && (
         <div className="space-y-6">
-          <div className="bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground flex items-start gap-2">
-            <Archive className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
-            <span>Converts every PDF page to a JPG image, then packages all images into a single ZIP file.</span>
-          </div>
+          <InfoBox icon={<Archive className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />} text="Converts every PDF page to a JPG image, then packages all images into a single ZIP file." />
           {!zipFile ? (
-            <DropZone icon={<Archive className="w-10 h-10 mx-auto text-muted-foreground mb-3" />} label="Upload PDF to ZIP" sub="PDF files only" onClick={() => zipInputRef.current?.click()} onDrop={(f) => handleZipFile(f)} testId="dropzone-zip">
+            <DropZone icon={<Archive className="w-10 h-10 mx-auto text-muted-foreground mb-3" />} label="Upload PDF to ZIP" sub="PDF files only" onClick={() => zipInputRef.current?.click()} onDrop={handleZipFile} testId="dropzone-zip">
               <input ref={zipInputRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleZipFile(e.target.files[0])} />
             </DropZone>
           ) : (
@@ -532,15 +576,90 @@ export default function PdfConverter() {
         </div>
       )}
 
+      {/* ── Rotate PDF ── */}
+      {mode === "rotate-pdf" && (
+        <div className="space-y-6">
+          <InfoBox icon={<RotateCw className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />} text="Rotates every page in the PDF by the selected angle and downloads the result." />
+          {!rotateFile ? (
+            <DropZone icon={<RotateCw className="w-10 h-10 mx-auto text-muted-foreground mb-3" />} label="Upload PDF to rotate" sub="PDF files only" onClick={() => rotateInputRef.current?.click()} onDrop={handleRotateFile} testId="dropzone-rotate">
+              <input ref={rotateInputRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleRotateFile(e.target.files[0])} />
+            </DropZone>
+          ) : (
+            <div className="space-y-4">
+              <FileCard name={rotateFile.name} size={rotateFile.size} onRemove={() => { setRotateFile(null); setRotateDone(false); }} />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Rotation angle</label>
+                <div className="flex gap-2">
+                  {([90, 180, 270] as const).map((deg) => (
+                    <button
+                      key={deg}
+                      onClick={() => setRotateDeg(deg)}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-all ${
+                        rotateDeg === deg
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background text-muted-foreground border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {deg}°
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {rotateError && <ErrorBox msg={rotateError} />}
+              {rotateDone && <SuccessBox msg="Rotated PDF downloaded!" />}
+              <Button onClick={rotatePdf} disabled={rotateLoading}>
+                {rotateLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Rotating...</> : <><RotateCw className="w-4 h-4 mr-2" />Rotate & Download</>}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Extract Text ── */}
+      {mode === "extract-text" && (
+        <div className="space-y-6">
+          <InfoBox icon={<AlignLeft className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />} text="Extracts all readable text from your PDF. Works best with text-based PDFs (not scanned images)." />
+          {!extractFile ? (
+            <DropZone icon={<AlignLeft className="w-10 h-10 mx-auto text-muted-foreground mb-3" />} label="Upload PDF to extract text" sub="PDF files only" onClick={() => extractInputRef.current?.click()} onDrop={handleExtractFile} testId="dropzone-extract">
+              <input ref={extractInputRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtractFile(e.target.files[0])} />
+            </DropZone>
+          ) : (
+            <div className="space-y-4">
+              <FileCard name={extractFile.name} size={extractFile.size} onRemove={() => { setExtractFile(null); setExtractText(""); }} />
+              {extractError && <ErrorBox msg={extractError} />}
+              {extractLoading && <ProgressBar value={extractProgress} label="Extracting text..." />}
+              <Button onClick={extractTextFromPdf} disabled={extractLoading}>
+                {extractLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Extracting... {extractProgress}%</> : <><AlignLeft className="w-4 h-4 mr-2" />Extract Text</>}
+              </Button>
+              {extractText && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">{extractText.length.toLocaleString()} characters extracted</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={copyExtractedText}>
+                        {extractCopied ? "Copied!" : "Copy"}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={downloadExtractedText}>
+                        <Download className="w-3.5 h-3.5 mr-1" />TXT
+                      </Button>
+                    </div>
+                  </div>
+                  <pre className="bg-muted/30 border border-border rounded-xl px-4 py-3 text-xs font-mono leading-relaxed whitespace-pre-wrap overflow-auto max-h-80 text-foreground">
+                    {extractText}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── DOCX → PDF ── */}
       {mode === "docx-to-pdf" && (
         <div className="space-y-6">
-          <div className="bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground flex items-start gap-2">
-            <FileType className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
-            <span>Converts your Word document (.docx) to PDF using your browser's print dialog. Select "Save as PDF" in the print dialog to save the file.</span>
-          </div>
+          <InfoBox icon={<FileType className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />} text='Converts your Word document to PDF via the browser print dialog. Choose "Save as PDF" as the printer.' />
           {!docxFile ? (
-            <DropZone icon={<FileType className="w-10 h-10 mx-auto text-muted-foreground mb-3" />} label="Upload Word document" sub=".doc or .docx files" onClick={() => docxInputRef.current?.click()} onDrop={(f) => handleDocxFile(f)} testId="dropzone-docx">
+            <DropZone icon={<FileType className="w-10 h-10 mx-auto text-muted-foreground mb-3" />} label="Upload Word document" sub=".doc or .docx files" onClick={() => docxInputRef.current?.click()} onDrop={handleDocxFile} testId="dropzone-docx">
               <input ref={docxInputRef} type="file" accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" onChange={(e) => e.target.files?.[0] && handleDocxFile(e.target.files[0])} />
             </DropZone>
           ) : (
@@ -548,7 +667,7 @@ export default function PdfConverter() {
               <FileCard name={docxFile.name} size={docxFile.size} onRemove={() => setDocxFile(null)} />
               {docxError && <ErrorBox msg={docxError} />}
               <div className="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs px-4 py-3 rounded-lg">
-                💡 <strong>Tip:</strong> When the print dialog opens, choose <strong>"Save as PDF"</strong> or <strong>"Microsoft Print to PDF"</strong> as the printer.
+                💡 <strong>Tip:</strong> When the print dialog opens, choose <strong>"Save as PDF"</strong> as the printer.
               </div>
               <Button onClick={convertDocxToPdf} disabled={docxLoading}>
                 {docxLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Converting...</> : <><FileType className="w-4 h-4 mr-2" />Convert to PDF</>}
@@ -612,6 +731,18 @@ function ProgressBar({ value, label }: { value: number; label: string }) {
   );
 }
 
+function InfoBox({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="bg-muted/40 border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground flex items-start gap-2">
+      {icon}<span>{text}</span>
+    </div>
+  );
+}
+
 function ErrorBox({ msg }: { msg: string }) {
   return <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-lg">{msg}</div>;
+}
+
+function SuccessBox({ msg }: { msg: string }) {
+  return <div className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-sm px-4 py-3 rounded-lg">✅ {msg}</div>;
 }
