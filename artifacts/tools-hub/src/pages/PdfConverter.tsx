@@ -1,11 +1,11 @@
 import { useState, useRef } from "react";
 import { jsPDF } from "jspdf";
-import { PDFDocument, degrees } from "pdf-lib";
+import { PDFDocument, degrees, rgb, StandardFonts } from "pdf-lib";
 import JSZip from "jszip";
 import {
   FileText, Upload, Download, X, RefreshCw, Image, Link2,
   Scissors, Layers, RotateCw, AlignLeft, FileType,
-  Minimize2, Trash2, Copy, GripVertical,
+  Minimize2, Trash2, Copy, GripVertical, Stamp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UsageCount } from "@/components/UsageCount";
@@ -13,9 +13,9 @@ import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
 
 type Mode =
-  | "compress-pdf" | "merge-pdf"    | "split-pdf"   | "pdf-to-word"
+  | "compress-pdf" | "merge-pdf"    | "split-pdf"    | "pdf-to-word"
   | "word-to-pdf"  | "pdf-to-image" | "image-to-pdf" | "rotate-pdf"
-  | "delete-pages" | "extract-pages";
+  | "delete-pages" | "extract-pages"| "watermark-pdf";
 
 type CompressLevel = "lossless" | "balanced" | "small";
 
@@ -110,6 +110,7 @@ const TOOLS: { id: Mode; label: string; icon: React.ReactNode; color: string }[]
   { id: "rotate-pdf",    label: "Rotate PDF",    icon: <RotateCw className="w-5 h-5" />,  color: "text-yellow-500" },
   { id: "delete-pages",  label: "Delete Pages",  icon: <Trash2 className="w-5 h-5" />,    color: "text-red-500" },
   { id: "extract-pages", label: "Extract Pages", icon: <Copy className="w-5 h-5" />,      color: "text-teal-500" },
+  { id: "watermark-pdf", label: "Watermark PDF", icon: <Stamp className="w-5 h-5" />,     color: "text-purple-500" },
 ];
 
 const COMPRESS_LEVELS: { id: CompressLevel; label: string; desc: string; scale: number; quality: number }[] = [
@@ -205,6 +206,17 @@ export default function PdfConverter() {
   const [extDone, setExtDone] = useState(false);
   const [extError, setExtError] = useState("");
   const extRef = useRef<HTMLInputElement>(null);
+
+  // ── Watermark ──
+  const [wmFile, setWmFile] = useState<File | null>(null);
+  const [wmText, setWmText] = useState("CONFIDENTIAL");
+  const [wmOpacity, setWmOpacity] = useState(30);
+  const [wmColor, setWmColor] = useState<"gray" | "red" | "blue" | "black">("gray");
+  const [wmSize, setWmSize] = useState<"small" | "medium" | "large">("medium");
+  const [wmLoading, setWmLoading] = useState(false);
+  const [wmDone, setWmDone] = useState(false);
+  const [wmError, setWmError] = useState("");
+  const wmRef = useRef<HTMLInputElement>(null);
 
   const handleShareLink = async () => {
     await navigator.clipboard.writeText(window.location.href);
@@ -454,6 +466,44 @@ export default function PdfConverter() {
     finally { setExtLoading(false); }
   };
 
+  // ── Watermark ─────────────────────────────────────────────
+  const WM_COLORS: Record<string, [number, number, number]> = {
+    gray: [0.5, 0.5, 0.5], red: [0.8, 0.1, 0.1], blue: [0.1, 0.2, 0.8], black: [0, 0, 0],
+  };
+  const WM_SIZES: Record<string, number> = { small: 36, medium: 52, large: 72 };
+  const handleWmFile = (f: File) => {
+    if (!f.name.toLowerCase().endsWith(".pdf")) return;
+    setWmFile(f); setWmError(""); setWmDone(false);
+  };
+  const applyWatermark = async () => {
+    if (!wmFile || !wmText.trim()) { setWmError("Enter watermark text first."); return; }
+    setWmLoading(true); setWmError(""); setWmDone(false);
+    try {
+      const pdf = await PDFDocument.load(await wmFile.arrayBuffer());
+      const font = await pdf.embedFont(StandardFonts.HelveticaBold);
+      const [r, g, b] = WM_COLORS[wmColor];
+      const fontSize = WM_SIZES[wmSize];
+      const opacity = wmOpacity / 100;
+      for (const page of pdf.getPages()) {
+        const { width, height } = page.getSize();
+        const textWidth = font.widthOfTextAtSize(wmText, fontSize);
+        page.drawText(wmText, {
+          x: (width - textWidth) / 2,
+          y: (height - fontSize) / 2,
+          size: fontSize,
+          font,
+          color: rgb(r, g, b),
+          opacity,
+          rotate: degrees(45),
+          blendMode: undefined,
+        });
+      }
+      triggerDownload(new Blob([await pdf.save()], { type: "application/pdf" }), wmFile.name.replace(".pdf", "-watermarked.pdf"));
+      setWmDone(true); increment();
+    } catch { setWmError("Failed to add watermark."); }
+    finally { setWmLoading(false); }
+  };
+
   const activeTool = TOOLS.find((t) => t.id === mode)!;
 
   return (
@@ -476,7 +526,7 @@ export default function PdfConverter() {
       </div>
 
       {/* Tool Grid */}
-      <div className="grid grid-cols-5 gap-2 mb-6">
+      <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6">
         {TOOLS.map((tool) => {
           const active = mode === tool.id;
           return (
@@ -869,6 +919,106 @@ export default function PdfConverter() {
           )}
         </div>
       )}
+
+      {/* ── Watermark PDF ── */}
+      {mode === "watermark-pdf" && (
+        <div className="space-y-4">
+          {/* Watermark text */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">Watermark text</label>
+            <input
+              type="text"
+              value={wmText}
+              onChange={(e) => setWmText(e.target.value)}
+              placeholder="e.g. CONFIDENTIAL, DRAFT, DO NOT COPY"
+              maxLength={40}
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          {/* Options row */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Color */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-foreground">Color</label>
+              <div className="flex gap-1.5">
+                {(["gray","red","blue","black"] as const).map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setWmColor(c)}
+                    title={c}
+                    className={`w-7 h-7 rounded-full border-2 transition-all ${wmColor === c ? "border-primary scale-110 shadow" : "border-transparent hover:border-muted-foreground"}`}
+                    style={{ backgroundColor: c === "gray" ? "#888" : c === "red" ? "#c0392b" : c === "blue" ? "#1a3ab0" : "#111" }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Size */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-foreground">Text size</label>
+              <div className="flex gap-1">
+                {(["small","medium","large"] as const).map((s) => (
+                  <button key={s} onClick={() => setWmSize(s)} className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-all capitalize ${wmSize === s ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground hover:border-primary/50"}`}>
+                    {s === "small" ? "S" : s === "medium" ? "M" : "L"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Opacity slider */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-foreground">Opacity</label>
+              <span className="text-xs font-mono text-primary">{wmOpacity}%</span>
+            </div>
+            <input
+              type="range"
+              min={5} max={80} step={5}
+              value={wmOpacity}
+              onChange={(e) => setWmOpacity(Number(e.target.value))}
+              className="w-full accent-primary"
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>Subtle</span><span>Visible</span>
+            </div>
+          </div>
+
+          {/* Preview badge */}
+          {wmText && (
+            <div className="relative overflow-hidden rounded-xl border border-border bg-muted/20 h-28 flex items-center justify-center">
+              <p className="text-xs text-muted-foreground absolute top-2 left-3">Preview</p>
+              <span
+                className="font-bold select-none rotate-45 tracking-widest"
+                style={{
+                  fontSize: wmSize === "small" ? 18 : wmSize === "medium" ? 26 : 36,
+                  color: wmColor === "gray" ? "#888" : wmColor === "red" ? "#c0392b" : wmColor === "blue" ? "#1a3ab0" : "#111",
+                  opacity: wmOpacity / 100,
+                }}
+              >
+                {wmText}
+              </span>
+            </div>
+          )}
+
+          {/* File upload */}
+          {!wmFile ? (
+            <PdfDrop label="Upload PDF to watermark" onClick={() => wmRef.current?.click()} onDrop={handleWmFile} testId="dropzone-watermark">
+              <input ref={wmRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleWmFile(e.target.files[0])} />
+            </PdfDrop>
+          ) : (
+            <>
+              <FileCard name={wmFile.name} size={wmFile.size} onRemove={() => { setWmFile(null); setWmDone(false); }} />
+              {wmError && <ErrorBox msg={wmError} />}
+              {wmDone && <SuccessBox msg="Watermarked PDF downloaded!" />}
+              <Button onClick={applyWatermark} disabled={wmLoading || !wmText.trim()}>
+                {wmLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Applying...</> : <><Stamp className="w-4 h-4 mr-2" />Apply Watermark & Download</>}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -885,6 +1035,7 @@ function getToolDesc(mode: Mode): string {
     "rotate-pdf":    "Rotate all pages by 90°, 180°, or 270°",
     "delete-pages":  "Click page numbers to select which pages to remove",
     "extract-pages": "Click page numbers to select which pages to keep",
+    "watermark-pdf": "Stamp diagonal text on every page — set color, size & opacity",
   };
   return map[mode];
 }
