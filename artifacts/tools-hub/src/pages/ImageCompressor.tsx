@@ -4,7 +4,9 @@ import { Upload, Download, ImageIcon, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ShareButton } from "@/components/ShareButton";
+import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
+import { useToolCounter } from "@/hooks/useToolCounter";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -24,6 +26,8 @@ export default function ImageCompressor() {
     description:
       "Compress images online for free. Reduce JPG, PNG, and WebP file sizes in your browser — no upload to any server. Instant, private, and free.",
   });
+
+  const { count, increment } = useToolCounter("image-compressor");
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -65,6 +69,7 @@ export default function ImageCompressor() {
       const result = await imageCompression(file, options);
       const url = URL.createObjectURL(result);
       setCompressed({ file: result, url });
+      increment(); // count each compression
     } finally {
       setLoading(false);
     }
@@ -104,6 +109,7 @@ export default function ImageCompressor() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
               <ImageIcon className="w-3.5 h-3.5" />
               <span>Image Tools</span>
+              <UsageCount count={count} label="compression" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Image Compressor</h1>
             <p className="text-muted-foreground mt-2">
@@ -141,7 +147,6 @@ export default function ImageCompressor() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Previews */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="rounded-xl border border-border overflow-hidden">
               <div className="px-3 py-2 bg-muted/50 border-b border-border flex items-center justify-between">
@@ -173,7 +178,6 @@ export default function ImageCompressor() {
             </div>
           </div>
 
-          {/* Savings badge */}
           {savings !== null && (
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${
               savings > 0
@@ -186,7 +190,6 @@ export default function ImageCompressor() {
             </div>
           )}
 
-          {/* Quality slider */}
           <div className="space-y-3 bg-card border border-border rounded-xl p-5">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">Quality</label>
@@ -207,7 +210,6 @@ export default function ImageCompressor() {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex flex-wrap gap-3">
             <Button
               onClick={compress}

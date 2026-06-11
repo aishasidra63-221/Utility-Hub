@@ -3,8 +3,10 @@ import QRCode from "qrcode";
 import { QrCode, Download, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "@/components/ShareButton";
+import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useShareURL } from "@/hooks/useShareURL";
+import { useToolCounter } from "@/hooks/useToolCounter";
 
 const SIZES: Record<string, number> = { Small: 200, Medium: 300, Large: 400 };
 
@@ -19,6 +21,8 @@ export default function QrGenerator() {
     text: "https://",
     size: "Medium",
   });
+
+  const { count, increment } = useToolCounter("qr-generator");
 
   const [text, setText] = useState(initialValues.text);
   const [size, setSize] = useState<keyof typeof SIZES>(
@@ -59,6 +63,7 @@ export default function QrGenerator() {
       a.download = "qrcode.png";
       a.click();
       URL.revokeObjectURL(url);
+      increment(); // count each download
     }, "image/png");
   };
 
@@ -72,11 +77,12 @@ export default function QrGenerator() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
               <QrCode className="w-3.5 h-3.5" />
               <span>QR Tools</span>
+              <UsageCount count={count} label="QR generated" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">QR Code Generator</h1>
             <p className="text-muted-foreground mt-2">
@@ -88,7 +94,6 @@ export default function QrGenerator() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Input panel */}
         <div className="space-y-5">
           <div className="space-y-2">
             <label htmlFor="qr-input" className="text-sm font-medium text-foreground">
@@ -105,7 +110,6 @@ export default function QrGenerator() {
             />
           </div>
 
-          {/* Size selector */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Size</label>
             <div className="flex gap-2">
@@ -127,7 +131,6 @@ export default function QrGenerator() {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-2">
             <Button
               onClick={download}
@@ -149,7 +152,6 @@ export default function QrGenerator() {
           </div>
         </div>
 
-        {/* QR preview */}
         <div className="flex flex-col items-center justify-center bg-card border border-border rounded-xl p-6 min-h-[300px]">
           {text.trim() ? (
             <>

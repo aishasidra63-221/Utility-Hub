@@ -1,10 +1,13 @@
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Image, FileText, QrCode, AlignLeft, MessageCircle, ArrowRight } from "lucide-react";
+import { Image, FileText, QrCode, AlignLeft, MessageCircle, ArrowRight, Activity } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
+import { getAllToolCounts } from "@/hooks/useToolCounter";
 
 const tools = [
   {
     href: "/image-compressor",
+    id: "image-compressor",
     icon: Image,
     title: "Image Compressor",
     description: "Compress JPG, PNG, and WebP images instantly in your browser. Reduce file size while keeping quality.",
@@ -13,6 +16,7 @@ const tools = [
   },
   {
     href: "/pdf-converter",
+    id: "pdf-converter",
     icon: FileText,
     title: "PDF Converter",
     description: "Convert PDF pages to images, or stitch multiple images into a single PDF. No upload to any server.",
@@ -21,6 +25,7 @@ const tools = [
   },
   {
     href: "/qr-generator",
+    id: "qr-generator",
     icon: QrCode,
     title: "QR Code Generator",
     description: "Generate a QR code for any URL or text instantly. Download as PNG in seconds.",
@@ -29,6 +34,7 @@ const tools = [
   },
   {
     href: "/text-cleaner",
+    id: "text-cleaner",
     icon: AlignLeft,
     title: "Text Cleaner",
     description: "Remove extra spaces, normalize line breaks, change case, and strip emojis from messy text.",
@@ -37,6 +43,7 @@ const tools = [
   },
   {
     href: "/whatsapp-link",
+    id: "whatsapp-link",
     icon: MessageCircle,
     title: "WhatsApp Link Generator",
     description: "Create a direct WhatsApp chat link with a pre-filled message. Also generates a scannable QR code.",
@@ -51,6 +58,17 @@ export default function Home() {
     description:
       "Free online tools: compress images, convert PDFs, generate QR codes, clean text, and create WhatsApp links. No signup, no ads, instant results.",
   });
+
+  const [counts, setCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    setCounts(getAllToolCounts());
+    const handler = () => setCounts(getAllToolCounts());
+    window.addEventListener("toolhub_count_updated", handler);
+    return () => window.removeEventListener("toolhub_count_updated", handler);
+  }, []);
+
+  const totalUses = Object.values(counts).reduce((a, b) => a + b, 0);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
@@ -69,12 +87,19 @@ export default function Home() {
           Five essential utilities that run entirely in your browser.
           Upload, process, download — done.
         </p>
+        {totalUses > 0 && (
+          <div className="mt-4 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Activity className="w-3.5 h-3.5 text-primary" />
+            You&rsquo;ve used these tools <span className="font-semibold text-foreground">{totalUses}</span> time{totalUses !== 1 ? "s" : ""}
+          </div>
+        )}
       </div>
 
       {/* Tool grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {tools.map((tool) => {
           const Icon = tool.icon;
+          const toolCount = counts[tool.id] ?? 0;
           return (
             <Link
               key={tool.href}
@@ -86,9 +111,20 @@ export default function Home() {
                 <div className={`p-2.5 rounded-lg ${tool.color}`}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                  {tool.badge}
-                </span>
+                <div className="flex items-center gap-2">
+                  {toolCount > 0 && (
+                    <span
+                      className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full"
+                      data-testid={`text-usage-count-${tool.id}`}
+                      title={`Used ${toolCount} time${toolCount !== 1 ? "s" : ""}`}
+                    >
+                      {toolCount}×
+                    </span>
+                  )}
+                  <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    {tool.badge}
+                  </span>
+                </div>
               </div>
               <div className="flex-1">
                 <h2 className="text-base font-semibold text-foreground mb-1.5 group-hover:text-primary transition-colors">
@@ -106,7 +142,7 @@ export default function Home() {
           );
         })}
 
-        {/* Spacer card (for grid symmetry on lg) */}
+        {/* Spacer card */}
         <div className="hidden lg:flex flex-col gap-4 p-6 rounded-xl border border-dashed border-border items-center justify-center text-center opacity-40">
           <p className="text-sm text-muted-foreground">More tools coming soon</p>
         </div>

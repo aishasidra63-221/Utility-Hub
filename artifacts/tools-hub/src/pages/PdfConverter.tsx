@@ -2,7 +2,9 @@ import { useState, useRef } from "react";
 import { jsPDF } from "jspdf";
 import { FileText, Upload, Download, X, RefreshCw, Image, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
+import { useToolCounter } from "@/hooks/useToolCounter";
 
 type Mode = "pdf-to-images" | "images-to-pdf";
 
@@ -75,6 +77,7 @@ export default function PdfConverter() {
       "Convert PDF pages to PNG images, or combine multiple images into a single PDF. Free, browser-based, no file upload to servers.",
   });
 
+  const { count, increment } = useToolCounter("pdf-converter");
   const [mode, setMode] = useState<Mode>("pdf-to-images");
   const [shareCopied, setShareCopied] = useState(false);
 
@@ -98,7 +101,6 @@ export default function PdfConverter() {
     setTimeout(() => setShareCopied(false), 2500);
   };
 
-  // --- PDF to Images ---
   const handlePdfFile = (f: File) => {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
     setPdfFile(f);
@@ -114,6 +116,7 @@ export default function PdfConverter() {
     try {
       const images = await pdfToImages(pdfFile, setPdfProgress);
       setPdfImages(images);
+      increment(); // count PDF conversion
     } catch (e) {
       setPdfError("Failed to convert PDF. Make sure it is a valid PDF file.");
       console.error(e);
@@ -129,7 +132,6 @@ export default function PdfConverter() {
     a.click();
   };
 
-  // --- Images to PDF ---
   const handleImgFiles = (files: FileList | File[]) => {
     const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
     setImgFiles((prev) => [...prev, ...arr]);
@@ -154,6 +156,7 @@ export default function PdfConverter() {
     setPdfBuilding(true);
     try {
       imagesToPdf(imgPreviews, imgFiles.map((f) => f.name));
+      increment(); // count PDF build
     } finally {
       setPdfBuilding(false);
     }
@@ -167,6 +170,7 @@ export default function PdfConverter() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
               <FileText className="w-3.5 h-3.5" />
               <span>PDF Tools</span>
+              <UsageCount count={count} label="conversion" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">PDF Converter</h1>
             <p className="text-muted-foreground mt-2">
@@ -182,7 +186,7 @@ export default function PdfConverter() {
           >
             {shareCopied ? (
               <>
-                <Download className="w-3.5 h-3.5 text-emerald-500" />
+                <Upload className="w-3.5 h-3.5 text-emerald-500" />
                 Link copied!
               </>
             ) : (
@@ -213,7 +217,6 @@ export default function PdfConverter() {
         ))}
       </div>
 
-      {/* PDF to Images */}
       {mode === "pdf-to-images" && (
         <div className="space-y-6">
           {!pdfFile ? (
@@ -260,11 +263,7 @@ export default function PdfConverter() {
                 </div>
               )}
 
-              <Button
-                onClick={convertPdfToImages}
-                disabled={pdfLoading}
-                data-testid="button-convert-pdf"
-              >
+              <Button onClick={convertPdfToImages} disabled={pdfLoading} data-testid="button-convert-pdf">
                 {pdfLoading ? (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -306,7 +305,6 @@ export default function PdfConverter() {
         </div>
       )}
 
-      {/* Images to PDF */}
       {mode === "images-to-pdf" && (
         <div className="space-y-6">
           <div
@@ -354,11 +352,7 @@ export default function PdfConverter() {
                   </div>
                 ))}
               </div>
-              <Button
-                onClick={buildPdf}
-                disabled={pdfBuilding}
-                data-testid="button-build-pdf"
-              >
+              <Button onClick={buildPdf} disabled={pdfBuilding} data-testid="button-build-pdf">
                 {pdfBuilding ? (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />

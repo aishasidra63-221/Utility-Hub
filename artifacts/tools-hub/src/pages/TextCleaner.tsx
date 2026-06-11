@@ -2,8 +2,10 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { AlignLeft, Copy, Check, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "@/components/ShareButton";
+import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useShareURL } from "@/hooks/useShareURL";
+import { useToolCounter } from "@/hooks/useToolCounter";
 
 interface Option {
   id: string;
@@ -71,11 +73,12 @@ export default function TextCleaner() {
     opts: "spaces,linebreaks",
   });
 
+  const { count, increment } = useToolCounter("text-cleaner");
+
   const [input, setInput] = useState(initialValues.text);
   const [enabled, setEnabled] = useState<Set<string>>(parseOpts(initialValues.opts));
   const [copied, setCopied] = useState(false);
 
-  // Debounced URL sync
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (syncTimer.current) clearTimeout(syncTimer.current);
@@ -106,6 +109,7 @@ export default function TextCleaner() {
     await navigator.clipboard.writeText(output);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    increment(); // count each copy
   };
 
   const download = () => {
@@ -117,6 +121,7 @@ export default function TextCleaner() {
     a.download = "cleaned-text.txt";
     a.click();
     URL.revokeObjectURL(url);
+    increment(); // count each download
   };
 
   const charDiff = input.length - output.length;
@@ -129,6 +134,7 @@ export default function TextCleaner() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
               <AlignLeft className="w-3.5 h-3.5" />
               <span>Text Tools</span>
+              <UsageCount count={count} label="clean" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Text Cleaner</h1>
             <p className="text-muted-foreground mt-2">
@@ -139,7 +145,6 @@ export default function TextCleaner() {
         </div>
       </div>
 
-      {/* Options */}
       <div className="flex flex-wrap gap-2 mb-6">
         {OPTIONS.map((opt) => (
           <button
@@ -158,9 +163,7 @@ export default function TextCleaner() {
         ))}
       </div>
 
-      {/* Editor panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Input */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Input</label>
@@ -175,7 +178,6 @@ export default function TextCleaner() {
           />
         </div>
 
-        {/* Output */}
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Output</label>
@@ -197,7 +199,6 @@ export default function TextCleaner() {
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex gap-3 mt-4">
         <Button
           onClick={copy}

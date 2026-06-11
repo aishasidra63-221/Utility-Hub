@@ -3,8 +3,10 @@ import QRCode from "qrcode";
 import { MessageCircle, Copy, Check, Download, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "@/components/ShareButton";
+import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useShareURL } from "@/hooks/useShareURL";
+import { useToolCounter } from "@/hooks/useToolCounter";
 
 function buildLink(phone: string, message: string): string {
   const clean = phone.replace(/[^\d+]/g, "");
@@ -28,6 +30,8 @@ export default function WhatsappLink() {
     msg: "",
   });
 
+  const { count, increment } = useToolCounter("whatsapp-link");
+
   const [phone, setPhone] = useState(initialValues.phone);
   const [message, setMessage] = useState(initialValues.msg);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -35,7 +39,6 @@ export default function WhatsappLink() {
 
   const link = buildLink(phone, message);
 
-  // Sync URL params (debounced)
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (syncTimer.current) clearTimeout(syncTimer.current);
@@ -70,6 +73,7 @@ export default function WhatsappLink() {
     await navigator.clipboard.writeText(link);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
+    increment(); // count each link copy
   };
 
   const downloadQr = () => {
@@ -94,6 +98,7 @@ export default function WhatsappLink() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
               <MessageCircle className="w-3.5 h-3.5" />
               <span>WhatsApp Tools</span>
+              <UsageCount count={count} label="link created" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">WhatsApp Link Generator</h1>
             <p className="text-muted-foreground mt-2">
@@ -105,7 +110,6 @@ export default function WhatsappLink() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Input panel */}
         <div className="space-y-5">
           <div className="space-y-2">
             <label htmlFor="wa-phone" className="text-sm font-medium text-foreground">
@@ -138,7 +142,6 @@ export default function WhatsappLink() {
             />
           </div>
 
-          {/* Generated link */}
           {link && (
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Generated link</label>
@@ -163,7 +166,6 @@ export default function WhatsappLink() {
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex flex-wrap gap-2">
             {link && (
               <>
@@ -171,6 +173,7 @@ export default function WhatsappLink() {
                   asChild
                   data-testid="button-open-whatsapp"
                   className="flex-1 sm:flex-none"
+                  onClick={() => increment()} // count opening WhatsApp too
                 >
                   <a href={link} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="w-4 h-4 mr-2" />
@@ -190,7 +193,6 @@ export default function WhatsappLink() {
           </div>
         </div>
 
-        {/* QR preview */}
         <div className="flex flex-col items-center justify-center bg-card border border-border rounded-xl p-6 min-h-[280px]">
           {link ? (
             <>
