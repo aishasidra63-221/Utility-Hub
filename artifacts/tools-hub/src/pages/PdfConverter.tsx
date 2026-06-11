@@ -16,56 +16,74 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-async function pdfToImages(file: File, onProgress?: (p: number) => void): Promise<string[]> {
-  const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+let pdfjsLibCache: typeof import("pdfjs-dist") | null = null;
 
+async function getPdfjsLib() {
+  if (pdfjsLibCache) return pdfjsLibCache;
+  const lib = await import("pdfjs-dist");
+  lib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${lib.version}/build/pdf.worker.min.mjs`;
+  pdfjsLibCache = lib;
+  return lib;
+}
+
+async function pdfToImages(file: File, onProgress?: (p: number) => void): Promise<string[]> {
+  const pdfjsLib = await getPdfjsLib();
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const images: string[] = [];
+  const total = pdf.numPages;
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const viewport = page.getViewport({ scale: 2 });
+  const renderPage = async (pageNum: number): Promise<string> => {
+    const page = await pdf.getPage(pageNum);
+    const viewport = page.getViewport({ scale: 1.5 });
     const canvas = document.createElement("canvas");
     canvas.width = viewport.width;
     canvas.height = viewport.height;
     const ctx = canvas.getContext("2d")!;
     await page.render({ canvasContext: ctx, viewport }).promise;
-    images.push(canvas.toDataURL("image/png"));
-    if (onProgress) onProgress(Math.round((i / pdf.numPages) * 100));
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    if (onProgress) onProgress(Math.round((pageNum / total) * 100));
+    return dataUrl;
+  };
+
+  const BATCH = 3;
+  const results: string[] = new Array(total);
+  for (let i = 0; i < total; i += BATCH) {
+    const batch = Array.from({ length: Math.min(BATCH, total - i) }, (_, j) => renderPage(i + j + 1));
+    const batchResults = await Promise.all(batch);
+    batchResults.forEach((r, j) => { results[i + j] = r; });
   }
-  return images;
+  return results;
 }
 
-function imagesToPdf(dataUrls: string[], filenames: string[]): void {
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+async function imagesToPdf(dataUrls: string[]): Promise<void> {
   const pdf = new jsPDF({ orientation: "portrait", unit: "px" });
   let firstPage = true;
 
-  dataUrls.forEach((dataUrl, idx) => {
-    const img = document.createElement("img");
-    img.src = dataUrl;
+  for (const dataUrl of dataUrls) {
+    const img = await loadImage(dataUrl);
+    const w = img.naturalWidth || 800;
+    const h = img.naturalHeight || 600;
+    const pdfW = 595;
+    const pdfH = Math.round(h * (pdfW / w));
 
-    const canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth || 800;
-    canvas.height = img.naturalHeight || 600;
-    const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(img, 0, 0);
-
-    const imgWidth = 595;
-    const imgHeight = canvas.height * (imgWidth / (canvas.width || 1));
-
-    if (!firstPage) {
-      pdf.addPage([imgWidth, imgHeight], imgHeight > imgWidth ? "portrait" : "landscape");
-    } else {
+    if (firstPage) {
+      pdf.internal.pageSize.width = pdfW;
+      pdf.internal.pageSize.height = pdfH;
       firstPage = false;
-      pdf.internal.pageSize.width = imgWidth;
-      pdf.internal.pageSize.height = imgHeight;
+    } else {
+      pdf.addPage([pdfW, pdfH], pdfH > pdfW ? "portrait" : "landscape");
     }
-
-    pdf.addImage(dataUrl, "PNG", 0, 0, imgWidth, imgHeight);
-    void filenames[idx];
-  });
+    pdf.addImage(dataUrl, "JPEG", 0, 0, pdfW, pdfH);
+  }
 
   pdf.save("converted.pdf");
 }
@@ -81,7 +99,6 @@ export default function PdfConverter() {
   const [mode, setMode] = useState<Mode>("pdf-to-images");
   const [shareCopied, setShareCopied] = useState(false);
 
-  // PDF to Images state
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfImages, setPdfImages] = useState<string[]>([]);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -89,7 +106,6 @@ export default function PdfConverter() {
   const [pdfError, setPdfError] = useState("");
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
-  // Images to PDF state
   const [imgFiles, setImgFiles] = useState<File[]>([]);
   const [imgPreviews, setImgPreviews] = useState<string[]>([]);
   const [pdfBuilding, setPdfBuilding] = useState(false);
@@ -116,7 +132,7 @@ export default function PdfConverter() {
     try {
       const images = await pdfToImages(pdfFile, setPdfProgress);
       setPdfImages(images);
-      increment(); // count PDF conversion
+      increment();
     } catch (e) {
       setPdfError("Failed to convert PDF. Make sure it is a valid PDF file.");
       console.error(e);
@@ -128,8 +144,12 @@ export default function PdfConverter() {
   const downloadPdfPage = (dataUrl: string, pageNum: number) => {
     const a = document.createElement("a");
     a.href = dataUrl;
-    a.download = `page-${pageNum}.png`;
+    a.download = `page-${pageNum}.jpg`;
     a.click();
+  };
+
+  const downloadAllPages = () => {
+    pdfImages.forEach((src, i) => downloadPdfPage(src, i + 1));
   };
 
   const handleImgFiles = (files: FileList | File[]) => {
@@ -155,8 +175,10 @@ export default function PdfConverter() {
     if (!imgPreviews.length) return;
     setPdfBuilding(true);
     try {
-      imagesToPdf(imgPreviews, imgFiles.map((f) => f.name));
-      increment(); // count PDF build
+      await imagesToPdf(imgPreviews);
+      increment();
+    } catch (e) {
+      console.error(e);
     } finally {
       setPdfBuilding(false);
     }
@@ -199,7 +221,6 @@ export default function PdfConverter() {
         </div>
       </div>
 
-      {/* Mode tabs */}
       <div className="flex rounded-xl border border-border bg-muted/30 p-1 mb-8 w-fit gap-1">
         {(["pdf-to-images", "images-to-pdf"] as const).map((m) => (
           <button
@@ -222,11 +243,13 @@ export default function PdfConverter() {
           {!pdfFile ? (
             <div
               onClick={() => pdfInputRef.current?.click()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handlePdfFile(f); }}
+              onDragOver={(e) => e.preventDefault()}
               data-testid="dropzone-pdf"
               className="border-2 border-dashed border-border rounded-xl p-12 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors"
             >
               <FileText className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-sm font-medium text-foreground">Click to upload a PDF file</p>
+              <p className="text-sm font-medium text-foreground">Click or drag to upload a PDF</p>
               <p className="text-xs text-muted-foreground mt-1">PDF files only</p>
               <input
                 ref={pdfInputRef}
@@ -263,24 +286,51 @@ export default function PdfConverter() {
                 </div>
               )}
 
-              <Button onClick={convertPdfToImages} disabled={pdfLoading} data-testid="button-convert-pdf">
-                {pdfLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Converting... {pdfProgress}%
-                  </>
-                ) : (
-                  "Convert to Images"
+              {pdfLoading && (
+                <div className="bg-muted/50 rounded-xl px-4 py-3">
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      Converting pages...
+                    </span>
+                    <span className="font-mono text-primary font-semibold">{pdfProgress}%</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-1.5">
+                    <div
+                      className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${pdfProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button onClick={convertPdfToImages} disabled={pdfLoading} data-testid="button-convert-pdf">
+                  {pdfLoading ? "Converting..." : "Convert to Images"}
+                </Button>
+                {pdfImages.length > 0 && (
+                  <Button variant="outline" onClick={downloadAllPages}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download All
+                  </Button>
                 )}
-              </Button>
+              </div>
 
               {pdfImages.length > 0 && (
                 <div className="space-y-3">
-                  <p className="text-sm font-medium text-foreground">{pdfImages.length} page{pdfImages.length > 1 ? "s" : ""} extracted</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {pdfImages.length} page{pdfImages.length > 1 ? "s" : ""} extracted
+                  </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {pdfImages.map((src, i) => (
                       <div key={i} className="group relative rounded-lg border border-border overflow-hidden">
-                        <img src={src} alt={`Page ${i + 1}`} className="w-full object-cover" data-testid={`img-pdf-page-${i + 1}`} />
+                        <img
+                          src={src}
+                          alt={`Page ${i + 1}`}
+                          className="w-full object-cover"
+                          loading="lazy"
+                          data-testid={`img-pdf-page-${i + 1}`}
+                        />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <Button
                             size="sm"
@@ -341,7 +391,7 @@ export default function PdfConverter() {
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                 {imgPreviews.map((src, i) => (
                   <div key={i} className="relative group rounded-lg border border-border overflow-hidden aspect-square">
-                    <img src={src} alt={imgFiles[i]?.name} className="w-full h-full object-cover" />
+                    <img src={src} alt={imgFiles[i]?.name} className="w-full h-full object-cover" loading="lazy" />
                     <button
                       onClick={() => removeImg(i)}
                       data-testid={`button-remove-img-${i}`}
@@ -349,6 +399,9 @@ export default function PdfConverter() {
                     >
                       <X className="w-3 h-3" />
                     </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[9px] text-center py-0.5 opacity-0 group-hover:opacity-100 transition-opacity truncate px-1">
+                      {i + 1}
+                    </div>
                   </div>
                 ))}
               </div>
