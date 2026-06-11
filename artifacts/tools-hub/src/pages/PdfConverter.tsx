@@ -5,7 +5,7 @@ import JSZip from "jszip";
 import {
   FileText, Upload, Download, X, RefreshCw, Image, Link2,
   Scissors, Layers, RotateCw, AlignLeft, FileType,
-  Minimize2, Trash2, Copy,
+  Minimize2, Trash2, Copy, GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UsageCount } from "@/components/UsageCount";
@@ -13,16 +13,11 @@ import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
 
 type Mode =
-  | "compress-pdf"
-  | "merge-pdf"
-  | "split-pdf"
-  | "pdf-to-word"
-  | "word-to-pdf"
-  | "pdf-to-image"
-  | "image-to-pdf"
-  | "rotate-pdf"
-  | "delete-pages"
-  | "extract-pages";
+  | "compress-pdf" | "merge-pdf"    | "split-pdf"   | "pdf-to-word"
+  | "word-to-pdf"  | "pdf-to-image" | "image-to-pdf" | "rotate-pdf"
+  | "delete-pages" | "extract-pages";
+
+type CompressLevel = "lossless" | "balanced" | "small";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -41,6 +36,28 @@ async function getPdfjsLib() {
   return lib;
 }
 
+async function renderPdfPages(file: File, scale: number, quality: number, onProgress?: (p: number) => void): Promise<Uint8Array> {
+  const pdfjsLib = await getPdfjsLib();
+  const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+  const total = pdf.numPages;
+  const newPdf = new jsPDF({ orientation: "portrait", unit: "px" });
+  let first = true;
+  for (let i = 1; i <= total; i++) {
+    const page = await pdf.getPage(i);
+    const vp = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    canvas.width = vp.width; canvas.height = vp.height;
+    await page.render({ canvasContext: canvas.getContext("2d")!, viewport: vp }).promise;
+    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+    const pW = 595, pH = Math.round((vp.height / vp.width) * pW);
+    if (first) { newPdf.internal.pageSize.width = pW; newPdf.internal.pageSize.height = pH; first = false; }
+    else newPdf.addPage([pW, pH], pH > pW ? "portrait" : "landscape");
+    newPdf.addImage(dataUrl, "JPEG", 0, 0, pW, pH);
+    if (onProgress) onProgress(Math.round((i / total) * 100));
+  }
+  return newPdf.output("arraybuffer") as unknown as Uint8Array;
+}
+
 async function pdfToImages(file: File, onProgress?: (p: number) => void): Promise<string[]> {
   const pdfjsLib = await getPdfjsLib();
   const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
@@ -48,17 +65,15 @@ async function pdfToImages(file: File, onProgress?: (p: number) => void): Promis
   const BATCH = 3;
   const results: string[] = new Array(total);
   for (let i = 0; i < total; i += BATCH) {
-    await Promise.all(
-      Array.from({ length: Math.min(BATCH, total - i) }, async (_, j) => {
-        const page = await pdf.getPage(i + j + 1);
-        const vp = page.getViewport({ scale: 1.5 });
-        const canvas = document.createElement("canvas");
-        canvas.width = vp.width; canvas.height = vp.height;
-        await page.render({ canvasContext: canvas.getContext("2d")!, viewport: vp }).promise;
-        results[i + j] = canvas.toDataURL("image/jpeg", 0.92);
-        if (onProgress) onProgress(Math.round(((i + j + 1) / total) * 100));
-      })
-    );
+    await Promise.all(Array.from({ length: Math.min(BATCH, total - i) }, async (_, j) => {
+      const page = await pdf.getPage(i + j + 1);
+      const vp = page.getViewport({ scale: 1.5 });
+      const canvas = document.createElement("canvas");
+      canvas.width = vp.width; canvas.height = vp.height;
+      await page.render({ canvasContext: canvas.getContext("2d")!, viewport: vp }).promise;
+      results[i + j] = canvas.toDataURL("image/jpeg", 0.92);
+      if (onProgress) onProgress(Math.round(((i + j + 1) / total) * 100));
+    }));
   }
   return results;
 }
@@ -66,9 +81,7 @@ async function pdfToImages(file: File, onProgress?: (p: number) => void): Promis
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
+    img.onload = () => resolve(img); img.onerror = reject; img.src = src;
   });
 }
 
@@ -79,41 +92,36 @@ function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-function parsePageList(input: string, total: number): number[] {
-  const pages = new Set<number>();
-  const parts = input.split(",").map((s) => s.trim());
-  for (const part of parts) {
-    if (part.includes("-")) {
-      const [a, b] = part.split("-").map(Number);
-      if (!isNaN(a) && !isNaN(b)) {
-        for (let i = Math.max(1, a); i <= Math.min(total, b); i++) pages.add(i);
-      }
-    } else {
-      const n = Number(part);
-      if (!isNaN(n) && n >= 1 && n <= total) pages.add(n);
-    }
-  }
-  return [...pages].sort((a, b) => a - b);
+async function getPdfPageCount(file: File): Promise<number> {
+  try {
+    const pdf = await PDFDocument.load(await file.arrayBuffer());
+    return pdf.getPageCount();
+  } catch { return 0; }
 }
 
 const TOOLS: { id: Mode; label: string; icon: React.ReactNode; color: string }[] = [
-  { id: "compress-pdf",  label: "Compress PDF",  icon: <Minimize2 className="w-5 h-5" />,  color: "text-blue-500" },
-  { id: "merge-pdf",     label: "Merge PDF",     icon: <Layers className="w-5 h-5" />,     color: "text-violet-500" },
-  { id: "split-pdf",     label: "Split PDF",     icon: <Scissors className="w-5 h-5" />,   color: "text-orange-500" },
-  { id: "pdf-to-word",   label: "PDF to Word",   icon: <AlignLeft className="w-5 h-5" />,  color: "text-cyan-500" },
-  { id: "word-to-pdf",   label: "Word to PDF",   icon: <FileType className="w-5 h-5" />,   color: "text-emerald-500" },
-  { id: "pdf-to-image",  label: "PDF to Image",  icon: <Image className="w-5 h-5" />,      color: "text-pink-500" },
-  { id: "image-to-pdf",  label: "Image to PDF",  icon: <FileText className="w-5 h-5" />,   color: "text-indigo-500" },
-  { id: "rotate-pdf",    label: "Rotate PDF",    icon: <RotateCw className="w-5 h-5" />,   color: "text-yellow-500" },
-  { id: "delete-pages",  label: "Delete Pages",  icon: <Trash2 className="w-5 h-5" />,     color: "text-red-500" },
-  { id: "extract-pages", label: "Extract Pages", icon: <Copy className="w-5 h-5" />,       color: "text-teal-500" },
+  { id: "compress-pdf",  label: "Compress PDF",  icon: <Minimize2 className="w-5 h-5" />, color: "text-blue-500" },
+  { id: "merge-pdf",     label: "Merge PDF",     icon: <Layers className="w-5 h-5" />,    color: "text-violet-500" },
+  { id: "split-pdf",     label: "Split PDF",     icon: <Scissors className="w-5 h-5" />,  color: "text-orange-500" },
+  { id: "pdf-to-word",   label: "PDF to Word",   icon: <AlignLeft className="w-5 h-5" />, color: "text-cyan-500" },
+  { id: "word-to-pdf",   label: "Word to PDF",   icon: <FileType className="w-5 h-5" />,  color: "text-emerald-500" },
+  { id: "pdf-to-image",  label: "PDF to Image",  icon: <Image className="w-5 h-5" />,     color: "text-pink-500" },
+  { id: "image-to-pdf",  label: "Image to PDF",  icon: <FileText className="w-5 h-5" />,  color: "text-indigo-500" },
+  { id: "rotate-pdf",    label: "Rotate PDF",    icon: <RotateCw className="w-5 h-5" />,  color: "text-yellow-500" },
+  { id: "delete-pages",  label: "Delete Pages",  icon: <Trash2 className="w-5 h-5" />,    color: "text-red-500" },
+  { id: "extract-pages", label: "Extract Pages", icon: <Copy className="w-5 h-5" />,      color: "text-teal-500" },
+];
+
+const COMPRESS_LEVELS: { id: CompressLevel; label: string; desc: string; scale: number; quality: number }[] = [
+  { id: "lossless", label: "High Quality", desc: "No quality loss, smaller size",      scale: 1.5, quality: 0.95 },
+  { id: "balanced", label: "Balanced",     desc: "Good quality, significantly smaller", scale: 1.2, quality: 0.75 },
+  { id: "small",    label: "Smallest",     desc: "Max compression, smaller file",      scale: 1.0, quality: 0.50 },
 ];
 
 export default function PdfConverter() {
   useSEO({
     title: "Free PDF Tools — Compress, Merge, Split, Convert Online | ToolsHub",
-    description:
-      "10 free PDF tools in one place: compress, merge, split, rotate, convert to image/word, delete or extract pages — all in your browser.",
+    description: "10 free PDF tools: compress, merge, split, rotate, convert to image/word, delete or extract pages — all in your browser.",
   });
 
   const { count, increment } = useToolCounter("pdf-converter");
@@ -122,8 +130,10 @@ export default function PdfConverter() {
 
   // ── Compress ──
   const [compFile, setCompFile] = useState<File | null>(null);
+  const [compLevel, setCompLevel] = useState<CompressLevel>("balanced");
   const [compLoading, setCompLoading] = useState(false);
-  const [compResult, setCompResult] = useState<{ originalSize: number; newSize: number } | null>(null);
+  const [compProgress, setCompProgress] = useState(0);
+  const [compResult, setCompResult] = useState<{ orig: number; neo: number } | null>(null);
   const [compError, setCompError] = useState("");
   const compRef = useRef<HTMLInputElement>(null);
 
@@ -131,6 +141,7 @@ export default function PdfConverter() {
   const [mergeFiles, setMergeFiles] = useState<File[]>([]);
   const [mergeLoading, setMergeLoading] = useState(false);
   const [mergeError, setMergeError] = useState("");
+  const [mergeDragIdx, setMergeDragIdx] = useState<number | null>(null);
   const mergeRef = useRef<HTMLInputElement>(null);
 
   // ── Split ──
@@ -178,19 +189,18 @@ export default function PdfConverter() {
   const [rotError, setRotError] = useState("");
   const rotRef = useRef<HTMLInputElement>(null);
 
-  // ── Delete Pages ──
+  // ── Delete / Extract Pages (shared page-chip state) ──
   const [delFile, setDelFile] = useState<File | null>(null);
-  const [delPages, setDelPages] = useState("");
   const [delTotal, setDelTotal] = useState(0);
+  const [delSelected, setDelSelected] = useState<Set<number>>(new Set());
   const [delLoading, setDelLoading] = useState(false);
   const [delDone, setDelDone] = useState(false);
   const [delError, setDelError] = useState("");
   const delRef = useRef<HTMLInputElement>(null);
 
-  // ── Extract Pages ──
   const [extFile, setExtFile] = useState<File | null>(null);
-  const [extPages, setExtPages] = useState("");
   const [extTotal, setExtTotal] = useState(0);
+  const [extSelected, setExtSelected] = useState<Set<number>>(new Set());
   const [extLoading, setExtLoading] = useState(false);
   const [extDone, setExtDone] = useState(false);
   const [extError, setExtError] = useState("");
@@ -203,27 +213,33 @@ export default function PdfConverter() {
   };
 
   // ── Compress ─────────────────────────────────────────────
-  const handleCompFile = async (f: File) => {
+  const handleCompFile = (f: File) => {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
-    setCompFile(f); setCompResult(null); setCompError("");
+    setCompFile(f); setCompResult(null); setCompError(""); setCompProgress(0);
   };
   const compressPdf = async () => {
     if (!compFile) return;
-    setCompLoading(true); setCompError("");
+    setCompLoading(true); setCompError(""); setCompProgress(0);
     try {
-      const bytes = await compFile.arrayBuffer();
-      const pdf = await PDFDocument.load(bytes, { updateMetadata: false });
-      const saved = await pdf.save({ useObjectStreams: true });
-      const newBlob = new Blob([saved], { type: "application/pdf" });
-      triggerDownload(newBlob, compFile.name.replace(".pdf", "-compressed.pdf"));
-      setCompResult({ originalSize: compFile.size, newSize: saved.byteLength });
+      const level = COMPRESS_LEVELS.find((l) => l.id === compLevel)!;
+      let output: Uint8Array;
+      if (compLevel === "lossless") {
+        const pdf = await PDFDocument.load(await compFile.arrayBuffer(), { updateMetadata: false });
+        output = await pdf.save({ useObjectStreams: true });
+        setCompProgress(100);
+      } else {
+        output = await renderPdfPages(compFile, level.scale, level.quality, setCompProgress);
+      }
+      const blob = new Blob([output], { type: "application/pdf" });
+      triggerDownload(blob, compFile.name.replace(".pdf", "-compressed.pdf"));
+      setCompResult({ orig: compFile.size, neo: output.byteLength });
       increment();
     } catch { setCompError("Failed to compress PDF."); }
     finally { setCompLoading(false); }
   };
 
-  // ── Merge ─────────────────────────────────────────────────
-  const handleMergeFiles = (files: FileList | File[]) => {
+  // ── Merge (drag-to-reorder) ───────────────────────────────
+  const handleMergeAdd = (files: FileList | File[]) => {
     const arr = Array.from(files).filter((f) => f.name.toLowerCase().endsWith(".pdf"));
     setMergeFiles((p) => [...p, ...arr]); setMergeError("");
   };
@@ -240,6 +256,16 @@ export default function PdfConverter() {
       increment();
     } catch { setMergeError("Failed to merge PDFs."); }
     finally { setMergeLoading(false); }
+  };
+  const handleMergeDragStart = (idx: number) => setMergeDragIdx(idx);
+  const handleMergeDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    if (mergeDragIdx === null || mergeDragIdx === idx) return;
+    const next = [...mergeFiles];
+    const [item] = next.splice(mergeDragIdx, 1);
+    next.splice(idx, 0, item);
+    setMergeFiles(next);
+    setMergeDragIdx(idx);
   };
 
   // ── Split ─────────────────────────────────────────────────
@@ -267,7 +293,7 @@ export default function PdfConverter() {
     finally { setSplitLoading(false); }
   };
 
-  // ── PDF to Word (text extraction) ─────────────────────────
+  // ── PDF to Word ───────────────────────────────────────────
   const handleP2wFile = (f: File) => {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
     setP2wFile(f); setP2wText(""); setP2wError("");
@@ -316,8 +342,7 @@ export default function PdfConverter() {
       iDoc.write(`<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;font-size:12pt;line-height:1.5;margin:20mm;color:#000}h1,h2,h3{margin:.5em 0}p{margin:.3em 0}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:4px 8px}img{max-width:100%}</style></head><body>${html}</body></html>`);
       iDoc.close();
       await new Promise((r) => setTimeout(r, 800));
-      iframe.contentWindow!.focus();
-      iframe.contentWindow!.print();
+      iframe.contentWindow!.focus(); iframe.contentWindow!.print();
       document.body.removeChild(iframe);
       increment();
     } catch { setW2pError("Failed to convert. Make sure it is a valid .docx file."); }
@@ -338,9 +363,6 @@ export default function PdfConverter() {
     } catch { setP2iError("Failed to convert PDF."); }
     finally { setP2iLoading(false); }
   };
-  const downloadAllImages = () => p2iImages.forEach((src, i) => {
-    const a = document.createElement("a"); a.href = src; a.download = `page-${i + 1}.jpg`; a.click();
-  });
 
   // ── Image to PDF ──────────────────────────────────────────
   const handleI2pFiles = (files: FileList | File[]) => {
@@ -351,10 +373,6 @@ export default function PdfConverter() {
       reader.onload = (e) => { if (e.target?.result) setI2pPreviews((p) => [...p, e.target!.result as string]); };
       reader.readAsDataURL(f);
     });
-  };
-  const removeI2p = (idx: number) => {
-    setI2pFiles((p) => p.filter((_, i) => i !== idx));
-    setI2pPreviews((p) => p.filter((_, i) => i !== idx));
   };
   const buildPdf = async () => {
     if (!i2pPreviews.length) return;
@@ -370,8 +388,7 @@ export default function PdfConverter() {
         else pdf.addPage([pW, pH], pH > pW ? "portrait" : "landscape");
         pdf.addImage(src, "JPEG", 0, 0, pW, pH);
       }
-      pdf.save("converted.pdf");
-      increment();
+      pdf.save("converted.pdf"); increment();
     } catch (e) { console.error(e); }
     finally { setI2pLoading(false); }
   };
@@ -396,20 +413,17 @@ export default function PdfConverter() {
   // ── Delete Pages ──────────────────────────────────────────
   const handleDelFile = async (f: File) => {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
-    setDelFile(f); setDelPages(""); setDelError(""); setDelDone(false);
-    try {
-      const pdf = await PDFDocument.load(await f.arrayBuffer());
-      setDelTotal(pdf.getPageCount());
-    } catch { setDelTotal(0); }
+    setDelFile(f); setDelSelected(new Set()); setDelError(""); setDelDone(false);
+    setDelTotal(await getPdfPageCount(f));
   };
+  const toggleDel = (n: number) => setDelSelected((s) => { const next = new Set(s); next.has(n) ? next.delete(n) : next.add(n); return next; });
   const deletePages = async () => {
-    if (!delFile || !delPages.trim()) { setDelError("Enter page numbers to delete."); return; }
+    if (!delFile || delSelected.size === 0) { setDelError("Select at least one page to delete."); return; }
     setDelLoading(true); setDelError(""); setDelDone(false);
     try {
       const pdf = await PDFDocument.load(await delFile.arrayBuffer());
       const total = pdf.getPageCount();
-      const toDelete = new Set(parsePageList(delPages, total).map((n) => n - 1));
-      const keep = Array.from({ length: total }, (_, i) => i).filter((i) => !toDelete.has(i));
+      const keep = Array.from({ length: total }, (_, i) => i).filter((i) => !delSelected.has(i + 1));
       if (!keep.length) { setDelError("Cannot delete all pages."); setDelLoading(false); return; }
       const newPdf = await PDFDocument.create();
       (await newPdf.copyPages(pdf, keep)).forEach((p) => newPdf.addPage(p));
@@ -422,20 +436,16 @@ export default function PdfConverter() {
   // ── Extract Pages ─────────────────────────────────────────
   const handleExtFile = async (f: File) => {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
-    setExtFile(f); setExtPages(""); setExtError(""); setExtDone(false);
-    try {
-      const pdf = await PDFDocument.load(await f.arrayBuffer());
-      setExtTotal(pdf.getPageCount());
-    } catch { setExtTotal(0); }
+    setExtFile(f); setExtSelected(new Set()); setExtError(""); setExtDone(false);
+    setExtTotal(await getPdfPageCount(f));
   };
+  const toggleExt = (n: number) => setExtSelected((s) => { const next = new Set(s); next.has(n) ? next.delete(n) : next.add(n); return next; });
   const extractPages = async () => {
-    if (!extFile || !extPages.trim()) { setExtError("Enter page numbers to extract."); return; }
+    if (!extFile || extSelected.size === 0) { setExtError("Select at least one page to extract."); return; }
     setExtLoading(true); setExtError(""); setExtDone(false);
     try {
       const pdf = await PDFDocument.load(await extFile.arrayBuffer());
-      const total = pdf.getPageCount();
-      const toExtract = parsePageList(extPages, total).map((n) => n - 1);
-      if (!toExtract.length) { setExtError("No valid pages entered."); setExtLoading(false); return; }
+      const toExtract = [...extSelected].sort((a, b) => a - b).map((n) => n - 1);
       const newPdf = await PDFDocument.create();
       (await newPdf.copyPages(pdf, toExtract)).forEach((p) => newPdf.addPage(p));
       triggerDownload(new Blob([await newPdf.save()], { type: "application/pdf" }), extFile.name.replace(".pdf", "-extracted.pdf"));
@@ -453,23 +463,20 @@ export default function PdfConverter() {
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-              <FileText className="w-3.5 h-3.5" />
-              <span>PDF Tools</span>
+              <FileText className="w-3.5 h-3.5" /><span>PDF Tools</span>
               <UsageCount count={count} label="operation" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">PDF Tools</h1>
-            <p className="text-muted-foreground mt-2">
-              10 essential PDF tools — everything runs in your browser, nothing uploaded.
-            </p>
+            <p className="text-muted-foreground mt-2">10 essential PDF tools — everything runs in your browser, nothing uploaded.</p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleShareLink} data-testid="button-share-link" className="gap-2 text-xs">
+          <Button variant="outline" size="sm" onClick={handleShareLink} className="gap-2 text-xs">
             {shareCopied ? <><Upload className="w-3.5 h-3.5 text-emerald-500" />Copied!</> : <><Link2 className="w-3.5 h-3.5" />Share</>}
           </Button>
         </div>
       </div>
 
-      {/* ── Tool Picker Grid ── */}
-      <div className="grid grid-cols-5 gap-2 mb-8">
+      {/* Tool Grid */}
+      <div className="grid grid-cols-5 gap-2 mb-6">
         {TOOLS.map((tool) => {
           const active = mode === tool.id;
           return (
@@ -477,26 +484,22 @@ export default function PdfConverter() {
               key={tool.id}
               onClick={() => setMode(tool.id)}
               data-testid={`tab-${tool.id}`}
-              className={`relative flex flex-col items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all duration-150 text-center group ${
+              className={`relative flex flex-col items-center justify-center gap-2 py-3 px-2 rounded-xl border transition-all duration-150 text-center ${
                 active
                   ? "bg-primary border-primary text-primary-foreground shadow-md scale-[1.03]"
                   : "bg-card border-border text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/40"
               }`}
             >
-              <span className={active ? "text-primary-foreground" : tool.color}>
-                {tool.icon}
-              </span>
+              <span className={active ? "text-primary-foreground" : tool.color}>{tool.icon}</span>
               <span className="text-[11px] font-semibold leading-tight">{tool.label}</span>
-              {active && (
-                <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-1.5 bg-primary rounded-full" />
-              )}
+              {active && <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-1.5 bg-primary rounded-full" />}
             </button>
           );
         })}
       </div>
 
-      {/* ── Active Tool Header ── */}
-      <div className={`flex items-center gap-3 mb-6 px-4 py-3 rounded-xl border bg-muted/30`}>
+      {/* Active Tool Banner */}
+      <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl border bg-muted/30">
         <span className={activeTool.color}>{activeTool.icon}</span>
         <div>
           <p className="text-sm font-semibold text-foreground">{activeTool.label}</p>
@@ -507,19 +510,37 @@ export default function PdfConverter() {
       {/* ── Compress PDF ── */}
       {mode === "compress-pdf" && (
         <div className="space-y-4">
+          {/* Compression Level Selector */}
+          <div className="grid grid-cols-3 gap-2">
+            {COMPRESS_LEVELS.map((lvl) => (
+              <button
+                key={lvl.id}
+                onClick={() => setCompLevel(lvl.id)}
+                className={`rounded-xl border p-3 text-left transition-all ${
+                  compLevel === lvl.id
+                    ? "bg-primary/10 border-primary text-foreground"
+                    : "bg-card border-border text-muted-foreground hover:border-primary/30"
+                }`}
+              >
+                <p className="text-xs font-semibold">{lvl.label}</p>
+                <p className="text-[10px] mt-0.5 leading-tight">{lvl.desc}</p>
+              </button>
+            ))}
+          </div>
           {!compFile ? (
-            <PdfDropZone label="Upload PDF to compress" onClick={() => compRef.current?.click()} onDrop={handleCompFile} testId="dropzone-compress">
+            <PdfDrop label="Upload PDF to compress" onClick={() => compRef.current?.click()} onDrop={handleCompFile} testId="dropzone-compress">
               <input ref={compRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleCompFile(e.target.files[0])} />
-            </PdfDropZone>
+            </PdfDrop>
           ) : (
             <>
               <FileCard name={compFile.name} size={compFile.size} onRemove={() => { setCompFile(null); setCompResult(null); }} />
               {compError && <ErrorBox msg={compError} />}
+              {compLoading && <ProgressBar value={compProgress} label="Compressing..." />}
               {compResult && (
-                <div className={`px-4 py-3 rounded-xl text-sm font-medium ${compResult.newSize < compResult.originalSize ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-muted text-muted-foreground"}`}>
-                  {compResult.newSize < compResult.originalSize
-                    ? `✅ Saved ${Math.round((1 - compResult.newSize / compResult.originalSize) * 100)}% — ${formatBytes(compResult.originalSize)} → ${formatBytes(compResult.newSize)}`
-                    : `ℹ️ File already optimized (${formatBytes(compResult.newSize)})`}
+                <div className={`px-4 py-3 rounded-xl text-sm font-medium ${compResult.neo < compResult.orig ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" : "bg-muted/60 text-muted-foreground"}`}>
+                  {compResult.neo < compResult.orig
+                    ? `✅ Saved ${Math.round((1 - compResult.neo / compResult.orig) * 100)}% — ${formatBytes(compResult.orig)} → ${formatBytes(compResult.neo)}`
+                    : `ℹ️ Already optimized (${formatBytes(compResult.neo)})`}
                 </div>
               )}
               <Button onClick={compressPdf} disabled={compLoading}>
@@ -530,31 +551,39 @@ export default function PdfConverter() {
         </div>
       )}
 
-      {/* ── Merge PDF ── */}
+      {/* ── Merge PDF (drag-to-reorder) ── */}
       {mode === "merge-pdf" && (
         <div className="space-y-4">
-          <PdfDropZone label="Drop PDF files — multiple allowed" sub="Pages merged in order" onClick={() => mergeRef.current?.click()} onDrop={(f) => handleMergeFiles([f])} testId="dropzone-merge">
-            <input ref={mergeRef} type="file" accept="application/pdf" multiple className="hidden" onChange={(e) => e.target.files && handleMergeFiles(e.target.files)} />
-          </PdfDropZone>
+          <PdfDrop label="Drop PDFs here — multiple allowed" sub="Pages merged in order shown below" onClick={() => mergeRef.current?.click()} onDrop={(f) => handleMergeAdd([f])} testId="dropzone-merge">
+            <input ref={mergeRef} type="file" accept="application/pdf" multiple className="hidden" onChange={(e) => e.target.files && handleMergeAdd(e.target.files)} />
+          </PdfDrop>
           {mergeFiles.length > 0 && (
             <>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">{mergeFiles.length} PDF{mergeFiles.length > 1 ? "s" : ""} added</p>
+                <p className="text-sm font-medium">{mergeFiles.length} file{mergeFiles.length > 1 ? "s" : ""} — <span className="text-muted-foreground text-xs">drag to reorder</span></p>
                 <Button variant="ghost" size="sm" onClick={() => setMergeFiles([])}>Clear all</Button>
               </div>
               <div className="space-y-2">
                 {mergeFiles.map((f, i) => (
-                  <div key={i} className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-2">
+                  <div
+                    key={i}
+                    draggable
+                    onDragStart={() => handleMergeDragStart(i)}
+                    onDragOver={(e) => handleMergeDragOver(e, i)}
+                    onDragEnd={() => setMergeDragIdx(null)}
+                    className={`flex items-center gap-3 bg-card border rounded-lg px-3 py-2 cursor-grab active:cursor-grabbing select-none transition-all ${mergeDragIdx === i ? "border-primary shadow-md opacity-70" : "border-border"}`}
+                  >
+                    <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     <span className="text-xs font-mono text-muted-foreground w-5">{i + 1}.</span>
                     <FileText className="w-4 h-4 text-primary flex-shrink-0" />
                     <span className="flex-1 text-sm truncate">{f.name}</span>
                     <span className="text-xs text-muted-foreground">{formatBytes(f.size)}</span>
-                    <button onClick={() => setMergeFiles((p) => p.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive"><X className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => setMergeFiles((p) => p.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive transition-colors"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 ))}
               </div>
               {mergeError && <ErrorBox msg={mergeError} />}
-              <Button onClick={mergePdfs} disabled={mergeLoading}>
+              <Button onClick={mergePdfs} disabled={mergeLoading || mergeFiles.length < 2}>
                 {mergeLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Merging...</> : <><Download className="w-4 h-4 mr-2" />Merge & Download</>}
               </Button>
             </>
@@ -566,9 +595,9 @@ export default function PdfConverter() {
       {mode === "split-pdf" && (
         <div className="space-y-4">
           {!splitFile ? (
-            <PdfDropZone label="Upload PDF to split" onClick={() => splitRef.current?.click()} onDrop={handleSplitFile} testId="dropzone-split">
+            <PdfDrop label="Upload PDF to split" onClick={() => splitRef.current?.click()} onDrop={handleSplitFile} testId="dropzone-split">
               <input ref={splitRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleSplitFile(e.target.files[0])} />
-            </PdfDropZone>
+            </PdfDrop>
           ) : (
             <>
               <FileCard name={splitFile.name} size={splitFile.size} onRemove={() => { setSplitFile(null); setSplitDone(false); }} />
@@ -590,9 +619,9 @@ export default function PdfConverter() {
             💡 Extracts text from PDF. Works best with text-based PDFs (not scanned/image PDFs).
           </div>
           {!p2wFile ? (
-            <PdfDropZone label="Upload PDF to extract text" onClick={() => p2wRef.current?.click()} onDrop={handleP2wFile} testId="dropzone-p2w">
+            <PdfDrop label="Upload PDF to extract text" onClick={() => p2wRef.current?.click()} onDrop={handleP2wFile} testId="dropzone-p2w">
               <input ref={p2wRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleP2wFile(e.target.files[0])} />
-            </PdfDropZone>
+            </PdfDrop>
           ) : (
             <>
               <FileCard name={p2wFile.name} size={p2wFile.size} onRemove={() => { setP2wFile(null); setP2wText(""); }} />
@@ -621,12 +650,12 @@ export default function PdfConverter() {
       {mode === "word-to-pdf" && (
         <div className="space-y-4">
           <div className="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs px-4 py-3 rounded-lg">
-            💡 When the print dialog opens, choose <strong>"Save as PDF"</strong> as the printer to save your file.
+            💡 When the print dialog opens, choose <strong>"Save as PDF"</strong> as the printer.
           </div>
           {!w2pFile ? (
-            <PdfDropZone label="Upload Word document (.docx)" sub=".doc or .docx files only" onClick={() => w2pRef.current?.click()} onDrop={handleW2pFile} testId="dropzone-w2p">
+            <PdfDrop label="Upload Word document (.docx)" sub=".doc or .docx files only" onClick={() => w2pRef.current?.click()} onDrop={handleW2pFile} testId="dropzone-w2p">
               <input ref={w2pRef} type="file" accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" onChange={(e) => e.target.files?.[0] && handleW2pFile(e.target.files[0])} />
-            </PdfDropZone>
+            </PdfDrop>
           ) : (
             <>
               <FileCard name={w2pFile.name} size={w2pFile.size} onRemove={() => setW2pFile(null)} />
@@ -643,28 +672,32 @@ export default function PdfConverter() {
       {mode === "pdf-to-image" && (
         <div className="space-y-4">
           {!p2iFile ? (
-            <PdfDropZone label="Upload PDF to convert to images" onClick={() => p2iRef.current?.click()} onDrop={handleP2iFile} testId="dropzone-p2i">
-              <input ref={p2iRef} type="file" accept="application/pdf" className="hidden" data-testid="input-pdf-file" onChange={(e) => e.target.files?.[0] && handleP2iFile(e.target.files[0])} />
-            </PdfDropZone>
+            <PdfDrop label="Upload PDF to convert to images" onClick={() => p2iRef.current?.click()} onDrop={handleP2iFile} testId="dropzone-p2i">
+              <input ref={p2iRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleP2iFile(e.target.files[0])} />
+            </PdfDrop>
           ) : (
             <>
-              <FileCard name={p2iFile.name} size={p2iFile.size} onRemove={() => { setP2iFile(null); setP2iImages([]); }} testId="button-remove-pdf" />
+              <FileCard name={p2iFile.name} size={p2iFile.size} onRemove={() => { setP2iFile(null); setP2iImages([]); }} />
               {p2iError && <ErrorBox msg={p2iError} />}
               {p2iLoading && <ProgressBar value={p2iProgress} label="Converting pages..." />}
               <div className="flex gap-3 flex-wrap">
-                <Button onClick={convertPdfToImages} disabled={p2iLoading} data-testid="button-convert-pdf">
+                <Button onClick={convertPdfToImages} disabled={p2iLoading}>
                   {p2iLoading ? "Converting..." : "Convert to Images"}
                 </Button>
-                {p2iImages.length > 0 && <Button variant="outline" onClick={downloadAllImages}><Download className="w-4 h-4 mr-2" />Download All</Button>}
+                {p2iImages.length > 0 && (
+                  <Button variant="outline" onClick={() => p2iImages.forEach((src, i) => { const a = document.createElement("a"); a.href = src; a.download = `page-${i + 1}.jpg`; a.click(); })}>
+                    <Download className="w-4 h-4 mr-2" />Download All
+                  </Button>
+                )}
               </div>
               {p2iImages.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {p2iImages.map((src, i) => (
                     <div key={i} className="group relative rounded-lg border border-border overflow-hidden">
-                      <img src={src} alt={`Page ${i + 1}`} className="w-full object-cover" loading="lazy" data-testid={`img-pdf-page-${i + 1}`} />
+                      <img src={src} alt={`Page ${i + 1}`} className="w-full object-cover" loading="lazy" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <Button size="sm" variant="secondary" onClick={() => { const a = document.createElement("a"); a.href = src; a.download = `page-${i + 1}.jpg`; a.click(); }}>
-                          <Download className="w-3.5 h-3.5 mr-1" />Page {i + 1}
+                          <Download className="w-3.5 h-3.5 mr-1" />Pg {i + 1}
                         </Button>
                       </div>
                       <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center py-0.5">Page {i + 1}</div>
@@ -680,9 +713,9 @@ export default function PdfConverter() {
       {/* ── Image to PDF ── */}
       {mode === "image-to-pdf" && (
         <div className="space-y-4">
-          <ImageDropZone onClick={() => i2pRef.current?.click()} onDrop={(f) => handleI2pFiles([f])} testId="dropzone-images">
-            <input ref={i2pRef} type="file" accept="image/*" multiple className="hidden" data-testid="input-images-for-pdf" onChange={(e) => e.target.files && handleI2pFiles(e.target.files)} />
-          </ImageDropZone>
+          <ImageDrop onClick={() => i2pRef.current?.click()} onDrop={(f) => handleI2pFiles([f])} testId="dropzone-images">
+            <input ref={i2pRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files && handleI2pFiles(e.target.files)} />
+          </ImageDrop>
           {i2pPreviews.length > 0 && (
             <>
               <div className="flex items-center justify-between">
@@ -693,11 +726,11 @@ export default function PdfConverter() {
                 {i2pPreviews.map((src, i) => (
                   <div key={i} className="relative group rounded-lg border border-border overflow-hidden aspect-square">
                     <img src={src} alt={i2pFiles[i]?.name} className="w-full h-full object-cover" loading="lazy" />
-                    <button onClick={() => removeI2p(i)} data-testid={`button-remove-img-${i}`} className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-white"><X className="w-3 h-3" /></button>
+                    <button onClick={() => { setI2pFiles((p) => p.filter((_, j) => j !== i)); setI2pPreviews((p) => p.filter((_, j) => j !== i)); }} className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity text-white"><X className="w-3 h-3" /></button>
                   </div>
                 ))}
               </div>
-              <Button onClick={buildPdf} disabled={i2pLoading} data-testid="button-build-pdf">
+              <Button onClick={buildPdf} disabled={i2pLoading}>
                 {i2pLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Building...</> : <><Download className="w-4 h-4 mr-2" />Download PDF</>}
               </Button>
             </>
@@ -709,9 +742,9 @@ export default function PdfConverter() {
       {mode === "rotate-pdf" && (
         <div className="space-y-4">
           {!rotFile ? (
-            <PdfDropZone label="Upload PDF to rotate" onClick={() => rotRef.current?.click()} onDrop={handleRotFile} testId="dropzone-rotate">
+            <PdfDrop label="Upload PDF to rotate" onClick={() => rotRef.current?.click()} onDrop={handleRotFile} testId="dropzone-rotate">
               <input ref={rotRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleRotFile(e.target.files[0])} />
-            </PdfDropZone>
+            </PdfDrop>
           ) : (
             <>
               <FileCard name={rotFile.name} size={rotFile.size} onRemove={() => { setRotFile(null); setRotDone(false); }} />
@@ -735,66 +768,102 @@ export default function PdfConverter() {
         </div>
       )}
 
-      {/* ── Delete Pages ── */}
+      {/* ── Delete Pages (visual chip selector) ── */}
       {mode === "delete-pages" && (
         <div className="space-y-4">
           {!delFile ? (
-            <PdfDropZone label="Upload PDF to remove pages from" onClick={() => delRef.current?.click()} onDrop={handleDelFile} testId="dropzone-delete">
+            <PdfDrop label="Upload PDF to remove pages from" onClick={() => delRef.current?.click()} onDrop={handleDelFile} testId="dropzone-delete">
               <input ref={delRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleDelFile(e.target.files[0])} />
-            </PdfDropZone>
+            </PdfDrop>
           ) : (
             <>
-              <FileCard name={delFile.name} size={delFile.size} onRemove={() => { setDelFile(null); setDelDone(false); setDelTotal(0); }} />
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Pages to delete{delTotal > 0 && <span className="text-muted-foreground font-normal"> (total: {delTotal} pages)</span>}
-                </label>
-                <input
-                  type="text"
-                  value={delPages}
-                  onChange={(e) => setDelPages(e.target.value)}
-                  placeholder="e.g. 1, 3, 5-8"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <p className="text-xs text-muted-foreground">Use commas for individual pages, hyphens for ranges: <code className="bg-muted px-1 rounded">1, 3, 5-8</code></p>
-              </div>
+              <FileCard name={delFile.name} size={delFile.size} onRemove={() => { setDelFile(null); setDelDone(false); setDelTotal(0); setDelSelected(new Set()); }} />
+              {delTotal > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground">Select pages to delete ({delTotal} total)</label>
+                    <div className="flex gap-2">
+                      <button onClick={() => setDelSelected(new Set(Array.from({ length: delTotal }, (_, i) => i + 1)))} className="text-xs text-primary hover:underline">All</button>
+                      <span className="text-muted-foreground text-xs">·</span>
+                      <button onClick={() => setDelSelected(new Set())} className="text-xs text-muted-foreground hover:underline">None</button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from({ length: Math.min(delTotal, 100) }, (_, i) => i + 1).map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => toggleDel(n)}
+                        className={`w-9 h-9 rounded-lg text-xs font-semibold border transition-all ${
+                          delSelected.has(n)
+                            ? "bg-red-500 text-white border-red-500 shadow-sm"
+                            : "bg-card border-border text-muted-foreground hover:border-red-400 hover:text-red-500"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                    {delTotal > 100 && <span className="text-xs text-muted-foreground self-center">...and {delTotal - 100} more</span>}
+                  </div>
+                  {delSelected.size > 0 && (
+                    <p className="text-xs text-muted-foreground">{delSelected.size} page{delSelected.size > 1 ? "s" : ""} selected — {delTotal - delSelected.size} will remain</p>
+                  )}
+                </div>
+              )}
               {delError && <ErrorBox msg={delError} />}
               {delDone && <SuccessBox msg="Pages deleted — new PDF downloaded!" />}
-              <Button onClick={deletePages} disabled={delLoading}>
-                {delLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Processing...</> : <><Trash2 className="w-4 h-4 mr-2" />Delete Pages & Download</>}
+              <Button onClick={deletePages} disabled={delLoading} variant={delSelected.size > 0 ? "destructive" : "default"}>
+                {delLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Processing...</> : <><Trash2 className="w-4 h-4 mr-2" />Delete {delSelected.size > 0 ? `${delSelected.size} Page${delSelected.size > 1 ? "s" : ""}` : "Pages"} & Download</>}
               </Button>
             </>
           )}
         </div>
       )}
 
-      {/* ── Extract Pages ── */}
+      {/* ── Extract Pages (visual chip selector) ── */}
       {mode === "extract-pages" && (
         <div className="space-y-4">
           {!extFile ? (
-            <PdfDropZone label="Upload PDF to extract pages from" onClick={() => extRef.current?.click()} onDrop={handleExtFile} testId="dropzone-extract">
+            <PdfDrop label="Upload PDF to extract pages from" onClick={() => extRef.current?.click()} onDrop={handleExtFile} testId="dropzone-extract">
               <input ref={extRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleExtFile(e.target.files[0])} />
-            </PdfDropZone>
+            </PdfDrop>
           ) : (
             <>
-              <FileCard name={extFile.name} size={extFile.size} onRemove={() => { setExtFile(null); setExtDone(false); setExtTotal(0); }} />
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Pages to extract{extTotal > 0 && <span className="text-muted-foreground font-normal"> (total: {extTotal} pages)</span>}
-                </label>
-                <input
-                  type="text"
-                  value={extPages}
-                  onChange={(e) => setExtPages(e.target.value)}
-                  placeholder="e.g. 1, 3, 5-8"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <p className="text-xs text-muted-foreground">Use commas for individual pages, hyphens for ranges: <code className="bg-muted px-1 rounded">1, 3, 5-8</code></p>
-              </div>
+              <FileCard name={extFile.name} size={extFile.size} onRemove={() => { setExtFile(null); setExtDone(false); setExtTotal(0); setExtSelected(new Set()); }} />
+              {extTotal > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground">Select pages to extract ({extTotal} total)</label>
+                    <div className="flex gap-2">
+                      <button onClick={() => setExtSelected(new Set(Array.from({ length: extTotal }, (_, i) => i + 1)))} className="text-xs text-primary hover:underline">All</button>
+                      <span className="text-muted-foreground text-xs">·</span>
+                      <button onClick={() => setExtSelected(new Set())} className="text-xs text-muted-foreground hover:underline">None</button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from({ length: Math.min(extTotal, 100) }, (_, i) => i + 1).map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => toggleExt(n)}
+                        className={`w-9 h-9 rounded-lg text-xs font-semibold border transition-all ${
+                          extSelected.has(n)
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                            : "bg-card border-border text-muted-foreground hover:border-primary/50 hover:text-primary"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                    {extTotal > 100 && <span className="text-xs text-muted-foreground self-center">...and {extTotal - 100} more</span>}
+                  </div>
+                  {extSelected.size > 0 && (
+                    <p className="text-xs text-muted-foreground">{extSelected.size} page{extSelected.size > 1 ? "s" : ""} will be extracted into a new PDF</p>
+                  )}
+                </div>
+              )}
               {extError && <ErrorBox msg={extError} />}
               {extDone && <SuccessBox msg="Selected pages extracted — new PDF downloaded!" />}
               <Button onClick={extractPages} disabled={extLoading}>
-                {extLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Processing...</> : <><Copy className="w-4 h-4 mr-2" />Extract Pages & Download</>}
+                {extLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Processing...</> : <><Copy className="w-4 h-4 mr-2" />Extract {extSelected.size > 0 ? `${extSelected.size} Page${extSelected.size > 1 ? "s" : ""}` : "Pages"} & Download</>}
               </Button>
             </>
           )}
@@ -806,21 +875,21 @@ export default function PdfConverter() {
 
 function getToolDesc(mode: Mode): string {
   const map: Record<Mode, string> = {
-    "compress-pdf":  "Reduce PDF file size using object stream optimization",
-    "merge-pdf":     "Combine multiple PDF files into one in order",
+    "compress-pdf":  "Reduce PDF file size — choose High Quality, Balanced, or Smallest",
+    "merge-pdf":     "Combine multiple PDFs — drag rows to reorder before merging",
     "split-pdf":     "Split every page into a separate PDF, download as ZIP",
     "pdf-to-word":   "Extract all text from PDF and download as .txt",
     "word-to-pdf":   "Convert .docx Word document to PDF via browser print",
     "pdf-to-image":  "Convert each PDF page to a JPG image",
     "image-to-pdf":  "Combine multiple images into a single PDF file",
     "rotate-pdf":    "Rotate all pages by 90°, 180°, or 270°",
-    "delete-pages":  "Remove specific pages from a PDF by page number",
-    "extract-pages": "Extract specific pages into a new PDF file",
+    "delete-pages":  "Click page numbers to select which pages to remove",
+    "extract-pages": "Click page numbers to select which pages to keep",
   };
   return map[mode];
 }
 
-function PdfDropZone({ label, sub, onClick, onDrop, testId, children }: {
+function PdfDrop({ label, sub, onClick, onDrop, testId, children }: {
   label: string; sub?: string; onClick: () => void; onDrop: (f: File) => void; testId: string; children?: React.ReactNode;
 }) {
   const [over, setOver] = useState(false);
@@ -835,13 +904,13 @@ function PdfDropZone({ label, sub, onClick, onDrop, testId, children }: {
     >
       <FileText className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
       <p className="text-sm font-medium text-foreground">{label}</p>
-      <p className="text-xs text-muted-foreground mt-1">{sub ?? "PDF files only"}</p>
+      <p className="text-xs text-muted-foreground mt-1">{sub ?? "PDF files only · click or drag & drop"}</p>
       {children}
     </div>
   );
 }
 
-function ImageDropZone({ onClick, onDrop, testId, children }: {
+function ImageDrop({ onClick, onDrop, testId, children }: {
   onClick: () => void; onDrop: (f: File) => void; testId: string; children?: React.ReactNode;
 }) {
   const [over, setOver] = useState(false);
@@ -856,7 +925,7 @@ function ImageDropZone({ onClick, onDrop, testId, children }: {
     >
       <Image className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
       <p className="text-sm font-medium text-foreground">Drop images here or click to upload</p>
-      <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP — multiple files allowed</p>
+      <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP · multiple files allowed</p>
       {children}
     </div>
   );
