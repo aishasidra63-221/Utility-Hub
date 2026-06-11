@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
-import { Image, FileText, QrCode, AlignLeft, MessageCircle, ArrowRight, Activity, Star } from "lucide-react";
+import { Image, FileText, QrCode, AlignLeft, MessageCircle, ArrowRight, Activity, Star, ArrowLeftRight } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { getAllToolCounts } from "@/hooks/useToolCounter";
 
@@ -13,6 +13,15 @@ const ALL_TOOLS = [
     description: "Compress JPG, PNG, and WebP images instantly in your browser. Reduce file size while keeping quality.",
     badge: "Browser-only",
     color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  },
+  {
+    href: "/image-converter",
+    id: "image-converter",
+    icon: ArrowLeftRight,
+    title: "Image Converter",
+    description: "Convert JPG, PNG, and WebP formats in bulk. Change format and quality, download all as ZIP.",
+    badge: "Batch",
+    color: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
   },
   {
     href: "/pdf-converter",

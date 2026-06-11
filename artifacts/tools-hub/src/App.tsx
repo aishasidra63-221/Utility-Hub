@@ -7,6 +7,7 @@ import { Layout } from "@/components/Layout";
 
 const Home = lazy(() => import("@/pages/Home"));
 const ImageCompressor = lazy(() => import("@/pages/ImageCompressor"));
+const ImageConverter = lazy(() => import("@/pages/ImageConverter"));
 const PdfConverter = lazy(() => import("@/pages/PdfConverter"));
 const QrGenerator = lazy(() => import("@/pages/QrGenerator"));
 const TextCleaner = lazy(() => import("@/pages/TextCleaner"));
@@ -34,6 +35,7 @@ function Router() {
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/image-compressor" component={ImageCompressor} />
+          <Route path="/image-converter" component={ImageConverter} />
           <Route path="/pdf-converter" component={PdfConverter} />
           <Route path="/qr-generator" component={QrGenerator} />
           <Route path="/text-cleaner" component={TextCleaner} />

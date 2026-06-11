@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 
 const tools = [
   { href: "/image-compressor", label: "Image Compressor" },
+  { href: "/image-converter", label: "Image Converter" },
   { href: "/pdf-converter", label: "PDF Converter" },
   { href: "/qr-generator", label: "QR Generator" },
   { href: "/text-cleaner", label: "Text Cleaner" },
