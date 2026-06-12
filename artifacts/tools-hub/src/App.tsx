@@ -13,6 +13,7 @@ const QrGenerator     = lazy(() => import("@/pages/QrGenerator"));
 const TextCleaner     = lazy(() => import("@/pages/TextCleaner"));
 const WhatsappLink    = lazy(() => import("@/pages/WhatsappLink"));
 const ImageResizer    = lazy(() => import("@/pages/ImageResizer"));
+const ImageCropper    = lazy(() => import("@/pages/ImageCropper"));
 const Settings        = lazy(() => import("@/pages/Settings"));
 const PrivacyPolicy   = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("@/pages/TermsConditions"));
@@ -74,6 +75,7 @@ function Router() {
           <Route path="/text-cleaner"      component={TextCleaner} />
           <Route path="/whatsapp-link"     component={WhatsappLink} />
           <Route path="/image-resizer"     component={ImageResizer} />
+          <Route path="/image-cropper"    component={ImageCropper} />
           <Route path="/settings"          component={Settings} />
           <Route path="/privacy-policy"    component={PrivacyPolicy} />
           <Route path="/terms"             component={TermsConditions} />

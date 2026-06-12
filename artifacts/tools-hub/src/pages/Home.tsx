@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
-  ShieldCheck, Zap, Globe, Smartphone,
+  ShieldCheck, Zap, Globe, Smartphone, Crop,
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { getAllToolCounts } from "@/hooks/useToolCounter";
@@ -44,6 +44,18 @@ const ALL_TOOLS = [
     iconColor: "text-cyan-500",
     iconBg: "bg-cyan-500/10 dark:bg-cyan-500/15",
     accentColor: "group-hover:text-cyan-500",
+  },
+  {
+    href: "/image-cropper",
+    id: "image-cropper",
+    icon: Crop,
+    title: "Image Cropper",
+    description: "Drag to crop any area. Free crop, 1:1, 4:3, 16:9 and more. Download the exact region you need.",
+    badge: "Drag & crop",
+    gradient: "from-sky-500/20 to-indigo-500/10",
+    iconColor: "text-sky-500",
+    iconBg: "bg-sky-500/10 dark:bg-sky-500/15",
+    accentColor: "group-hover:text-sky-500",
   },
   {
     href: "/pdf-converter",

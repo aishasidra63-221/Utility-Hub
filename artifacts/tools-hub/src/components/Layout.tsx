@@ -8,6 +8,7 @@ const tools = [
   { href: "/image-compressor", label: "Image Compressor" },
   { href: "/image-converter",  label: "Image Converter" },
   { href: "/image-resizer",    label: "Image Resizer" },
+  { href: "/image-cropper",   label: "Image Cropper" },
   { href: "/pdf-converter",    label: "PDF Converter" },
   { href: "/qr-generator",     label: "QR Generator" },
   { href: "/text-cleaner",     label: "Text Cleaner" },
