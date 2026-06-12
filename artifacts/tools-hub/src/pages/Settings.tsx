@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Sun, Moon, Monitor,
+  Sun, Moon,
   ImageIcon, FileText,
   Download, EyeOff, Eye,
   RotateCcw,
@@ -89,22 +89,24 @@ export default function Settings() {
       <SectionLabel label="Appearance" />
       <Card>
         <Row>
-          <RowLabel icon={Sun} label="Theme" sub="How ToolsHub looks on your device" />
-          <div className="flex items-center gap-1 shrink-0 bg-muted rounded-lg p-1">
-            {(["light", "system", "dark"] as const).map((t) => {
-              const Icon = t === "light" ? Sun : t === "system" ? Monitor : Moon;
-              return (
-                <button
-                  key={t}
-                  onClick={() => update({ theme: t })}
-                  title={t.charAt(0).toUpperCase() + t.slice(1)}
-                  className={`flex items-center justify-center w-8 h-7 rounded-md transition-all ${settings.theme === t ? "bg-background shadow text-primary" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                </button>
-              );
-            })}
-          </div>
+          <RowLabel
+            icon={settings.theme === "dark" ? Moon : Sun}
+            label="Dark Mode"
+            sub={settings.theme === "dark" ? "Dark theme is on" : "Light theme is on"}
+          />
+          <button
+            role="switch"
+            aria-checked={settings.theme === "dark"}
+            onClick={() => update({ theme: settings.theme === "dark" ? "light" : "dark" })}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${settings.theme === "dark" ? "bg-primary" : "bg-input"}`}
+          >
+            <span className={`pointer-events-none inline-flex h-4.5 w-4.5 transform items-center justify-center rounded-full bg-background shadow-md transition-transform ${settings.theme === "dark" ? "translate-x-5" : "translate-x-1"}`}>
+              {settings.theme === "dark"
+                ? <Moon className="w-2.5 h-2.5 text-primary" />
+                : <Sun className="w-2.5 h-2.5 text-muted-foreground" />
+              }
+            </span>
+          </button>
         </Row>
       </Card>
 
