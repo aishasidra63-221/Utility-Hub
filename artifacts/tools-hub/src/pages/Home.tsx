@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
-  ShieldCheck, Zap, Globe, Smartphone, Crop,
+  ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Braces,
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { getAllToolCounts } from "@/hooks/useToolCounter";
@@ -56,6 +56,30 @@ const ALL_TOOLS = [
     iconColor: "text-sky-500",
     iconBg: "bg-sky-500/10 dark:bg-sky-500/15",
     accentColor: "group-hover:text-sky-500",
+  },
+  {
+    href: "/password-generator",
+    id: "password-generator",
+    icon: Key,
+    title: "Password Generator",
+    description: "Generate strong, random passwords. Choose length, symbols, numbers. Cryptographically secure — nothing leaves your browser.",
+    badge: "Secure",
+    gradient: "from-emerald-500/20 to-green-500/10",
+    iconColor: "text-emerald-500",
+    iconBg: "bg-emerald-500/10 dark:bg-emerald-500/15",
+    accentColor: "group-hover:text-emerald-500",
+  },
+  {
+    href: "/json-formatter",
+    id: "json-formatter",
+    icon: Braces,
+    title: "JSON Formatter",
+    description: "Beautify, minify, and validate JSON instantly. Paste messy JSON and get clean, readable output in one click.",
+    badge: "Dev tool",
+    gradient: "from-amber-500/20 to-orange-500/10",
+    iconColor: "text-amber-500",
+    iconBg: "bg-amber-500/10 dark:bg-amber-500/15",
+    accentColor: "group-hover:text-amber-500",
   },
   {
     href: "/pdf-converter",
