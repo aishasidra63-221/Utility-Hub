@@ -1,41 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Sun, Moon, Monitor,
   ImageIcon, FileText, ArrowLeftRight,
   Download, EyeOff, Eye,
-  BarChart2, RotateCcw,
-  Keyboard,
+  RotateCcw,
   ShieldCheck,
   Trash2,
   CheckCircle2,
-  Minimize2,
-  SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useSEO } from "@/hooks/useSEO";
 import { useSettings, resetSettings, clearAllData } from "@/hooks/useSettings";
-import { getToolCount } from "@/hooks/useToolCounter";
-
-const ALL_TOOLS = [
-  { id: "image-compressor", label: "Image Compressor",  Icon: ImageIcon },
-  { id: "image-converter",  label: "Image Converter",   Icon: ArrowLeftRight },
-  { id: "pdf-converter",    label: "PDF Tools",          Icon: FileText },
-  { id: "qr-generator",     label: "QR Generator",       Icon: BarChart2 },
-  { id: "text-cleaner",     label: "Text Cleaner",       Icon: SlidersHorizontal },
-  { id: "whatsapp-link",    label: "WhatsApp Link",      Icon: Minimize2 },
-];
-
-const SHORTCUTS = [
-  { keys: ["Alt", "1"], action: "Image Compressor" },
-  { keys: ["Alt", "2"], action: "Image Converter" },
-  { keys: ["Alt", "3"], action: "PDF Tools" },
-  { keys: ["Alt", "4"], action: "QR Generator" },
-  { keys: ["Alt", "5"], action: "Text Cleaner" },
-  { keys: ["Alt", "6"], action: "WhatsApp Link" },
-  { keys: ["Alt", "S"], action: "Settings" },
-  { keys: ["Alt", "H"], action: "Home" },
-];
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -80,29 +56,14 @@ export default function Settings() {
   useSEO({ title: "Settings | ToolsHub", description: "Customize ToolsHub defaults, theme, shortcuts, and privacy." });
 
   const { settings, update } = useSettings();
-  const [stats, setStats] = useState(() => ALL_TOOLS.map((t) => ({ ...t, count: getToolCount(t.id) })));
   const [clearConfirm, setClearConfirm] = useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
   const [toast, setToast] = useState("");
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2800); };
 
-  useEffect(() => {
-    const refresh = () => setStats(ALL_TOOLS.map((t) => ({ ...t, count: getToolCount(t.id) })));
-    window.addEventListener("toolhub_count_updated", refresh);
-    window.addEventListener("toolhub_data_cleared", refresh);
-    return () => {
-      window.removeEventListener("toolhub_count_updated", refresh);
-      window.removeEventListener("toolhub_data_cleared", refresh);
-    };
-  }, []);
-
-  const totalUses = stats.reduce((s, t) => s + t.count, 0);
-  const maxCount  = Math.max(...stats.map((t) => t.count), 1);
-
   const handleClearAll = () => {
     clearAllData();
-    setStats(ALL_TOOLS.map((t) => ({ ...t, count: 0 })));
     setClearConfirm(false);
     showToast("All data cleared.");
   };
@@ -111,13 +72,6 @@ export default function Settings() {
     resetSettings();
     setResetConfirm(false);
     showToast("Settings reset to defaults.");
-  };
-
-  const handleResetStats = () => {
-    ALL_TOOLS.forEach((t) => localStorage.removeItem(`toolhub_usage_${t.id}`));
-    setStats(ALL_TOOLS.map((t) => ({ ...t, count: 0 })));
-    window.dispatchEvent(new CustomEvent("toolhub_data_cleared"));
-    showToast("Usage stats cleared.");
   };
 
   return (
@@ -233,54 +187,6 @@ export default function Settings() {
           <RowLabel icon={settings.showPrivacyTips ? Eye : EyeOff} label="Privacy tips in tools" sub={'Show "browser only" reminders inside tools'} />
           <Toggle checked={settings.showPrivacyTips} onChange={(v) => update({ showPrivacyTips: v })} />
         </Row>
-      </Card>
-
-      {/* ── USAGE STATS ── */}
-      <SectionLabel label="Usage Stats" />
-      <Card>
-        <div className="px-4 pt-3.5 pb-2 space-y-2.5">
-          {stats.map(({ id, label, Icon, count }) => (
-            <div key={id} className="flex items-center gap-3">
-              <div className="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg bg-muted text-muted-foreground">
-                <Icon className="w-3.5 h-3.5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium text-foreground">{label}</span>
-                  <span className="text-xs font-mono text-muted-foreground tabular-nums">{count}</span>
-                </div>
-                <div className="h-1 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full bg-primary/60 transition-all duration-500" style={{ width: `${(count / maxCount) * 100}%` }} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <Row>
-          <p className="text-xs text-muted-foreground">Total: <span className="font-semibold text-foreground">{totalUses}</span> operations</p>
-          <Button size="sm" variant="ghost" onClick={handleResetStats} className="text-xs h-7 text-muted-foreground hover:text-destructive">
-            <RotateCcw className="w-3 h-3 mr-1.5" />Reset
-          </Button>
-        </Row>
-      </Card>
-
-      {/* ── KEYBOARD SHORTCUTS ── */}
-      <SectionLabel label="Keyboard Shortcuts" />
-      <Card>
-        <div className="px-4 py-3">
-          <div className="space-y-0.5">
-            {SHORTCUTS.map((s) => (
-              <div key={s.action} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
-                <span className="text-sm text-muted-foreground">{s.action}</span>
-                <div className="flex items-center gap-1">
-                  {s.keys.map((k, i) => (
-                    <kbd key={i} className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-muted border border-border text-[11px] font-mono text-foreground">{k}</kbd>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </Card>
 
       {/* ── PRIVACY ── */}
