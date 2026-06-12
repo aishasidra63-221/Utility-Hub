@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import imageCompression from "browser-image-compression";
 import { Upload, Download, ImageIcon, X, RefreshCw, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,18 +17,18 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-interface CompressedResult {
-  file: File;
-  url: string;
-}
-
+interface CompressedResult { file: File; url: string; }
 interface FileEntry {
+  id: number;
   original: File;
   preview: string;
   compressed: CompressedResult | null;
   loading: boolean;
   error: string | null;
 }
+
+let _idCounter = 0;
+const nextId = () => ++_idCounter;
 
 async function compressFile(file: File, quality: number): Promise<File> {
   return imageCompression(file, {
@@ -42,23 +42,41 @@ async function compressFile(file: File, quality: number): Promise<File> {
 export default function ImageCompressor() {
   useSEO({
     title: "Free Image Compressor — Compress JPG, PNG, WebP Online | ToolsHub",
-    description:
-      "Compress images online for free. Reduce JPG, PNG, and WebP file sizes in your browser — no upload to any server. Instant, private, and free.",
+    description: "Compress images online for free. Reduce JPG, PNG, and WebP file sizes in your browser — no upload to any server. Instant, private, and free.",
   });
 
   const { count, increment } = useToolCounter("image-compressor");
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [quality, setQuality] = useState(() => getSettings().imageQuality);
+  const [localQuality, setLocalQuality] = useState(() => getSettings().imageQuality);
   const [dragOver, setDragOver] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const incrementRef = useRef(increment);
+  useEffect(() => { incrementRef.current = increment; }, [increment]);
 
-  const processFiles = useCallback(
-    async (files: File[], q: number) => {
-      const valid = files.filter((f) => f.type.match(/image\/(jpeg|png|webp)/));
+  const compressEntry = useCallback(async (id: number, file: File, q: number) => {
+    try {
+      const result = await compressFile(file, q);
+      const url = URL.createObjectURL(result);
+      setEntries((prev) =>
+        prev.map((e) => e.id === id ? { ...e, compressed: { file: result, url }, loading: false } : e)
+      );
+      incrementRef.current();
+    } catch {
+      setEntries((prev) =>
+        prev.map((e) => e.id === id ? { ...e, loading: false, error: "Compression failed" } : e)
+      );
+    }
+  }, []);
+
+  const handleFiles = useCallback(
+    (fileList: FileList | File[]) => {
+      const valid = Array.from(fileList).filter((f) => f.type.match(/image\/(jpeg|png|webp)/));
       if (!valid.length) return;
 
       const newEntries: FileEntry[] = valid.map((f) => ({
+        id: nextId(),
         original: f,
         preview: URL.createObjectURL(f),
         compressed: null,
@@ -68,37 +86,20 @@ export default function ImageCompressor() {
 
       setEntries((prev) => [...prev, ...newEntries]);
 
-      await Promise.all(
-        newEntries.map(async (entry, localIdx) => {
-          const globalIdx = entries.length + localIdx;
-          try {
-            const result = await compressFile(entry.original, q);
-            const url = URL.createObjectURL(result);
-            setEntries((prev) => {
-              const next = [...prev];
-              next[globalIdx] = { ...next[globalIdx], compressed: { file: result, url }, loading: false };
-              return next;
-            });
-            increment();
-          } catch {
-            setEntries((prev) => {
-              const next = [...prev];
-              next[globalIdx] = { ...next[globalIdx], loading: false, error: "Compression failed" };
-              return next;
-            });
-          }
-        })
-      );
+      newEntries.forEach((entry) => compressEntry(entry.id, entry.original, quality));
     },
-    [entries.length, increment]
+    [quality, compressEntry]
   );
 
-  const handleFiles = useCallback(
-    (fileList: FileList | File[]) => {
-      const arr = Array.from(fileList);
-      processFiles(arr, quality);
+  const recompressAll = useCallback(
+    (newQuality: number) => {
+      setEntries((prev) => {
+        const updated = prev.map((e) => ({ ...e, compressed: null, loading: true, error: null }));
+        updated.forEach((entry) => compressEntry(entry.id, entry.original, newQuality));
+        return updated;
+      });
     },
-    [processFiles, quality]
+    [compressEntry]
   );
 
   const onDrop = useCallback(
@@ -110,30 +111,6 @@ export default function ImageCompressor() {
     [handleFiles]
   );
 
-  const recompressAll = async (newQuality: number) => {
-    if (!entries.length) return;
-    setEntries((prev) => prev.map((e) => ({ ...e, compressed: null, loading: true, error: null })));
-    await Promise.all(
-      entries.map(async (entry, idx) => {
-        try {
-          const result = await compressFile(entry.original, newQuality);
-          const url = URL.createObjectURL(result);
-          setEntries((prev) => {
-            const next = [...prev];
-            next[idx] = { ...next[idx], compressed: { file: result, url }, loading: false };
-            return next;
-          });
-        } catch {
-          setEntries((prev) => {
-            const next = [...prev];
-            next[idx] = { ...next[idx], loading: false, error: "Compression failed" };
-            return next;
-          });
-        }
-      })
-    );
-  };
-
   const downloadOne = (entry: FileEntry) => {
     if (!entry.compressed) return;
     const a = document.createElement("a");
@@ -144,12 +121,10 @@ export default function ImageCompressor() {
     a.click();
   };
 
-  const downloadAll = () => {
-    entries.forEach((e) => downloadOne(e));
-  };
+  const downloadAll = () => entries.forEach(downloadOne);
 
-  const removeEntry = (idx: number) => {
-    setEntries((prev) => prev.filter((_, i) => i !== idx));
+  const removeEntry = (id: number) => {
+    setEntries((prev) => prev.filter((e) => e.id !== id));
   };
 
   const reset = () => setEntries([]);
@@ -217,12 +192,13 @@ export default function ImageCompressor() {
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">Quality</label>
               <span className="text-sm font-mono font-semibold text-primary" data-testid="text-quality-value">
-                {quality}%
+                {localQuality}%
               </span>
             </div>
             <Slider
-              value={[quality]}
-              onValueChange={([v]) => {
+              value={[localQuality]}
+              onValueChange={([v]) => setLocalQuality(v)}
+              onValueCommit={([v]) => {
                 setQuality(v);
                 recompressAll(v);
               }}
@@ -239,13 +215,13 @@ export default function ImageCompressor() {
           </div>
 
           <div className="space-y-3">
-            {entries.map((entry, idx) => {
+            {entries.map((entry) => {
               const savings =
                 entry.compressed
                   ? Math.round(((entry.original.size - entry.compressed.file.size) / entry.original.size) * 100)
                   : null;
               return (
-                <div key={idx} className="bg-card border border-border rounded-xl overflow-hidden">
+                <div key={entry.id} className="bg-card border border-border rounded-xl overflow-hidden">
                   <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3">
                     <img
                       src={entry.preview}
@@ -259,7 +235,7 @@ export default function ImageCompressor() {
                         {entry.loading && (
                           <span className="flex items-center gap-1 text-primary">
                             <RefreshCw className="w-3 h-3 animate-spin" />
-                            Compressing...
+                            Compressing…
                           </span>
                         )}
                         {entry.compressed && savings !== null && (
@@ -300,7 +276,7 @@ export default function ImageCompressor() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => removeEntry(idx)}
+                        onClick={() => removeEntry(entry.id)}
                         data-testid="button-reset-image"
                         className="h-8 w-8"
                       >
@@ -308,6 +284,11 @@ export default function ImageCompressor() {
                       </Button>
                     </div>
                   </div>
+                  {entry.loading && (
+                    <div className="h-0.5 w-full bg-muted overflow-hidden">
+                      <div className="h-full bg-primary/60 animate-pulse w-2/3" />
+                    </div>
+                  )}
                 </div>
               );
             })}
