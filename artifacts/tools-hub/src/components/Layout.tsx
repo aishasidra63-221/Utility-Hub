@@ -10,7 +10,6 @@ const tools = [
   { href: "/image-resizer",    label: "Image Resizer" },
   { href: "/image-cropper",        label: "Image Cropper" },
   { href: "/password-generator",  label: "Password Generator" },
-  { href: "/json-formatter",      label: "JSON Formatter" },
   { href: "/color-palette",       label: "Color Palette" },
   { href: "/heic-converter",      label: "HEIC to JPG" },
   { href: "/pdf-converter",       label: "PDF Tools" },
