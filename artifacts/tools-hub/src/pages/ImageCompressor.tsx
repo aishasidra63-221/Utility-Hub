@@ -265,18 +265,18 @@ export default function ImageCompressor() {
         onDragLeave={() => setDragOver(false)}
         onClick={() => inputRef.current?.click()}
         data-testid="dropzone-image"
-        className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors mb-6 ${
-          dragOver
-            ? "border-primary bg-primary/5"
-            : "border-border hover:border-primary/50 hover:bg-muted/50"
+        className={`rounded-2xl p-10 text-center cursor-pointer mb-6 outline-none ${
+          dragOver ? "dropzone-active" : "dropzone-idle"
         }`}
       >
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Upload className="w-8 h-8 text-muted-foreground" />
-          <Zap className="w-5 h-5 text-primary" />
+        <div className={`flex items-center justify-center gap-2 mb-3 transition-transform duration-200 ${dragOver ? "scale-110" : ""}`}>
+          <Upload className={`w-9 h-9 transition-colors duration-200 ${dragOver ? "text-primary" : "text-muted-foreground/60"}`} />
+          <Zap className={`w-5 h-5 transition-colors duration-200 ${dragOver ? "text-primary" : "text-primary/70"}`} />
         </div>
-        <p className="text-sm font-medium text-foreground">Drop images — compresses instantly</p>
-        <p className="text-xs text-muted-foreground mt-1">JPG, PNG, or WebP · Multiple files OK</p>
+        <p className={`text-sm font-semibold transition-colors duration-200 ${dragOver ? "text-primary" : "text-foreground"}`}>
+          Drop images — compresses instantly
+        </p>
+        <p className="text-xs text-muted-foreground mt-1.5">JPG, PNG, or WebP · Multiple files OK</p>
         <input
           ref={inputRef}
           type="file"

@@ -356,6 +356,35 @@
     animation: pulse-ring 2s ease-in-out infinite;
   }
 
+  /* ── Drop zone glow animation ── */
+  @keyframes dropzone-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+    50%       { box-shadow: 0 0 0 6px hsl(var(--primary) / 0.12), 0 0 28px 4px hsl(var(--primary) / 0.10); }
+  }
+
+  @keyframes dropzone-drag {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.2); }
+    50%       { box-shadow: 0 0 0 8px hsl(var(--primary) / 0.08), 0 0 40px 8px hsl(var(--primary) / 0.15); }
+  }
+
+  .dropzone-idle {
+    border: 2px dashed hsl(var(--border));
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .dropzone-idle:hover,
+  .dropzone-idle:focus-visible {
+    border-color: hsl(var(--primary) / 0.6);
+    background-color: hsl(var(--primary) / 0.03);
+    animation: dropzone-pulse 2s ease-in-out infinite;
+  }
+
+  .dropzone-active {
+    border: 2px dashed hsl(var(--primary));
+    background-color: hsl(var(--primary) / 0.06);
+    animation: dropzone-drag 1.2s ease-in-out infinite;
+  }
+
   /* ── Performance & smoothness ── */
 
   /* GPU-accelerate card hover transforms */
