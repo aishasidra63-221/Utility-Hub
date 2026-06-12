@@ -1,0 +1,217 @@
+import { useState, useRef, useCallback } from "react";
+import { Upload, Download, X, Smartphone, CheckCircle2, Loader2, Archive } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ShareButton } from "@/components/ShareButton";
+import { UsageCount } from "@/components/UsageCount";
+import { useSEO } from "@/hooks/useSEO";
+import { useToolCounter } from "@/hooks/useToolCounter";
+import JSZip from "jszip";
+
+type Status = "pending" | "converting" | "done" | "error";
+interface FileItem {
+  id: string;
+  name: string;
+  size: number;
+  status: Status;
+  blobUrl?: string;
+  outputName?: string;
+  error?: string;
+}
+
+export default function HeicConverter() {
+  useSEO({
+    title: "Free HEIC to JPG Converter — Convert iPhone Photos Online | ToolsHub",
+    description: "Convert HEIC and HEIF photos to JPG instantly in your browser. No upload, 100% private. Works with iPhone photos.",
+  });
+
+  const { count, increment } = useToolCounter("heic-converter");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [dragOver, setDragOver] = useState(false);
+  const [zipping, setZipping] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const addFiles = useCallback((incoming: File[]) => {
+    const valid = incoming.filter((f) =>
+      f.name.toLowerCase().endsWith(".heic") ||
+      f.name.toLowerCase().endsWith(".heif") ||
+      f.type === "image/heic" || f.type === "image/heif"
+    );
+    if (!valid.length) return;
+    const items: FileItem[] = valid.map((f) => ({
+      id: `${f.name}-${f.size}-${Math.random()}`,
+      name: f.name,
+      size: f.size,
+      status: "pending",
+    }));
+    setFiles((prev) => [...prev, ...items]);
+
+    // Convert each
+    items.forEach(async (item) => {
+      setFiles((prev) => prev.map((x) => x.id === item.id ? { ...x, status: "converting" } : x));
+      try {
+        const file = valid.find((f) => f.name === item.name && f.size === item.size)!;
+        const heic2any = (await import("heic2any")).default;
+        const result = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+        const blob = Array.isArray(result) ? result[0] : result;
+        const blobUrl = URL.createObjectURL(blob);
+        const outputName = item.name.replace(/\.(heic|heif)$/i, ".jpg");
+        setFiles((prev) => prev.map((x) =>
+          x.id === item.id ? { ...x, status: "done", blobUrl, outputName } : x
+        ));
+        increment();
+      } catch {
+        setFiles((prev) => prev.map((x) =>
+          x.id === item.id ? { ...x, status: "error", error: "Conversion failed" } : x
+        ));
+      }
+    });
+  }, [increment]);
+
+  const remove = (id: string) => {
+    setFiles((prev) => {
+      const f = prev.find((x) => x.id === id);
+      if (f?.blobUrl) URL.revokeObjectURL(f.blobUrl);
+      return prev.filter((x) => x.id !== id);
+    });
+  };
+
+  const downloadOne = (item: FileItem) => {
+    if (!item.blobUrl || !item.outputName) return;
+    const a = document.createElement("a");
+    a.href = item.blobUrl;
+    a.download = item.outputName;
+    a.click();
+  };
+
+  const downloadAll = async () => {
+    const done = files.filter((f) => f.status === "done" && f.blobUrl);
+    if (!done.length) return;
+    setZipping(true);
+    const zip = new JSZip();
+    for (const f of done) {
+      const resp = await fetch(f.blobUrl!);
+      const buf = await resp.arrayBuffer();
+      zip.file(f.outputName!, buf);
+    }
+    const blob = await zip.generateAsync({ type: "blob" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "converted-photos.zip";
+    a.click();
+    setZipping(false);
+  };
+
+  const doneCount = files.filter((f) => f.status === "done").length;
+  const convertingCount = files.filter((f) => f.status === "converting").length;
+
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-10">
+      {/* Header */}
+      <div className="mb-8 flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>Image Tools</span>
+            <UsageCount count={count} label="converted" />
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">HEIC to JPG</h1>
+          <p className="text-muted-foreground mt-2">
+            Convert iPhone HEIC photos to JPG. Batch conversion, 100% in your browser.
+          </p>
+        </div>
+        <ShareButton
+          onCopy={async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }}
+          copied={linkCopied} label="Share"
+        />
+      </div>
+
+      {/* Drop zone */}
+      <div
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); addFiles([...e.dataTransfer.files]); }}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onClick={() => inputRef.current?.click()}
+        className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-colors mb-6 ${
+          dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/40"
+        }`}
+      >
+        <Smartphone className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+        <p className="text-sm font-semibold text-foreground">Drop HEIC files here</p>
+        <p className="text-xs text-muted-foreground mt-1">From iPhone or iPad · .heic / .heif · Batch supported</p>
+        <input ref={inputRef} type="file" accept=".heic,.heif,image/heic,image/heif" multiple className="hidden"
+          onChange={(e) => { if (e.target.files) addFiles([...e.target.files]); }} />
+      </div>
+
+      {/* Info tip */}
+      <div className="rounded-xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground mb-6 flex items-start gap-2">
+        <span className="text-base leading-none mt-0.5">💡</span>
+        <span>
+          <strong className="text-foreground">iPhone pe:</strong> Files app → photo select karo → Share → "Save to Files" se .heic file milegi.
+          WhatsApp aur other apps se photos already JPG format mein aati hain.
+        </span>
+      </div>
+
+      {/* File list */}
+      {files.length > 0 && (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            {files.map((f) => (
+              <div key={f.id} className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card">
+                {/* Status icon */}
+                <div className="shrink-0 w-8 h-8 flex items-center justify-center">
+                  {f.status === "pending"    && <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />}
+                  {f.status === "converting" && <Loader2 className="w-5 h-5 text-primary animate-spin" />}
+                  {f.status === "done"       && <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                  {f.status === "error"      && <X className="w-5 h-5 text-red-500" />}
+                </div>
+
+                {/* Name + size */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{f.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(f.size / 1024).toFixed(0)} KB
+                    {f.status === "converting" && " · Converting…"}
+                    {f.status === "done"       && ` · → ${f.outputName}`}
+                    {f.status === "error"      && ` · ${f.error}`}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {f.status === "done" && (
+                    <Button size="sm" variant="outline" onClick={() => downloadOne(f)} className="gap-1.5">
+                      <Download className="w-3.5 h-3.5" />
+                      JPG
+                    </Button>
+                  )}
+                  <button onClick={() => remove(f.id)} className="text-muted-foreground hover:text-foreground p-1 rounded transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Summary + actions */}
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <p className="text-sm text-muted-foreground flex-1">
+              {doneCount > 0 && <span className="text-green-600 dark:text-green-400 font-semibold">{doneCount} converted</span>}
+              {convertingCount > 0 && <span className="text-primary font-semibold ml-2">{convertingCount} converting…</span>}
+            </p>
+            {doneCount > 1 && (
+              <Button onClick={downloadAll} disabled={zipping} className="gap-2">
+                {zipping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Archive className="w-4 h-4" />}
+                {zipping ? "Creating ZIP…" : `Download All (${doneCount}) as ZIP`}
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => setFiles([])} className="gap-1.5">
+              <X className="w-4 h-4" />
+              Clear All
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -16,6 +16,8 @@ const ImageResizer    = lazy(() => import("@/pages/ImageResizer"));
 const ImageCropper        = lazy(() => import("@/pages/ImageCropper"));
 const PasswordGenerator   = lazy(() => import("@/pages/PasswordGenerator"));
 const JsonFormatter       = lazy(() => import("@/pages/JsonFormatter"));
+const ColorPalette        = lazy(() => import("@/pages/ColorPalette"));
+const HeicConverter       = lazy(() => import("@/pages/HeicConverter"));
 const Settings        = lazy(() => import("@/pages/Settings"));
 const PrivacyPolicy   = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("@/pages/TermsConditions"));
@@ -80,6 +82,8 @@ function Router() {
           <Route path="/image-cropper"        component={ImageCropper} />
           <Route path="/password-generator"  component={PasswordGenerator} />
           <Route path="/json-formatter"      component={JsonFormatter} />
+          <Route path="/color-palette"       component={ColorPalette} />
+          <Route path="/heic-converter"      component={HeicConverter} />
           <Route path="/settings"          component={Settings} />
           <Route path="/privacy-policy"    component={PrivacyPolicy} />
           <Route path="/terms"             component={TermsConditions} />

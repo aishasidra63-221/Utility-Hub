@@ -29,7 +29,7 @@ export function getAllToolCounts(): Record<string, number> {
   const ids = [
     "image-compressor", "image-converter", "image-resizer", "image-cropper",
     "pdf-converter", "qr-generator", "text-cleaner", "whatsapp-link",
-    "password-generator", "json-formatter",
+    "password-generator", "json-formatter", "color-palette", "heic-converter",
   ];
   return Object.fromEntries(ids.map((id) => [id, getToolCount(id)]));
 }

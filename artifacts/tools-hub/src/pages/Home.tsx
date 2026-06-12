@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
-  ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Braces,
+  ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Braces, Palette,
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { getAllToolCounts } from "@/hooks/useToolCounter";
@@ -82,10 +82,34 @@ const ALL_TOOLS = [
     accentColor: "group-hover:text-amber-500",
   },
   {
+    href: "/color-palette",
+    id: "color-palette",
+    icon: Palette,
+    title: "Color Palette Extractor",
+    description: "Upload any image and extract its dominant colors as hex codes. Copy instantly. Perfect for designers.",
+    badge: "For designers",
+    gradient: "from-fuchsia-500/20 to-pink-500/10",
+    iconColor: "text-fuchsia-500",
+    iconBg: "bg-fuchsia-500/10 dark:bg-fuchsia-500/15",
+    accentColor: "group-hover:text-fuchsia-500",
+  },
+  {
+    href: "/heic-converter",
+    id: "heic-converter",
+    icon: Smartphone,
+    title: "HEIC to JPG",
+    description: "Convert iPhone HEIC photos to JPG instantly. Batch convert, download as ZIP. Works 100% in your browser.",
+    badge: "iPhone photos",
+    gradient: "from-slate-500/20 to-zinc-500/10",
+    iconColor: "text-slate-500",
+    iconBg: "bg-slate-500/10 dark:bg-slate-500/15",
+    accentColor: "group-hover:text-slate-500",
+  },
+  {
     href: "/pdf-converter",
     id: "pdf-converter",
     icon: FileText,
-    title: "PDF Converter",
+    title: "PDF Tools",
     description: "Convert PDF pages to images, or stitch multiple images into a single PDF. No upload to any server.",
     badge: "Two-way",
     gradient: "from-violet-500/20 to-purple-500/10",
@@ -246,7 +270,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed mb-5">
-            10 powerful utilities that run entirely in your browser.
+            12 powerful utilities that run entirely in your browser.
             Upload, process, download — done in seconds.
           </p>
 
