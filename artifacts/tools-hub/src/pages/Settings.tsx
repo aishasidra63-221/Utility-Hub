@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Sun, Moon, Monitor,
-  ImageIcon, FileText, ArrowLeftRight,
+  ImageIcon, FileText,
   Download, EyeOff, Eye,
   RotateCcw,
   ShieldCheck,
@@ -154,25 +154,6 @@ export default function Settings() {
                     </button>
                   );
                 })}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Image output format */}
-        <div className="px-4 py-3.5">
-          <div className="flex items-center gap-3">
-            <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
-              <ArrowLeftRight className="w-4 h-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground mb-2">Image Converter Output Format</p>
-              <div className="grid grid-cols-3 gap-1.5">
-                {(["jpg", "png", "webp"] as const).map((f) => (
-                  <button key={f} onClick={() => update({ imageOutputFormat: f })} className={`py-1.5 rounded-lg text-xs font-bold uppercase border transition-all ${settings.imageOutputFormat === f ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground hover:text-foreground hover:border-primary/50"}`}>
-                    {f}
-                  </button>
-                ))}
               </div>
             </div>
           </div>
