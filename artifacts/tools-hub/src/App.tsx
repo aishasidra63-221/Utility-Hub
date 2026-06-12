@@ -15,6 +15,7 @@ const WhatsappLink    = lazy(() => import("@/pages/WhatsappLink"));
 const ImageResizer    = lazy(() => import("@/pages/ImageResizer"));
 const ImageCropper        = lazy(() => import("@/pages/ImageCropper"));
 const PasswordGenerator   = lazy(() => import("@/pages/PasswordGenerator"));
+const UnitConverter       = lazy(() => import("@/pages/UnitConverter"));
 const ColorPalette        = lazy(() => import("@/pages/ColorPalette"));
 const HeicConverter       = lazy(() => import("@/pages/HeicConverter"));
 const Settings        = lazy(() => import("@/pages/Settings"));
@@ -80,6 +81,7 @@ function Router() {
           <Route path="/image-resizer"     component={ImageResizer} />
           <Route path="/image-cropper"        component={ImageCropper} />
           <Route path="/password-generator"  component={PasswordGenerator} />
+          <Route path="/unit-converter"       component={UnitConverter} />
           <Route path="/color-palette"       component={ColorPalette} />
           <Route path="/heic-converter"      component={HeicConverter} />
           <Route path="/settings"          component={Settings} />

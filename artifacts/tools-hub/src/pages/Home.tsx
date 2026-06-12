@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
-  ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette,
+  ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { getAllToolCounts } from "@/hooks/useToolCounter";
@@ -68,6 +68,18 @@ const ALL_TOOLS = [
     iconColor: "text-emerald-500",
     iconBg: "bg-emerald-500/10 dark:bg-emerald-500/15",
     accentColor: "group-hover:text-emerald-500",
+  },
+  {
+    href: "/unit-converter",
+    id: "unit-converter",
+    icon: Ruler,
+    title: "Unit Converter",
+    description: "Convert length, weight, temperature, volume, area, and speed. Instant results with a full reference table.",
+    badge: "6 categories",
+    gradient: "from-violet-500/20 to-indigo-500/10",
+    iconColor: "text-violet-500",
+    iconBg: "bg-violet-500/10 dark:bg-violet-500/15",
+    accentColor: "group-hover:text-violet-500",
   },
   {
     href: "/color-palette",
@@ -258,7 +270,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed mb-5">
-            11 powerful utilities that run entirely in your browser.
+            12 powerful utilities that run entirely in your browser.
             Upload, process, download — done in seconds.
           </p>
 
