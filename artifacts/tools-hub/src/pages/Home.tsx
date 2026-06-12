@@ -194,9 +194,9 @@ export default function Home() {
     <div>
       {/* ── Hero ── */}
       <section className="relative hero-glow dot-grid overflow-hidden">
-        <div className="max-w-5xl mx-auto px-4 pt-20 pb-20 text-center">
+        <div className="max-w-5xl mx-auto px-4 pt-10 pb-10 text-center">
           {/* Live badge */}
-          <div className="inline-flex items-center gap-2 bg-primary/8 border border-primary/20 text-primary text-xs font-semibold px-4 py-1.5 rounded-full mb-6">
+          <div className="inline-flex items-center gap-2 bg-primary/8 border border-primary/20 text-primary text-xs font-semibold px-4 py-1.5 rounded-full mb-3">
             <span className="relative flex h-2 w-2">
               <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
@@ -204,12 +204,12 @@ export default function Home() {
             No login. No ads. Instant results.
           </div>
 
-          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-foreground mb-5 leading-[1.08]">
+          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-foreground mb-3 leading-[1.08]">
             Free Tools That Just{" "}
             <span className="gradient-text">Work.</span>
           </h1>
 
-          <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed mb-8">
+          <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed mb-5">
             Seven powerful utilities that run entirely in your browser.
             Upload, process, download — done in seconds.
           </p>
