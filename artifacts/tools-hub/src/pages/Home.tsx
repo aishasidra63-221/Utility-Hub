@@ -4,6 +4,7 @@ import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
   ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
+  Check, X, Trophy,
 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { getAllToolCounts } from "@/hooks/useToolCounter";
@@ -340,8 +341,58 @@ export default function Home() {
           </div>
         )}
 
+        {/* ── Why ToolsHub? Comparison ── */}
+        <div className="mt-16">
+          <div className="flex items-center gap-2 mb-6 justify-center">
+            <Trophy className="w-4 h-4 text-primary" />
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+              Why ToolsHub beats the rest
+            </h2>
+          </div>
+          <div className="overflow-x-auto rounded-2xl border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/40">
+                  <th className="text-left px-5 py-3 text-xs font-bold text-muted-foreground uppercase tracking-wider w-48">Feature</th>
+                  <th className="px-4 py-3 text-center">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                      <Zap className="w-3 h-3" /> ToolsHub
+                    </span>
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">iLoveIMG</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Smallpdf</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">Convertio</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border bg-card">
+                {[
+                  { label: "No server upload", us: true, a: false, b: false, c: false },
+                  { label: "No file size limit", us: true, a: false, b: false, c: false },
+                  { label: "No ads", us: true, a: false, b: false, c: false },
+                  { label: "No signup required", us: true, a: true, b: false, c: false },
+                  { label: "Instant in-browser processing", us: true, a: false, b: false, c: false },
+                  { label: "Works offline", us: true, a: false, b: false, c: false },
+                  { label: "100% free forever", us: true, a: false, b: false, c: false },
+                ].map(({ label, us, a, b, c }) => (
+                  <tr key={label} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-5 py-3 text-sm font-medium text-foreground">{label}</td>
+                    {[us, a, b, c].map((val, i) => (
+                      <td key={i} className="px-4 py-3 text-center">
+                        {val
+                          ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/15"><Check className="w-3.5 h-3.5 text-green-500" /></span>
+                          : <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/10"><X className="w-3.5 h-3.5 text-red-400" /></span>
+                        }
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* ── Feature Strip ── */}
-        <div className="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4">
           {FEATURES.map(({ icon: Icon, label, sub }) => (
             <div
               key={label}

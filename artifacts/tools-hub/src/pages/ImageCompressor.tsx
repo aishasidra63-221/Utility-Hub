@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import imageCompression from "browser-image-compression";
 import JSZip from "jszip";
 import { Upload, Download, ImageIcon, X, RefreshCw, Zap, Archive } from "lucide-react";
+import { SpeedBadge } from "@/components/SpeedBadge";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ShareButton } from "@/components/ShareButton";
@@ -26,6 +27,7 @@ interface FileEntry {
   compressed: CompressedResult | null;
   loading: boolean;
   error: string | null;
+  processingMs: number | null;
 }
 
 interface ZipProgress {
@@ -65,16 +67,18 @@ export default function ImageCompressor() {
   useEffect(() => { incrementRef.current = increment; }, [increment]);
 
   const compressEntry = useCallback(async (id: number, file: File, q: number) => {
+    const t0 = performance.now();
     try {
       const result = await compressFile(file, q);
       const url = URL.createObjectURL(result);
+      const processingMs = Math.round(performance.now() - t0);
       setEntries((prev) =>
-        prev.map((e) => e.id === id ? { ...e, compressed: { file: result, url }, loading: false } : e)
+        prev.map((e) => e.id === id ? { ...e, compressed: { file: result, url }, loading: false, processingMs } : e)
       );
       incrementRef.current();
     } catch {
       setEntries((prev) =>
-        prev.map((e) => e.id === id ? { ...e, loading: false, error: "Compression failed" } : e)
+        prev.map((e) => e.id === id ? { ...e, loading: false, error: "Compression failed", processingMs: null } : e)
       );
     }
   }, []);
@@ -91,6 +95,7 @@ export default function ImageCompressor() {
         compressed: null,
         loading: true,
         error: null,
+        processingMs: null,
       }));
 
       setEntries((prev) => [...prev, ...newEntries]);
@@ -328,6 +333,9 @@ export default function ImageCompressor() {
                               </span>
                             )}
                           </>
+                        )}
+                        {entry.processingMs !== null && (
+                          <SpeedBadge ms={entry.processingMs} />
                         )}
                         {entry.error && <span className="text-destructive">{entry.error}</span>}
                       </div>
