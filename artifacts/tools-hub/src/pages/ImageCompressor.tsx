@@ -241,7 +241,7 @@ export default function ImageCompressor() {
   const anyCompressed = entries.some((e) => e.compressed);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
+    <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
       <div className="mb-8">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
@@ -250,7 +250,7 @@ export default function ImageCompressor() {
               <span>Image Tools</span>
               <UsageCount count={count} label="compression" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Image Compressor</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Image Compressor</h1>
             <p className="text-muted-foreground mt-2">
               Drop images and they compress instantly. JPG, PNG, WebP — 100% in your browser.
             </p>
@@ -265,7 +265,7 @@ export default function ImageCompressor() {
         onDragLeave={() => setDragOver(false)}
         onClick={() => inputRef.current?.click()}
         data-testid="dropzone-image"
-        className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors mb-6 ${
+        className={`border-2 border-dashed rounded-xl p-5 sm:p-8 text-center cursor-pointer transition-colors mb-6 ${
           dragOver
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/50 hover:bg-muted/50"

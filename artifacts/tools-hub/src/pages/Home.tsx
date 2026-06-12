@@ -177,7 +177,7 @@ const ToolCard = memo(function ToolCard({
     <Link
       href={tool.href}
       data-testid={`card-tool-${tool.href.slice(1)}`}
-      className="group relative flex flex-col gap-4 p-6 rounded-2xl border border-border bg-card card-glow overflow-hidden"
+      className="group relative flex flex-col gap-3 p-4 sm:p-6 rounded-2xl border border-border bg-card card-glow overflow-hidden"
     >
       {/* Subtle gradient wash on hover */}
       <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
@@ -208,10 +208,10 @@ const ToolCard = memo(function ToolCard({
       </div>
 
       <div className="relative flex-1 z-10">
-        <h2 className={`text-base font-semibold text-foreground mb-1.5 transition-colors duration-200 ${tool.accentColor}`}>
+        <h2 className={`text-sm sm:text-base font-semibold text-foreground mb-1 transition-colors duration-200 ${tool.accentColor}`}>
           {tool.title}
         </h2>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed hidden sm:block">
           {tool.description}
         </p>
       </div>
@@ -297,7 +297,7 @@ export default function Home() {
                   Your Favourites
                 </h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {usedTools.map((tool) => (
                   <ToolCard
                     key={tool.id}
@@ -317,7 +317,7 @@ export default function Home() {
                     Not Tried Yet
                   </h2>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {unusedTools.map((tool) => (
                     <ToolCard key={tool.id} tool={tool} count={0} isFavourite={false} />
                   ))}
@@ -331,7 +331,7 @@ export default function Home() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {ALL_TOOLS.map((tool) => (
               <ToolCard key={tool.id} tool={tool} count={0} isFavourite={false} />
             ))}
