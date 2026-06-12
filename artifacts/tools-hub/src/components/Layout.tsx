@@ -168,17 +168,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1">{children}</main>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-border bg-card/50 py-10 mt-8">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
+      <footer className="border-t border-border bg-card/50 pt-10 pb-6 mt-8">
+        <div className="max-w-6xl mx-auto px-4 space-y-6">
+          {/* Top row: logo + tools nav */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <div className="p-1.5 rounded-lg bg-primary/10">
                 <Zap className="w-3.5 h-3.5 text-primary" />
               </div>
               <span className="text-sm font-extrabold tracking-tight text-foreground">ToolsHub</span>
               <span className="text-xs text-muted-foreground">— Free online tools, zero friction</span>
             </div>
-            <nav className="flex flex-wrap justify-center gap-x-5 gap-y-1.5" aria-label="Footer tools">
+            <nav className="flex flex-wrap gap-x-5 gap-y-1.5" aria-label="Footer tools">
               {tools.map((tool) => (
                 <Link
                   key={tool.href}
@@ -190,6 +191,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
               ))}
               <Link href="/settings" className="text-xs text-muted-foreground hover:text-primary transition-colors">
                 Settings
+              </Link>
+            </nav>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-border" />
+
+          {/* Bottom row: legal links + copyright */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground order-2 sm:order-1">
+              © {new Date().getFullYear()} ToolsHub. All rights reserved.
+            </p>
+            <nav className="flex items-center gap-5 order-1 sm:order-2" aria-label="Legal">
+              <Link href="/faq" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">
+                FAQ
+              </Link>
+              <Link href="/privacy-policy" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">
+                Terms &amp; Conditions
               </Link>
             </nav>
           </div>

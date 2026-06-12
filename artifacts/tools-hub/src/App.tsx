@@ -14,6 +14,9 @@ const TextCleaner     = lazy(() => import("@/pages/TextCleaner"));
 const WhatsappLink    = lazy(() => import("@/pages/WhatsappLink"));
 const ImageResizer    = lazy(() => import("@/pages/ImageResizer"));
 const Settings        = lazy(() => import("@/pages/Settings"));
+const PrivacyPolicy   = lazy(() => import("@/pages/PrivacyPolicy"));
+const TermsConditions = lazy(() => import("@/pages/TermsConditions"));
+const FAQ             = lazy(() => import("@/pages/FAQ"));
 const NotFound        = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
@@ -72,6 +75,9 @@ function Router() {
           <Route path="/whatsapp-link"     component={WhatsappLink} />
           <Route path="/image-resizer"     component={ImageResizer} />
           <Route path="/settings"          component={Settings} />
+          <Route path="/privacy-policy"    component={PrivacyPolicy} />
+          <Route path="/terms"             component={TermsConditions} />
+          <Route path="/faq"               component={FAQ} />
           <Route                           component={NotFound} />
         </Switch>
       </Suspense>
