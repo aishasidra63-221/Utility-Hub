@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Sun, Moon, Monitor, Zap, Menu, X, Settings } from "lucide-react";
+import { Sun, Moon, Monitor, Menu, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/useSettings";
+import { ToolsHubIcon } from "@/components/ToolsHubLogo";
 
 const tools = [
   { href: "/image-compressor", label: "Image Compressor" },
@@ -76,7 +77,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             className="flex items-center gap-2 font-bold text-foreground hover:text-primary transition-colors group"
           >
             <div className="p-1.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-              <Zap className="w-4 h-4 text-primary" />
+              <ToolsHubIcon className="w-4 h-4 text-primary" />
             </div>
             <span className="text-sm font-extrabold tracking-tight">ToolsHub</span>
           </Link>
@@ -180,7 +181,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
             <div className="flex items-center gap-2 flex-shrink-0">
               <div className="p-1.5 rounded-lg bg-primary/10">
-                <Zap className="w-3.5 h-3.5 text-primary" />
+                <ToolsHubIcon className="w-3.5 h-3.5 text-primary" />
               </div>
               <span className="text-sm font-extrabold tracking-tight text-foreground">ToolsHub</span>
               <span className="text-xs text-muted-foreground">— Free online tools, zero friction</span>
