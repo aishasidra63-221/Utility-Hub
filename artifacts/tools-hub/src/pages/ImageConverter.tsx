@@ -26,6 +26,7 @@ const FORMATS: FormatOption[] = [
 interface ConvertedEntry {
   originalName: string;
   originalSize: number;
+  originalFile: File;
   originalUrl: string;
   convertedUrl: string;
   convertedSize: number;
@@ -103,6 +104,7 @@ export default function ImageConverter() {
       const newEntries: ConvertedEntry[] = valid.map((f) => ({
         originalName: f.name,
         originalSize: f.size,
+        originalFile: f,
         originalUrl: URL.createObjectURL(f),
         convertedUrl: "",
         convertedSize: 0,
@@ -160,25 +162,23 @@ export default function ImageConverter() {
 
   const reconvertAll = async (fmt: Format, q: number) => {
     if (!entries.length) return;
+    const snapshot = [...entries];
     setEntries((prev) => prev.map((e) => ({ ...e, convertedUrl: "", loading: true, error: null })));
     await Promise.all(
-      entries.map(async (entry, idx) => {
+      snapshot.map(async (entry) => {
         try {
-          const resp = await fetch(entry.originalUrl);
-          const blob = await resp.blob();
-          const file = new File([blob], entry.originalName, { type: blob.type });
-          const { blob: converted, url } = await convertImage(file, fmt, q);
-          setEntries((prev) => {
-            const next = [...prev];
-            next[idx] = { ...next[idx], convertedUrl: url, convertedSize: converted.size, convertedBlob: converted, loading: false };
-            return next;
-          });
+          const { blob: converted, url } = await convertImage(entry.originalFile, fmt, q);
+          setEntries((prev) =>
+            prev.map((e) => e.originalName === entry.originalName && e.originalSize === entry.originalSize
+              ? { ...e, convertedUrl: url, convertedSize: converted.size, convertedBlob: converted, loading: false }
+              : e)
+          );
         } catch {
-          setEntries((prev) => {
-            const next = [...prev];
-            next[idx] = { ...next[idx], loading: false, error: "Conversion failed" };
-            return next;
-          });
+          setEntries((prev) =>
+            prev.map((e) => e.originalName === entry.originalName && e.originalSize === entry.originalSize
+              ? { ...e, loading: false, error: "Conversion failed" }
+              : e)
+          );
         }
       })
     );
@@ -221,10 +221,26 @@ export default function ImageConverter() {
     setTimeout(() => setAllDownloaded(false), 3000);
   };
 
-  const removeEntry = (idx: number) =>
-    setEntries((prev) => prev.filter((_, i) => i !== idx));
+  const removeEntry = (idx: number) => {
+    setEntries((prev) => {
+      const entry = prev[idx];
+      if (entry) {
+        URL.revokeObjectURL(entry.originalUrl);
+        if (entry.convertedUrl) URL.revokeObjectURL(entry.convertedUrl);
+      }
+      return prev.filter((_, i) => i !== idx);
+    });
+  };
 
-  const reset = () => setEntries([]);
+  const reset = () => {
+    setEntries((prev) => {
+      prev.forEach((e) => {
+        URL.revokeObjectURL(e.originalUrl);
+        if (e.convertedUrl) URL.revokeObjectURL(e.convertedUrl);
+      });
+      return [];
+    });
+  };
 
   const handleShareLink = async () => {
     await navigator.clipboard.writeText(window.location.href);

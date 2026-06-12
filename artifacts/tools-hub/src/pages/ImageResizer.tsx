@@ -182,8 +182,27 @@ export default function ImageResizer() {
   };
 
   const downloadAll = () => entries.forEach(downloadOne);
-  const remove = (id: number) => setEntries((prev) => prev.filter((e) => e.id !== id));
-  const reset  = () => setEntries([]);
+
+  const remove = (id: number) => {
+    setEntries((prev) => {
+      const entry = prev.find((e) => e.id === id);
+      if (entry) {
+        URL.revokeObjectURL(entry.preview);
+        if (entry.result) URL.revokeObjectURL(entry.result.url);
+      }
+      return prev.filter((e) => e.id !== id);
+    });
+  };
+
+  const reset = () => {
+    setEntries((prev) => {
+      prev.forEach((e) => {
+        URL.revokeObjectURL(e.preview);
+        if (e.result) URL.revokeObjectURL(e.result.url);
+      });
+      return [];
+    });
+  };
   const handleShare = async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); };
 
   const allDone    = entries.length > 0 && entries.every((e) => !e.loading);

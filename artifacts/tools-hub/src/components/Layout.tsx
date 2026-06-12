@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Sun, Moon, Monitor, Wrench, Menu, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSettings } from "@/hooks/useSettings";
+import { useTheme } from "@/hooks/useSettings";
 
 const tools = [
   { href: "/image-compressor", label: "Image Compressor" },
@@ -15,37 +15,34 @@ const tools = [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { settings, update } = useSettings();
+  const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [location] = useLocation();
 
   useEffect(() => {
-    const applyTheme = (theme: string) => {
-      if (theme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else if (theme === "light") {
-        document.documentElement.classList.remove("dark");
-      } else {
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        document.documentElement.classList.toggle("dark", prefersDark);
-      }
-    };
-    applyTheme(settings.theme);
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else if (theme === "light") {
+      document.documentElement.classList.remove("dark");
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.classList.toggle("dark", prefersDark);
+    }
 
-    if (settings.theme === "system") {
+    if (theme === "system") {
       const mq = window.matchMedia("(prefers-color-scheme: dark)");
       const listener = (e: MediaQueryListEvent) => document.documentElement.classList.toggle("dark", e.matches);
       mq.addEventListener("change", listener);
       return () => mq.removeEventListener("change", listener);
     }
-  }, [settings.theme]);
+  }, [theme]);
 
   const cycleTheme = () => {
-    const next = settings.theme === "light" ? "dark" : settings.theme === "dark" ? "system" : "light";
-    update({ theme: next });
+    const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
+    setTheme(next);
   };
 
-  const themeIcon = settings.theme === "dark" ? <Sun className="w-4 h-4" /> : settings.theme === "light" ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />;
+  const themeIcon = theme === "dark" ? <Sun className="w-4 h-4" /> : theme === "light" ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -81,8 +78,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               size="icon"
               onClick={cycleTheme}
               data-testid="button-toggle-theme"
-              aria-label={`Theme: ${settings.theme}. Click to cycle.`}
-              title={`Theme: ${settings.theme}`}
+              aria-label={`Theme: ${theme}. Click to cycle.`}
+              title={`Theme: ${theme}`}
               className="w-8 h-8"
             >
               {themeIcon}

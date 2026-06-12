@@ -124,10 +124,25 @@ export default function ImageCompressor() {
   const downloadAll = () => entries.forEach(downloadOne);
 
   const removeEntry = (id: number) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+    setEntries((prev) => {
+      const entry = prev.find((e) => e.id === id);
+      if (entry) {
+        URL.revokeObjectURL(entry.preview);
+        if (entry.compressed) URL.revokeObjectURL(entry.compressed.url);
+      }
+      return prev.filter((e) => e.id !== id);
+    });
   };
 
-  const reset = () => setEntries([]);
+  const reset = () => {
+    setEntries((prev) => {
+      prev.forEach((e) => {
+        URL.revokeObjectURL(e.preview);
+        if (e.compressed) URL.revokeObjectURL(e.compressed.url);
+      });
+      return [];
+    });
+  };
 
   const handleShareLink = async () => {
     await navigator.clipboard.writeText(window.location.href);

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 
 const SETTINGS_KEY = "toolhub_settings";
 
@@ -75,5 +75,22 @@ export function useSettings(): { settings: AppSettings; update: (patch: Partial<
     setSettings((prev) => ({ ...prev, ...patch }));
   }, []);
 
-  return { settings, update };
+  return useMemo(() => ({ settings, update }), [settings, update]);
+}
+
+/** Lightweight hook — only re-renders when theme changes. Use in Layout. */
+export function useTheme(): { theme: AppSettings["theme"]; setTheme: (t: AppSettings["theme"]) => void } {
+  const [theme, setThemeState] = useState<AppSettings["theme"]>(() => getSettings().theme);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<AppSettings>;
+      setThemeState(ce.detail.theme);
+    };
+    window.addEventListener("toolhub_settings_changed", handler);
+    return () => window.removeEventListener("toolhub_settings_changed", handler);
+  }, []);
+
+  const setTheme = useCallback((t: AppSettings["theme"]) => saveSettings({ theme: t }), []);
+  return useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
 }
