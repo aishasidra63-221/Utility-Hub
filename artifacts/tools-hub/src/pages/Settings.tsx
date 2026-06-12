@@ -126,7 +126,7 @@ export default function Settings() {
                 value={[localQuality]}
                 onValueChange={([v]) => setLocalQuality(v)}
                 onValueCommit={([v]) => update({ imageQuality: v })}
-                min={30} max={100} step={5}
+                min={30} max={100} step={1}
                 className="w-full"
               />
               <div className="flex justify-between mt-1">

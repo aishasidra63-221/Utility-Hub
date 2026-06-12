@@ -204,7 +204,7 @@ export default function ImageCompressor() {
               }}
               min={10}
               max={100}
-              step={5}
+              step={1}
               data-testid="slider-quality"
               className="w-full"
             />
