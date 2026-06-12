@@ -56,6 +56,7 @@ export default function Settings() {
   useSEO({ title: "Settings | ToolsHub", description: "Customize ToolsHub defaults, theme, shortcuts, and privacy." });
 
   const { settings, update } = useSettings();
+  const [localQuality, setLocalQuality] = useState(() => settings.imageQuality);
   const [clearConfirm, setClearConfirm] = useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
   const [toast, setToast] = useState("");
@@ -119,11 +120,12 @@ export default function Settings() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-sm font-medium text-foreground">Image Compression Quality</p>
-                <span className="text-sm font-semibold text-primary tabular-nums">{settings.imageQuality}%</span>
+                <span className="text-sm font-semibold text-primary tabular-nums">{localQuality}%</span>
               </div>
               <Slider
-                value={[settings.imageQuality]}
-                onValueChange={([v]) => update({ imageQuality: v })}
+                value={[localQuality]}
+                onValueChange={([v]) => setLocalQuality(v)}
+                onValueCommit={([v]) => update({ imageQuality: v })}
                 min={30} max={100} step={5}
                 className="w-full"
               />
