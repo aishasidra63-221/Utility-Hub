@@ -1,5 +1,9 @@
 import { useState, useCallback } from "react";
-import { ArrowLeftRight, Copy, Check } from "lucide-react";
+import {
+  ArrowLeftRight, Copy, Check,
+  Ruler, Weight, Thermometer, FlaskConical, SquareDashed, Wind,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
@@ -15,13 +19,13 @@ interface Unit {
   fromBase: (v: number) => number;
 }
 
-const CATEGORIES: { id: Category; label: string; emoji: string }[] = [
-  { id: "length",      label: "Length",      emoji: "📏" },
-  { id: "weight",      label: "Weight",      emoji: "⚖️" },
-  { id: "temperature", label: "Temperature", emoji: "🌡️" },
-  { id: "volume",      label: "Volume",      emoji: "🧪" },
-  { id: "area",        label: "Area",        emoji: "⬛" },
-  { id: "speed",       label: "Speed",       emoji: "💨" },
+const CATEGORIES: { id: Category; label: string; icon: LucideIcon }[] = [
+  { id: "length",      label: "Length",      icon: Ruler },
+  { id: "weight",      label: "Weight",      icon: Weight },
+  { id: "temperature", label: "Temperature", icon: Thermometer },
+  { id: "volume",      label: "Volume",      icon: FlaskConical },
+  { id: "area",        label: "Area",        icon: SquareDashed },
+  { id: "speed",       label: "Speed",       icon: Wind },
 ];
 
 const UNITS: Record<Category, Unit[]> = {
@@ -156,20 +160,23 @@ export default function UnitConverter() {
 
       {/* Category Tabs */}
       <div className="flex flex-wrap gap-2 mb-8">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => handleCategoryChange(cat.id)}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${
-              category === cat.id
-                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
-            }`}
-          >
-            <span>{cat.emoji}</span>
-            {cat.label}
-          </button>
-        ))}
+        {CATEGORIES.map((cat) => {
+          const Icon = cat.icon;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => handleCategoryChange(cat.id)}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all duration-150 ${
+                category === cat.id
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {cat.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Converter Card */}
