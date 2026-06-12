@@ -57,7 +57,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* ── Top Banner ── */}
-      <div className="w-full bg-primary text-primary-foreground text-center text-xs font-medium py-2 px-4 tracking-wide">
+      <div className="w-full bg-primary text-primary-foreground text-center text-xs font-medium py-2 px-4 tracking-wide border-0">
         ⚡ 100% Free · No Login · No Ads · All processing happens in your browser — your files never leave your device.
       </div>
 
