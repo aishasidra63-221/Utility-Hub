@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
-import { Image, FileText, QrCode, AlignLeft, MessageCircle, ArrowRight, Activity, Star, ArrowLeftRight } from "lucide-react";
+import { Image, FileText, QrCode, AlignLeft, MessageCircle, ArrowRight, Activity, Star, ArrowLeftRight, Maximize2 } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
 import { getAllToolCounts } from "@/hooks/useToolCounter";
 
@@ -22,6 +22,15 @@ const ALL_TOOLS = [
     description: "Convert JPG, PNG, and WebP formats in bulk. Change format and quality, download all as ZIP.",
     badge: "Batch",
     color: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
+  },
+  {
+    href: "/image-resizer",
+    id: "image-resizer",
+    icon: Maximize2,
+    title: "Image Resizer",
+    description: "Resize images to any dimension — HD, Full HD, Instagram, custom. Batch resize with aspect ratio lock.",
+    badge: "Presets",
+    color: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
   },
   {
     href: "/pdf-converter",

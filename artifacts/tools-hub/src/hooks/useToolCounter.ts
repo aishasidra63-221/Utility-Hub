@@ -26,7 +26,7 @@ export function incrementToolCount(toolId: string): number {
 
 /** Get counts for all tools at once (used on the home page). */
 export function getAllToolCounts(): Record<string, number> {
-  const ids = ["image-compressor", "image-converter", "pdf-converter", "qr-generator", "text-cleaner", "whatsapp-link"];
+  const ids = ["image-compressor", "image-converter", "image-resizer", "pdf-converter", "qr-generator", "text-cleaner", "whatsapp-link"];
   return Object.fromEntries(ids.map((id) => [id, getToolCount(id)]));
 }
 

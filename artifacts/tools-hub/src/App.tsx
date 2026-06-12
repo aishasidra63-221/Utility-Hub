@@ -12,6 +12,7 @@ const PdfConverter    = lazy(() => import("@/pages/PdfConverter"));
 const QrGenerator     = lazy(() => import("@/pages/QrGenerator"));
 const TextCleaner     = lazy(() => import("@/pages/TextCleaner"));
 const WhatsappLink    = lazy(() => import("@/pages/WhatsappLink"));
+const ImageResizer    = lazy(() => import("@/pages/ImageResizer"));
 const Settings        = lazy(() => import("@/pages/Settings"));
 const NotFound        = lazy(() => import("@/pages/not-found"));
 
@@ -69,6 +70,7 @@ function Router() {
           <Route path="/qr-generator"      component={QrGenerator} />
           <Route path="/text-cleaner"      component={TextCleaner} />
           <Route path="/whatsapp-link"     component={WhatsappLink} />
+          <Route path="/image-resizer"     component={ImageResizer} />
           <Route path="/settings"          component={Settings} />
           <Route                           component={NotFound} />
         </Switch>
