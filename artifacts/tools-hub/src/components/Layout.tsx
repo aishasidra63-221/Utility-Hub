@@ -58,10 +58,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* ── Header ── */}
       <header
-        className={`sticky top-0 z-50 border-b transition-all duration-200 ${
+        className={`sticky top-0 z-50 border-b border-border transition-all duration-200 ${
           scrolled
-            ? "border-border bg-background/80 backdrop-blur-xl shadow-sm"
-            : "border-transparent bg-background/60 backdrop-blur-md"
+            ? "bg-background/80 backdrop-blur-xl shadow-sm"
+            : "bg-background/95 backdrop-blur-md"
         }`}
       >
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
