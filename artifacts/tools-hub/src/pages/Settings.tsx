@@ -76,7 +76,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-10 space-y-1 pb-20">
+    <div className="max-w-3xl mx-auto px-4 py-10 space-y-1 pb-20">
       <h1 className="text-2xl font-bold tracking-tight text-foreground px-1 mb-4">Settings</h1>
 
       {toast && (

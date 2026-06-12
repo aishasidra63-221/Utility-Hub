@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Sun, Moon, Monitor, Menu, X, Settings } from "lucide-react";
+import { Menu, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/useSettings";
 import { ToolsHubIcon } from "@/components/ToolsHubLogo";
@@ -50,15 +50,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const cycleTheme = () => {
-    const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
-    setTheme(next);
-  };
-
-  const themeIcon =
-    theme === "dark"   ? <Sun className="w-4 h-4" /> :
-    theme === "light"  ? <Moon className="w-4 h-4" /> :
-                         <Monitor className="w-4 h-4" />;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -101,17 +92,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={cycleTheme}
-              data-testid="button-toggle-theme"
-              aria-label={`Theme: ${theme}. Click to cycle.`}
-              title={`Theme: ${theme}`}
-              className="w-8 h-8 text-muted-foreground hover:text-foreground"
-            >
-              {themeIcon}
-            </Button>
             <Link href="/settings">
               <Button
                 variant="ghost"
