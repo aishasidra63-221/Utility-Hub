@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import imageCompression from "browser-image-compression";
-import { Upload, Download, ImageIcon, X, RefreshCw, Zap } from "lucide-react";
+import JSZip from "jszip";
+import { Upload, Download, ImageIcon, X, RefreshCw, Zap, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ShareButton } from "@/components/ShareButton";
@@ -27,6 +28,13 @@ interface FileEntry {
   error: string | null;
 }
 
+interface ZipProgress {
+  phase: "packing" | "generating" | "done";
+  packed: number;
+  total: number;
+  percent: number;
+}
+
 let _idCounter = 0;
 const nextId = () => ++_idCounter;
 
@@ -51,6 +59,7 @@ export default function ImageCompressor() {
   const [localQuality, setLocalQuality] = useState(() => getSettings().imageQuality);
   const [dragOver, setDragOver] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [zipProgress, setZipProgress] = useState<ZipProgress | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const incrementRef = useRef(increment);
   useEffect(() => { incrementRef.current = increment; }, [increment]);
@@ -121,7 +130,54 @@ export default function ImageCompressor() {
     a.click();
   };
 
-  const downloadAll = () => entries.forEach(downloadOne);
+  const downloadAll = async () => {
+    const toZip = entries.filter((e) => e.compressed);
+    if (!toZip.length) return;
+
+    const zip = new JSZip();
+    const total = toZip.length;
+
+    setZipProgress({ phase: "packing", packed: 0, total, percent: 0 });
+
+    for (let i = 0; i < toZip.length; i++) {
+      const entry = toZip[i];
+      if (!entry.compressed) continue;
+      const ext = entry.original.name.split(".").pop() ?? "jpg";
+      const baseName = entry.original.name.replace(/\.[^.]+$/, "");
+      const fileName = `${baseName}-compressed.${ext}`;
+      const arrayBuffer = await entry.compressed.file.arrayBuffer();
+      zip.file(fileName, arrayBuffer);
+      const packed = i + 1;
+      setZipProgress({
+        phase: "packing",
+        packed,
+        total,
+        percent: Math.round((packed / total) * 70),
+      });
+    }
+
+    setZipProgress({ phase: "generating", packed: total, total, percent: 75 });
+
+    const blob = await zip.generateAsync({ type: "blob" }, (meta) => {
+      setZipProgress({
+        phase: "generating",
+        packed: total,
+        total,
+        percent: 75 + Math.round(meta.percent * 0.25),
+      });
+    });
+
+    setZipProgress({ phase: "done", packed: total, total, percent: 100 });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "compressed-images.zip";
+    a.click();
+    URL.revokeObjectURL(url);
+
+    setTimeout(() => setZipProgress(null), 1800);
+  };
 
   const removeEntry = (id: number) => {
     setEntries((prev) => {
@@ -142,6 +198,7 @@ export default function ImageCompressor() {
       });
       return [];
     });
+    setZipProgress(null);
   };
 
   const handleShareLink = async () => {
@@ -309,11 +366,54 @@ export default function ImageCompressor() {
             })}
           </div>
 
+          {zipProgress && (
+            <div className="bg-card border border-border rounded-xl p-4 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 font-medium text-foreground">
+                  <Archive className="w-4 h-4 text-primary" />
+                  {zipProgress.phase === "packing" && (
+                    <span>Packing files… {zipProgress.packed}/{zipProgress.total}</span>
+                  )}
+                  {zipProgress.phase === "generating" && (
+                    <span>Generating ZIP…</span>
+                  )}
+                  {zipProgress.phase === "done" && (
+                    <span className="text-emerald-600 dark:text-emerald-400">Download ready!</span>
+                  )}
+                </div>
+                <span className="text-xs font-mono text-muted-foreground">{zipProgress.percent}%</span>
+              </div>
+              <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    zipProgress.phase === "done"
+                      ? "bg-emerald-500"
+                      : "bg-primary"
+                  }`}
+                  style={{ width: `${zipProgress.percent}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-3">
             {allDone && anyCompressed && entries.length > 1 && (
-              <Button onClick={downloadAll} data-testid="button-download-all">
-                <Download className="w-4 h-4 mr-2" />
-                Download All ({entries.filter((e) => e.compressed).length})
+              <Button
+                onClick={downloadAll}
+                disabled={!!zipProgress && zipProgress.phase !== "done"}
+                data-testid="button-download-all"
+              >
+                {zipProgress && zipProgress.phase !== "done" ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Creating ZIP…
+                  </>
+                ) : (
+                  <>
+                    <Archive className="w-4 h-4 mr-2" />
+                    Download ZIP ({entries.filter((e) => e.compressed).length})
+                  </>
+                )}
               </Button>
             )}
             <Button variant="ghost" onClick={reset}>
