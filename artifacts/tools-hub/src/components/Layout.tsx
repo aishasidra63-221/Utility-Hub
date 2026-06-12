@@ -76,8 +76,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span className="text-sm font-extrabold tracking-tight">ToolsHub</span>
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-0.5" aria-label="Tools navigation">
+          {/* Desktop nav — only on large screens */}
+          <nav className="hidden lg:flex items-center gap-0.5" aria-label="Tools navigation">
             {tools.map((tool) => (
               <Link
                 key={tool.href}
@@ -117,10 +117,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Settings className="w-4 h-4" />
               </Button>
             </Link>
+            {/* Hamburger — visible on mobile & tablet, hidden on large screens */}
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden w-8 h-8 text-muted-foreground hover:text-foreground"
+              className="lg:hidden w-8 h-8 text-muted-foreground hover:text-foreground"
               onClick={() => setMobileOpen(!mobileOpen)}
               data-testid="button-mobile-menu"
               aria-label="Toggle menu"
