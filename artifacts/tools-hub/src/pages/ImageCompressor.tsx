@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import imageCompression from "browser-image-compression";
 import JSZip from "jszip";
-import { Upload, Download, ImageIcon, X, RefreshCw, Zap, Archive } from "lucide-react";
+import { Upload, Download, ImageIcon, X, RefreshCw, Zap, Archive, SlidersHorizontal, Share2 } from "lucide-react";
 import { SpeedBadge } from "@/components/SpeedBadge";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ShareButton } from "@/components/ShareButton";
@@ -28,6 +29,7 @@ interface FileEntry {
   loading: boolean;
   error: string | null;
   processingMs: number | null;
+  showComparison: boolean;
 }
 
 interface ZipProgress {
@@ -96,6 +98,7 @@ export default function ImageCompressor() {
         loading: true,
         error: null,
         processingMs: null,
+        showComparison: false,
       }));
 
       setEntries((prev) => [...prev, ...newEntries]);
@@ -133,6 +136,28 @@ export default function ImageCompressor() {
     const baseName = entry.original.name.replace(/\.[^.]+$/, "");
     a.download = `${baseName}-compressed.${ext}`;
     a.click();
+  };
+
+  const shareOnWhatsApp = async (entry: FileEntry) => {
+    if (!entry.compressed) return;
+    const ext = entry.original.name.split(".").pop() ?? "jpg";
+    const baseName = entry.original.name.replace(/\.[^.]+$/, "");
+    const file = new File([entry.compressed.file], `${baseName}-compressed.${ext}`, { type: entry.compressed.file.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: "Shared via ToolsHub" });
+      } catch { /* user cancelled */ }
+    } else {
+      // Desktop fallback: download then open WhatsApp Web
+      downloadOne(entry);
+      window.open("https://web.whatsapp.com", "_blank");
+    }
+  };
+
+  const toggleComparison = (id: number) => {
+    setEntries((prev) =>
+      prev.map((e) => e.id === id ? { ...e, showComparison: !e.showComparison } : e)
+    );
   };
 
   const downloadAll = async () => {
@@ -342,16 +367,36 @@ export default function ImageCompressor() {
                     </div>
                     <div className="flex items-center gap-1">
                       {entry.compressed && (
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          onClick={() => downloadOne(entry)}
-                          data-testid="button-download-compressed"
-                          title="Download"
-                          className="h-8 w-8"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                        </Button>
+                        <>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => toggleComparison(entry.id)}
+                            title="Before / After compare"
+                            className={`h-8 w-8 ${entry.showComparison ? "text-primary border-primary bg-primary/10" : ""}`}
+                          >
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => shareOnWhatsApp(entry)}
+                            title="Share on WhatsApp"
+                            className="h-8 w-8 text-green-600 border-green-500/40 hover:bg-green-500/10"
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => downloadOne(entry)}
+                            data-testid="button-download-compressed"
+                            title="Download"
+                            className="h-8 w-8"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </Button>
+                        </>
                       )}
                       <Button
                         size="icon"
@@ -364,6 +409,19 @@ export default function ImageCompressor() {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Before/After Comparison Slider */}
+                  {entry.compressed && entry.showComparison && (
+                    <div className="px-4 pb-4">
+                      <BeforeAfterSlider
+                        beforeUrl={entry.preview}
+                        afterUrl={entry.compressed.url}
+                        beforeLabel={`Original · ${formatBytes(entry.original.size)}`}
+                        afterLabel={`Compressed · ${formatBytes(entry.compressed.file.size)}`}
+                      />
+                    </div>
+                  )}
+
                   {entry.loading && (
                     <div className="h-0.5 w-full bg-muted overflow-hidden">
                       <div className="h-full bg-primary/60 animate-pulse w-2/3" />
