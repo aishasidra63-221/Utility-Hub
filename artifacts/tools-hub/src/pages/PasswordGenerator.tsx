@@ -73,15 +73,22 @@ export default function PasswordGenerator() {
   const [copied,     setCopied]     = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
+  // Generate without incrementing (auto on settings change)
   const generate = useCallback(() => {
     const pw = generatePassword(length, opts);
     setPassword(pw);
     setCopied(false);
-    if (pw) increment();
-  }, [length, opts, increment]);
+    return pw;
+  }, [length, opts]);
 
-  useEffect(() => { generate(); }, []);
-  useEffect(() => { generate(); }, [length, opts]);
+  // Manual button press — generate AND count
+  const handleGenerate = useCallback(() => {
+    const pw = generate();
+    if (pw) increment();
+  }, [generate, increment]);
+
+  // Auto-generate when length/opts change (no counting)
+  useEffect(() => { generate(); }, [generate]);
 
   const copy = async () => {
     if (!password) return;
@@ -139,7 +146,7 @@ export default function PasswordGenerator() {
             {password || <span className="text-muted-foreground/50 text-lg">—</span>}
           </p>
           <div className="flex items-center gap-3 shrink-0">
-            <Button size="lg" variant="outline" onClick={generate} className="gap-2">
+            <Button size="lg" variant="outline" onClick={handleGenerate} className="gap-2">
               <RefreshCw className="w-4 h-4" />
               Regenerate
             </Button>
@@ -244,7 +251,7 @@ export default function PasswordGenerator() {
 
       {/* Generate button */}
       <div className="mt-6 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-        <Button className="flex-1 sm:flex-none sm:min-w-[220px] h-12 text-base" onClick={generate}>
+        <Button className="flex-1 sm:flex-none sm:min-w-[220px] h-12 text-base" onClick={handleGenerate}>
           <RefreshCw className="w-5 h-5 mr-2" />
           Generate New Password
         </Button>

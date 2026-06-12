@@ -246,7 +246,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed mb-5">
-            Seven powerful utilities that run entirely in your browser.
+            10 powerful utilities that run entirely in your browser.
             Upload, process, download — done in seconds.
           </p>
 
