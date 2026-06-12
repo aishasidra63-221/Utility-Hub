@@ -57,6 +57,22 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    target: "esnext",
+    minify: "esbuild",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom"],
+          "vendor-zip":   ["jszip"],
+          "vendor-pdf":   ["pdfjs-dist"],
+          "vendor-heic":  ["heic2any"],
+          "vendor-ui":    ["@radix-ui/react-slider", "@radix-ui/react-tooltip"],
+        },
+      },
+    },
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom", "wouter", "@tanstack/react-query"],
   },
   server: {
     port,

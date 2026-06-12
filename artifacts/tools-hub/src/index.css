@@ -355,4 +355,46 @@
     background: hsl(var(--primary) / 0.35);
     animation: pulse-ring 2s ease-in-out infinite;
   }
+
+  /* ── Performance & smoothness ── */
+
+  /* GPU-accelerate card hover transforms */
+  .card-glow {
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeSpeed;
+  }
+
+  /* Instant page transitions - no layout jank */
+  #root {
+    isolation: isolate;
+  }
+
+  /* Respect reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .card-glow {
+      transition: none !important;
+    }
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  /* Faster hover transitions for interactive elements */
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
 }

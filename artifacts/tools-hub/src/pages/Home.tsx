@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 import { Link } from "wouter";
 import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
@@ -163,7 +163,7 @@ const FEATURES = [
   { icon: Smartphone,  label: "Works Everywhere", sub: "Desktop & mobile" },
 ];
 
-function ToolCard({
+const ToolCard = memo(function ToolCard({
   tool,
   count,
   isFavourite,
@@ -222,7 +222,7 @@ function ToolCard({
       </div>
     </Link>
   );
-}
+});
 
 export default function Home() {
   useSEO({
