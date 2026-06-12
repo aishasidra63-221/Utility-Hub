@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Sun, Moon, Monitor, Wrench, Menu, X, Settings } from "lucide-react";
+import { Sun, Moon, Monitor, Zap, Menu, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/useSettings";
 
@@ -17,6 +17,7 @@ const tools = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [location] = useLocation();
 
   useEffect(() => {
@@ -37,33 +38,54 @@ export function Layout({ children }: { children: React.ReactNode }) {
     }
   }, [theme]);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const cycleTheme = () => {
     const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
     setTheme(next);
   };
 
-  const themeIcon = theme === "dark" ? <Sun className="w-4 h-4" /> : theme === "light" ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />;
+  const themeIcon =
+    theme === "dark"   ? <Sun className="w-4 h-4" /> :
+    theme === "light"  ? <Moon className="w-4 h-4" /> :
+                         <Monitor className="w-4 h-4" />;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      {/* ── Header ── */}
+      <header
+        className={`sticky top-0 z-50 border-b transition-all duration-200 ${
+          scrolled
+            ? "border-border bg-background/80 backdrop-blur-xl shadow-sm"
+            : "border-transparent bg-background/60 backdrop-blur-md"
+        }`}
+      >
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-foreground hover:text-primary transition-colors">
-            <Wrench className="w-5 h-5 text-primary" />
-            <span className="text-sm font-bold tracking-tight">ToolsHub</span>
+          {/* Logo */}
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-bold text-foreground hover:text-primary transition-colors group"
+          >
+            <div className="p-1.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+              <Zap className="w-4 h-4 text-primary" />
+            </div>
+            <span className="text-sm font-extrabold tracking-tight">ToolsHub</span>
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1" aria-label="Tools navigation">
+          <nav className="hidden md:flex items-center gap-0.5" aria-label="Tools navigation">
             {tools.map((tool) => (
               <Link
                 key={tool.href}
                 href={tool.href}
                 data-testid={`nav-link-${tool.href.slice(1)}`}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
                   location === tool.href
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 }`}
               >
@@ -80,7 +102,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               data-testid="button-toggle-theme"
               aria-label={`Theme: ${theme}. Click to cycle.`}
               title={`Theme: ${theme}`}
-              className="w-8 h-8"
+              className="w-8 h-8 text-muted-foreground hover:text-foreground"
             >
               {themeIcon}
             </Button>
@@ -90,7 +112,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 size="icon"
                 data-testid="button-settings"
                 aria-label="Settings"
-                className={`w-8 h-8 ${location === "/settings" ? "text-primary" : ""}`}
+                className={`w-8 h-8 ${location === "/settings" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <Settings className="w-4 h-4" />
               </Button>
@@ -98,7 +120,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden w-8 h-8"
+              className="md:hidden w-8 h-8 text-muted-foreground hover:text-foreground"
               onClick={() => setMobileOpen(!mobileOpen)}
               data-testid="button-mobile-menu"
               aria-label="Toggle menu"
@@ -110,14 +132,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-border bg-background px-4 py-3 flex flex-col gap-1">
+          <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl px-4 py-3 flex flex-col gap-1">
             {tools.map((tool) => (
               <Link
                 key={tool.href}
                 href={tool.href}
                 onClick={() => setMobileOpen(false)}
                 data-testid={`mobile-nav-link-${tool.href.slice(1)}`}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   location === tool.href
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -126,32 +148,49 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {tool.label}
               </Link>
             ))}
-            <Link href="/settings" onClick={() => setMobileOpen(false)} className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${location === "/settings" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}>
-              <Settings className="w-4 h-4" />Settings
+            <Link
+              href="/settings"
+              onClick={() => setMobileOpen(false)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                location === "/settings"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              Settings
             </Link>
           </div>
         )}
       </header>
 
-      {/* Main */}
+      {/* ── Main ── */}
       <main className="flex-1">{children}</main>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-background py-8">
+      {/* ── Footer ── */}
+      <footer className="border-t border-border bg-card/50 py-10 mt-8">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <Wrench className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold">ToolsHub</span>
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <Zap className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <span className="text-sm font-extrabold tracking-tight text-foreground">ToolsHub</span>
               <span className="text-xs text-muted-foreground">— Free online tools, zero friction</span>
             </div>
-            <nav className="flex flex-wrap justify-center gap-x-4 gap-y-1" aria-label="Footer tools">
+            <nav className="flex flex-wrap justify-center gap-x-5 gap-y-1.5" aria-label="Footer tools">
               {tools.map((tool) => (
-                <Link key={tool.href} href={tool.href} className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
                   {tool.label}
                 </Link>
               ))}
-              <Link href="/settings" className="text-xs text-muted-foreground hover:text-primary transition-colors">Settings</Link>
+              <Link href="/settings" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                Settings
+              </Link>
             </nav>
           </div>
         </div>
