@@ -18,6 +18,9 @@ const PasswordGenerator   = lazy(() => import("@/pages/PasswordGenerator"));
 const UnitConverter       = lazy(() => import("@/pages/UnitConverter"));
 const ColorPalette        = lazy(() => import("@/pages/ColorPalette"));
 const HeicConverter       = lazy(() => import("@/pages/HeicConverter"));
+const ESignature      = lazy(() => import("@/pages/ESignature"));
+const OcrTool         = lazy(() => import("@/pages/OcrTool"));
+const PdfAnnotator    = lazy(() => import("@/pages/PdfAnnotator"));
 const Settings        = lazy(() => import("@/pages/Settings"));
 const PrivacyPolicy   = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("@/pages/TermsConditions"));
@@ -84,6 +87,9 @@ function Router() {
           <Route path="/unit-converter"       component={UnitConverter} />
           <Route path="/color-palette"       component={ColorPalette} />
           <Route path="/heic-converter"      component={HeicConverter} />
+          <Route path="/e-signature"         component={ESignature} />
+          <Route path="/ocr-tool"            component={OcrTool} />
+          <Route path="/pdf-annotator"       component={PdfAnnotator} />
           <Route path="/settings"          component={Settings} />
           <Route path="/privacy-policy"    component={PrivacyPolicy} />
           <Route path="/terms"             component={TermsConditions} />
