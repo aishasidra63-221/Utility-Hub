@@ -131,14 +131,37 @@ export default function HeicConverter() {
         onDrop={(e) => { e.preventDefault(); setDragOver(false); addFiles([...e.dataTransfer.files]); }}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
-        onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-colors mb-6 ${
-          dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/40"
+        className={`relative rounded-2xl py-14 px-8 text-center mb-6 overflow-hidden select-none ${
+          dragOver ? "dropzone-active" : "dropzone-idle"
         }`}
       >
-        <Smartphone className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-        <p className="text-sm font-semibold text-foreground">Drop HEIC files here</p>
-        <p className="text-xs text-muted-foreground mt-1">From iPhone or iPad · .heic / .heif · Batch supported</p>
+        {/* Corner brackets */}
+        <span className={`absolute top-3 left-3 w-5 h-5 border-t-[2.5px] border-l-[2.5px] rounded-tl transition-colors duration-200 ${dragOver ? "border-primary" : "border-primary/40"}`} />
+        <span className={`absolute top-3 right-3 w-5 h-5 border-t-[2.5px] border-r-[2.5px] rounded-tr transition-colors duration-200 ${dragOver ? "border-primary" : "border-primary/40"}`} />
+        <span className={`absolute bottom-3 left-3 w-5 h-5 border-b-[2.5px] border-l-[2.5px] rounded-bl transition-colors duration-200 ${dragOver ? "border-primary" : "border-primary/40"}`} />
+        <span className={`absolute bottom-3 right-3 w-5 h-5 border-b-[2.5px] border-r-[2.5px] rounded-br transition-colors duration-200 ${dragOver ? "border-primary" : "border-primary/40"}`} />
+
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className={`inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 cursor-pointer shadow-lg active:scale-95 ${
+            dragOver ? "bg-primary scale-105 shadow-primary/40" : "bg-primary hover:bg-primary/90 hover:scale-[1.02] shadow-primary/25"
+          }`}
+        >
+          <Smartphone className="w-4 h-4" />
+          Select HEIC Files
+        </button>
+
+        <p className={`mt-4 text-xs transition-colors duration-200 ${dragOver ? "text-primary font-medium" : "text-muted-foreground"}`}>
+          {dragOver ? "Release to upload" : "or drop files here"}
+        </p>
+
+        <div className="flex items-center justify-center gap-1.5 mt-4 flex-wrap">
+          {[".heic", ".heif"].map((b) => (
+            <span key={b} className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-colors duration-200 ${dragOver ? "bg-primary/15 text-primary border-primary/30" : "bg-muted text-muted-foreground border-border"}`}>{b}</span>
+          ))}
+          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-colors duration-200 ${dragOver ? "bg-primary/15 text-primary border-primary/30" : "bg-muted text-muted-foreground border-border"}`}>Batch OK</span>
+        </div>
         <input ref={inputRef} type="file" accept=".heic,.heif,image/heic,image/heif" multiple className="hidden"
           onChange={(e) => { if (e.target.files) addFiles([...e.target.files]); }} />
       </div>

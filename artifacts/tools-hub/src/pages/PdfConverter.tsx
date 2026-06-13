@@ -1047,16 +1047,21 @@ function PdfDrop({ label, sub, onClick, onDrop, testId, children }: {
   const [over, setOver] = useState(false);
   return (
     <div
-      onClick={onClick}
       onDrop={(e) => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files[0]; if (f) onDrop(f); }}
       onDragOver={(e) => { e.preventDefault(); setOver(true); }}
       onDragLeave={() => setOver(false)}
       data-testid={testId}
-      className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${over ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/30"}`}
+      className={`relative rounded-2xl py-14 px-8 text-center overflow-hidden select-none ${over ? "dropzone-active" : "dropzone-idle"}`}
     >
-      <FileText className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-      <p className="text-sm font-medium text-foreground">{label}</p>
-      <p className="text-xs text-muted-foreground mt-1">{sub ?? "PDF files only · click or drag & drop"}</p>
+      <span className={`absolute top-3 left-3 w-5 h-5 border-t-[2.5px] border-l-[2.5px] rounded-tl transition-colors duration-200 ${over ? "border-primary" : "border-primary/40"}`} />
+      <span className={`absolute top-3 right-3 w-5 h-5 border-t-[2.5px] border-r-[2.5px] rounded-tr transition-colors duration-200 ${over ? "border-primary" : "border-primary/40"}`} />
+      <span className={`absolute bottom-3 left-3 w-5 h-5 border-b-[2.5px] border-l-[2.5px] rounded-bl transition-colors duration-200 ${over ? "border-primary" : "border-primary/40"}`} />
+      <span className={`absolute bottom-3 right-3 w-5 h-5 border-b-[2.5px] border-r-[2.5px] rounded-br transition-colors duration-200 ${over ? "border-primary" : "border-primary/40"}`} />
+      <button type="button" onClick={onClick} className={`inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 cursor-pointer shadow-lg active:scale-95 ${over ? "bg-primary scale-105 shadow-primary/40" : "bg-primary hover:bg-primary/90 hover:scale-[1.02] shadow-primary/25"}`}>
+        <FileText className="w-4 h-4" />
+        {label}
+      </button>
+      <p className={`mt-4 text-xs transition-colors duration-200 ${over ? "text-primary font-medium" : "text-muted-foreground"}`}>{over ? "Release to upload" : (sub ?? "PDF files only · or drop here")}</p>
       {children}
     </div>
   );
@@ -1068,16 +1073,21 @@ function ImageDrop({ onClick, onDrop, testId, children }: {
   const [over, setOver] = useState(false);
   return (
     <div
-      onClick={onClick}
       onDrop={(e) => { e.preventDefault(); setOver(false); const f = e.dataTransfer.files[0]; if (f) onDrop(f); }}
       onDragOver={(e) => { e.preventDefault(); setOver(true); }}
       onDragLeave={() => setOver(false)}
       data-testid={testId}
-      className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors ${over ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/30"}`}
+      className={`relative rounded-2xl py-14 px-8 text-center overflow-hidden select-none ${over ? "dropzone-active" : "dropzone-idle"}`}
     >
-      <Image className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-      <p className="text-sm font-medium text-foreground">Drop images here or click to upload</p>
-      <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP · multiple files allowed</p>
+      <span className={`absolute top-3 left-3 w-5 h-5 border-t-[2.5px] border-l-[2.5px] rounded-tl transition-colors duration-200 ${over ? "border-primary" : "border-primary/40"}`} />
+      <span className={`absolute top-3 right-3 w-5 h-5 border-t-[2.5px] border-r-[2.5px] rounded-tr transition-colors duration-200 ${over ? "border-primary" : "border-primary/40"}`} />
+      <span className={`absolute bottom-3 left-3 w-5 h-5 border-b-[2.5px] border-l-[2.5px] rounded-bl transition-colors duration-200 ${over ? "border-primary" : "border-primary/40"}`} />
+      <span className={`absolute bottom-3 right-3 w-5 h-5 border-b-[2.5px] border-r-[2.5px] rounded-br transition-colors duration-200 ${over ? "border-primary" : "border-primary/40"}`} />
+      <button type="button" onClick={onClick} className={`inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl font-semibold text-sm text-white transition-all duration-200 cursor-pointer shadow-lg active:scale-95 ${over ? "bg-primary scale-105 shadow-primary/40" : "bg-primary hover:bg-primary/90 hover:scale-[1.02] shadow-primary/25"}`}>
+        <Image className="w-4 h-4" />
+        Select Images
+      </button>
+      <p className={`mt-4 text-xs transition-colors duration-200 ${over ? "text-primary font-medium" : "text-muted-foreground"}`}>{over ? "Release to upload" : "JPG, PNG, WebP · or drop here"}</p>
       {children}
     </div>
   );
