@@ -96,8 +96,8 @@ export default function JsonFormatter() {
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">
-        <div className="relative">
-          <div className="text-center">
+        <div className="flex flex-col items-center text-center gap-3">
+          <div>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
               <Braces className="w-3.5 h-3.5" />
               <span>Developer Tools</span>
@@ -108,17 +108,15 @@ export default function JsonFormatter() {
               Beautify, minify, and validate JSON. 100% in your browser — your data never leaves.
             </p>
           </div>
-          <div className="absolute top-0 right-0">
-            <ShareButton
-              onCopy={async () => {
-                await navigator.clipboard.writeText(window.location.href);
-                setLinkCopied(true);
-                setTimeout(() => setLinkCopied(false), 2500);
-              }}
-              copied={linkCopied}
-              label="Share this tool"
-            />
-          </div>
+          <ShareButton
+            onCopy={async () => {
+              await navigator.clipboard.writeText(window.location.href);
+              setLinkCopied(true);
+              setTimeout(() => setLinkCopied(false), 2500);
+            }}
+            copied={linkCopied}
+            label="Share this tool"
+          />
         </div>
       </div>
 

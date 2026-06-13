@@ -255,8 +255,8 @@ export default function ImageConverter() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <div className="relative">
-          <div className="text-center">
+        <div className="flex flex-col items-center text-center gap-3">
+          <div>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
               <ArrowLeftRight className="w-3.5 h-3.5" />
               <span>Image Tools</span>
@@ -267,9 +267,7 @@ export default function ImageConverter() {
               Convert JPG, PNG, and WebP in bulk — instantly in your browser. Nothing uploaded.
             </p>
           </div>
-          <div className="absolute top-0 right-0">
-            <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
-          </div>
+          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

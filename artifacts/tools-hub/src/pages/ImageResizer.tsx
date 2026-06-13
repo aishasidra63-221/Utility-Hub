@@ -215,8 +215,8 @@ export default function ImageResizer() {
     <div className="max-w-3xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">
-        <div className="relative">
-          <div className="text-center">
+        <div className="flex flex-col items-center text-center gap-3">
+          <div>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
               <Maximize2 className="w-3.5 h-3.5" />
               <span>Image Tools</span>
@@ -225,9 +225,7 @@ export default function ImageResizer() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Image Resizer</h1>
             <p className="text-muted-foreground mt-2">Resize to any dimension — custom or preset. 100% in your browser.</p>
           </div>
-          <div className="absolute top-0 right-0">
-            <ShareButton onCopy={handleShare} copied={linkCopied} label="Share this tool" />
-          </div>
+          <ShareButton onCopy={handleShare} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

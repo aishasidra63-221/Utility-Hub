@@ -511,8 +511,8 @@ export default function PdfConverter() {
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">
-        <div className="relative">
-          <div className="text-center">
+        <div className="flex flex-col items-center text-center gap-3">
+          <div>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
               <FileText className="w-3.5 h-3.5" /><span>PDF Tools</span>
               <UsageCount count={count} label="operation" />
@@ -520,11 +520,9 @@ export default function PdfConverter() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground">PDF Tools</h1>
             <p className="text-muted-foreground mt-2">10 essential PDF tools — everything runs in your browser, nothing uploaded.</p>
           </div>
-          <div className="absolute top-0 right-0">
-            <Button variant="outline" size="sm" onClick={handleShareLink} className="gap-2 text-xs">
-              {shareCopied ? <><Upload className="w-3.5 h-3.5 text-emerald-500" />Copied!</> : <><Link2 className="w-3.5 h-3.5" />Share</>}
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" onClick={handleShareLink} className="gap-2 text-xs">
+            {shareCopied ? <><Upload className="w-3.5 h-3.5 text-emerald-500" />Copied!</> : <><Link2 className="w-3.5 h-3.5" />Share</>}
+          </Button>
         </div>
       </div>
 

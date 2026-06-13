@@ -93,8 +93,8 @@ export default function WhatsappLink() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <div className="relative">
-          <div className="text-center">
+        <div className="flex flex-col items-center text-center gap-3">
+          <div>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
               <MessageCircle className="w-3.5 h-3.5" />
               <span>WhatsApp Tools</span>
@@ -105,9 +105,7 @@ export default function WhatsappLink() {
               Create a direct chat link with an optional message. Generates a QR code automatically.
             </p>
           </div>
-          <div className="absolute top-0 right-0">
-            <ShareButton onCopy={copyShareLink} copied={linkCopied} />
-          </div>
+          <ShareButton onCopy={copyShareLink} copied={linkCopied} />
         </div>
       </div>
 

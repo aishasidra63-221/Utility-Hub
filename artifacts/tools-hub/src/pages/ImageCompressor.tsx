@@ -243,19 +243,19 @@ export default function ImageCompressor() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <div className="mb-8 relative">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
-            <ImageIcon className="w-3.5 h-3.5" />
-            <span>Image Tools</span>
-            <UsageCount count={count} label="compression" />
+      <div className="mb-8">
+        <div className="flex flex-col items-center text-center gap-3">
+          <div>
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span>Image Tools</span>
+              <UsageCount count={count} label="compression" />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Image Compressor</h1>
+            <p className="text-muted-foreground mt-2">
+              Drop images and they compress instantly. JPG, PNG, WebP — 100% in your browser.
+            </p>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Image Compressor</h1>
-          <p className="text-muted-foreground mt-2">
-            Drop images and they compress instantly. JPG, PNG, WebP — 100% in your browser.
-          </p>
-        </div>
-        <div className="absolute top-0 right-0">
           <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
