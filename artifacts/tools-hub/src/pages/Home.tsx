@@ -191,9 +191,6 @@ const ToolCard = memo(function ToolCard({
       data-testid={`card-tool-${tool.href.slice(1)}`}
       className="group relative flex flex-col gap-4 p-6 rounded-2xl border border-border bg-card card-glow overflow-hidden"
     >
-      {/* Colored top border accent */}
-      <div className={`absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r ${tool.borderGradient} opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
-
       {/* Subtle gradient wash on hover */}
       <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
 
