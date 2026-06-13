@@ -511,9 +511,9 @@ export default function PdfConverter() {
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-start justify-between flex-wrap gap-3">
+        <div className="flex flex-col items-center text-center gap-3">
           <div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
               <FileText className="w-3.5 h-3.5" /><span>PDF Tools</span>
               <UsageCount count={count} label="operation" />
             </div>

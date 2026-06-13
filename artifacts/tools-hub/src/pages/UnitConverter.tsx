@@ -143,7 +143,7 @@ export default function UnitConverter() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="mb-8 flex flex-col items-center text-center gap-4">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground mb-1">
             Unit Converter

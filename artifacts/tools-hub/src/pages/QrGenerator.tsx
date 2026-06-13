@@ -77,9 +77,9 @@ export default function QrGenerator() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <div className="flex items-start justify-between flex-wrap gap-3">
+        <div className="flex flex-col items-center text-center gap-3">
           <div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
               <QrCode className="w-3.5 h-3.5" />
               <span>QR Tools</span>
               <UsageCount count={count} label="QR generated" />
