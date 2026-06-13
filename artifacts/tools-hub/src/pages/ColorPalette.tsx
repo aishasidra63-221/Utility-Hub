@@ -138,8 +138,8 @@ export default function ColorPalette() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-10">
       {/* Header */}
-      <div className="mb-8 flex flex-col items-center text-center flex-wrap gap-3">
-        <div>
+      <div className="mb-8 relative">
+        <div className="text-center">
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
             <Palette className="w-3.5 h-3.5" />
             <span>Design Tools</span>
@@ -150,10 +150,12 @@ export default function ColorPalette() {
             Upload any image — get its dominant colors as hex codes instantly.
           </p>
         </div>
-        <ShareButton
-          onCopy={async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }}
-          copied={linkCopied} label="Share"
-        />
+        <div className="absolute top-0 right-0">
+          <ShareButton
+            onCopy={async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }}
+            copied={linkCopied} label="Share"
+          />
+        </div>
       </div>
 
       {/* Drop zone */}

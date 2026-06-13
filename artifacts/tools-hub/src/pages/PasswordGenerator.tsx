@@ -115,8 +115,8 @@ export default function PasswordGenerator() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
       {/* Header */}
-      <div className="mb-10 flex flex-col items-center text-center flex-wrap gap-4">
-        <div>
+      <div className="mb-10 relative">
+        <div className="text-center">
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
             <Key className="w-3.5 h-3.5" />
             <span>Security Tools</span>
@@ -127,15 +127,17 @@ export default function PasswordGenerator() {
             Strong, random passwords instantly. 100% in your browser — nothing leaves your device.
           </p>
         </div>
-        <ShareButton
-          onCopy={async () => {
-            await navigator.clipboard.writeText(window.location.href);
-            setLinkCopied(true);
-            setTimeout(() => setLinkCopied(false), 2500);
-          }}
-          copied={linkCopied}
-          label="Share"
-        />
+        <div className="absolute top-0 right-0">
+          <ShareButton
+            onCopy={async () => {
+              await navigator.clipboard.writeText(window.location.href);
+              setLinkCopied(true);
+              setTimeout(() => setLinkCopied(false), 2500);
+            }}
+            copied={linkCopied}
+            label="Share"
+          />
+        </div>
       </div>
 
       {/* Password display — full width */}

@@ -285,8 +285,8 @@ export default function ImageCropper() {
     <div className="max-w-3xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex flex-col items-center text-center gap-3">
-          <div>
+        <div className="relative">
+          <div className="text-center">
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
               <ImageIcon className="w-3.5 h-3.5" />
               <span>Image Tools</span>
@@ -297,15 +297,17 @@ export default function ImageCropper() {
               Upload, drag to select your area, download. JPG, PNG, WebP — 100% in your browser.
             </p>
           </div>
-          <ShareButton
-            onCopy={async () => {
-              await navigator.clipboard.writeText(window.location.href);
-              setLinkCopied(true);
-              setTimeout(() => setLinkCopied(false), 2500);
-            }}
-            copied={linkCopied}
-            label="Share this tool"
-          />
+          <div className="absolute top-0 right-0">
+            <ShareButton
+              onCopy={async () => {
+                await navigator.clipboard.writeText(window.location.href);
+                setLinkCopied(true);
+                setTimeout(() => setLinkCopied(false), 2500);
+              }}
+              copied={linkCopied}
+              label="Share this tool"
+            />
+          </div>
         </div>
       </div>
 
