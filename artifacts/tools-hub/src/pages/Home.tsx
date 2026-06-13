@@ -21,6 +21,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30",
     accentColor: "group-hover:text-blue-500",
+    borderGradient: "from-blue-500 to-cyan-400",
   },
   {
     href: "/image-converter",
@@ -33,6 +34,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-pink-500 to-rose-600 shadow-lg shadow-pink-500/30",
     accentColor: "group-hover:text-pink-500",
+    borderGradient: "from-pink-500 to-rose-400",
   },
   {
     href: "/image-resizer",
@@ -45,6 +47,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-cyan-500 to-teal-600 shadow-lg shadow-cyan-500/30",
     accentColor: "group-hover:text-cyan-500",
+    borderGradient: "from-cyan-500 to-teal-400",
   },
   {
     href: "/image-cropper",
@@ -57,6 +60,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-sky-500 to-indigo-600 shadow-lg shadow-sky-500/30",
     accentColor: "group-hover:text-sky-500",
+    borderGradient: "from-sky-500 to-indigo-400",
   },
   {
     href: "/password-generator",
@@ -69,6 +73,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg shadow-emerald-500/30",
     accentColor: "group-hover:text-emerald-500",
+    borderGradient: "from-emerald-500 to-green-400",
   },
   {
     href: "/unit-converter",
@@ -81,6 +86,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/30",
     accentColor: "group-hover:text-violet-500",
+    borderGradient: "from-violet-500 to-indigo-400",
   },
   {
     href: "/color-palette",
@@ -93,6 +99,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-fuchsia-500 to-pink-600 shadow-lg shadow-fuchsia-500/30",
     accentColor: "group-hover:text-fuchsia-500",
+    borderGradient: "from-fuchsia-500 to-pink-400",
   },
   {
     href: "/heic-converter",
@@ -105,6 +112,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg shadow-orange-500/30",
     accentColor: "group-hover:text-orange-500",
+    borderGradient: "from-orange-500 to-amber-400",
   },
   {
     href: "/pdf-converter",
@@ -117,6 +125,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-red-500 to-rose-600 shadow-lg shadow-red-500/30",
     accentColor: "group-hover:text-red-500",
+    borderGradient: "from-red-500 to-rose-400",
   },
   {
     href: "/qr-generator",
@@ -129,6 +138,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg shadow-teal-500/30",
     accentColor: "group-hover:text-teal-500",
+    borderGradient: "from-teal-500 to-emerald-400",
   },
   {
     href: "/text-cleaner",
@@ -141,6 +151,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-yellow-500 to-orange-500 shadow-lg shadow-yellow-500/30",
     accentColor: "group-hover:text-orange-500",
+    borderGradient: "from-yellow-400 to-orange-500",
   },
   {
     href: "/whatsapp-link",
@@ -153,6 +164,7 @@ const ALL_TOOLS = [
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-green-500 to-lime-600 shadow-lg shadow-green-500/30",
     accentColor: "group-hover:text-green-500",
+    borderGradient: "from-green-500 to-lime-400",
   },
 ];
 
@@ -179,6 +191,9 @@ const ToolCard = memo(function ToolCard({
       data-testid={`card-tool-${tool.href.slice(1)}`}
       className="group relative flex flex-col gap-4 p-6 rounded-2xl border border-border bg-card card-glow overflow-hidden"
     >
+      {/* Colored top border accent */}
+      <div className={`absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r ${tool.borderGradient} opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
+
       {/* Subtle gradient wash on hover */}
       <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
 
