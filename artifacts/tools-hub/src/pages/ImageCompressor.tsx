@@ -4,6 +4,7 @@ import JSZip from "jszip";
 import { Upload, Download, ImageIcon, X, RefreshCw, Zap, Archive, SlidersHorizontal, Share2 } from "lucide-react";
 import { SpeedBadge } from "@/components/SpeedBadge";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ShareButton } from "@/components/ShareButton";
@@ -259,24 +260,17 @@ export default function ImageCompressor() {
         </div>
       </div>
 
-      <div
+      <ImageDropZone
+        dragOver={dragOver}
         onDrop={onDrop}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onClick={() => inputRef.current?.click()}
-        data-testid="dropzone-image"
-        className={`rounded-2xl p-10 text-center cursor-pointer mb-6 outline-none ${
-          dragOver ? "dropzone-active" : "dropzone-idle"
-        }`}
+        testId="dropzone-image"
+        title="Drop images — compresses instantly"
+        subtitle="Multiple files OK"
+        badges={["JPG", "PNG", "WebP"]}
       >
-        <div className={`flex items-center justify-center gap-2 mb-3 transition-transform duration-200 ${dragOver ? "scale-110" : ""}`}>
-          <Upload className={`w-9 h-9 transition-colors duration-200 ${dragOver ? "text-primary" : "text-muted-foreground/60"}`} />
-          <Zap className={`w-5 h-5 transition-colors duration-200 ${dragOver ? "text-primary" : "text-primary/70"}`} />
-        </div>
-        <p className={`text-sm font-semibold transition-colors duration-200 ${dragOver ? "text-primary" : "text-foreground"}`}>
-          Drop images — compresses instantly
-        </p>
-        <p className="text-xs text-muted-foreground mt-1.5">JPG, PNG, or WebP · Multiple files OK</p>
         <input
           ref={inputRef}
           type="file"
@@ -286,7 +280,7 @@ export default function ImageCompressor() {
           data-testid="input-image-file"
           onChange={(e) => e.target.files && handleFiles(e.target.files)}
         />
-      </div>
+      </ImageDropZone>
 
       {entries.length > 0 && (
         <div className="space-y-6">

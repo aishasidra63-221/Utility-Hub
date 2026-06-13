@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { ArrowLeftRight, Upload, Download, X, RefreshCw, Zap, Check } from "lucide-react";
+import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ShareButton } from "@/components/ShareButton";
@@ -314,23 +315,16 @@ export default function ImageConverter() {
       </div>
 
       {/* Drop zone */}
-      <div
+      <ImageDropZone
+        dragOver={dragOver}
         onDrop={onDrop}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors mb-6 ${
-          dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/50"
-        }`}
+        title={<>Drop images — converts to <span className="text-primary font-semibold">{targetFmt.label}</span> instantly</>}
+        subtitle="Multiple files OK"
+        badges={["JPG", "PNG", "WebP", "GIF", "BMP"]}
       >
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Upload className="w-8 h-8 text-muted-foreground" />
-          <Zap className="w-5 h-5 text-primary" />
-        </div>
-        <p className="text-sm font-medium text-foreground">
-          Drop images — converts to <span className="text-primary font-semibold">{targetFmt.label}</span> instantly
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP · Multiple files OK</p>
         <input
           ref={inputRef}
           type="file"
@@ -339,7 +333,7 @@ export default function ImageConverter() {
           className="hidden"
           onChange={(e) => e.target.files && handleFiles(e.target.files)}
         />
-      </div>
+      </ImageDropZone>
 
       {/* Results */}
       {entries.length > 0 && (

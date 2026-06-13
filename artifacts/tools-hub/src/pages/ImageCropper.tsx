@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, Download, X, ImageIcon, Move } from "lucide-react";
+import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
@@ -310,7 +311,8 @@ export default function ImageCropper() {
 
       {/* Drop zone */}
       {!loaded ? (
-        <div
+        <ImageDropZone
+          dragOver={dragOver}
           onDrop={(e) => {
             e.preventDefault();
             setDragOver(false);
@@ -320,15 +322,10 @@ export default function ImageCropper() {
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onClick={() => inputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${
-            dragOver
-              ? "border-primary bg-primary/5"
-              : "border-border hover:border-primary/50 hover:bg-muted/50"
-          }`}
+          title="Drop an image here to crop"
+          subtitle="One image at a time"
+          badges={["JPG", "PNG", "WebP"]}
         >
-          <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-sm font-medium text-foreground">Drop an image here to crop</p>
-          <p className="text-xs text-muted-foreground mt-1">JPG, PNG, or WebP</p>
           <input
             ref={inputRef}
             type="file"
@@ -336,7 +333,7 @@ export default function ImageCropper() {
             className="hidden"
             onChange={(e) => e.target.files?.[0] && loadImage(e.target.files[0])}
           />
-        </div>
+        </ImageDropZone>
       ) : (
         <div className="space-y-4">
           {/* Aspect ratio selector */}
