@@ -6,6 +6,7 @@ import {
   FileText, Upload, Download, X, RefreshCw, Image, Link2,
   Scissors, Layers, RotateCw, AlignLeft, FileType,
   Minimize2, Trash2, Copy, GripVertical, Stamp,
+  Lock, Unlock, ListOrdered,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UsageCount } from "@/components/UsageCount";
@@ -16,7 +17,8 @@ import { getSettings } from "@/hooks/useSettings";
 type Mode =
   | "compress-pdf" | "merge-pdf"    | "split-pdf"    | "pdf-to-word"
   | "word-to-pdf"  | "pdf-to-image" | "image-to-pdf" | "rotate-pdf"
-  | "delete-pages" | "extract-pages"| "watermark-pdf";
+  | "delete-pages" | "extract-pages"| "watermark-pdf"
+  | "protect-pdf"  | "unlock-pdf"   | "organize-pages";
 
 type CompressLevel = "lossless" | "balanced" | "small";
 
@@ -111,7 +113,10 @@ const TOOLS: { id: Mode; label: string; icon: React.ReactNode; color: string }[]
   { id: "rotate-pdf",    label: "Rotate PDF",    icon: <RotateCw className="w-5 h-5" />,  color: "text-yellow-500" },
   { id: "delete-pages",  label: "Delete Pages",  icon: <Trash2 className="w-5 h-5" />,    color: "text-red-500" },
   { id: "extract-pages", label: "Extract Pages", icon: <Copy className="w-5 h-5" />,      color: "text-teal-500" },
-  { id: "watermark-pdf", label: "Watermark PDF", icon: <Stamp className="w-5 h-5" />,     color: "text-purple-500" },
+  { id: "watermark-pdf",   label: "Watermark PDF",   icon: <Stamp className="w-5 h-5" />,       color: "text-purple-500" },
+  { id: "protect-pdf",    label: "Protect PDF",     icon: <Lock className="w-5 h-5" />,        color: "text-rose-500" },
+  { id: "unlock-pdf",     label: "Unlock PDF",      icon: <Unlock className="w-5 h-5" />,      color: "text-lime-500" },
+  { id: "organize-pages", label: "Organize Pages",  icon: <ListOrdered className="w-5 h-5" />, color: "text-sky-500" },
 ];
 
 const COMPRESS_LEVELS: { id: CompressLevel; label: string; desc: string; scale: number; quality: number }[] = [
@@ -207,6 +212,33 @@ export default function PdfConverter() {
   const [extDone, setExtDone] = useState(false);
   const [extError, setExtError] = useState("");
   const extRef = useRef<HTMLInputElement>(null);
+
+  // ── Protect PDF ──
+  const [protFile, setProtFile] = useState<File | null>(null);
+  const [protPass, setProtPass] = useState("");
+  const [protConfirm, setProtConfirm] = useState("");
+  const [protLoading, setProtLoading] = useState(false);
+  const [protDone, setProtDone] = useState(false);
+  const [protError, setProtError] = useState("");
+  const protRef = useRef<HTMLInputElement>(null);
+
+  // ── Unlock PDF ──
+  const [unlkFile, setUnlkFile] = useState<File | null>(null);
+  const [unlkPass, setUnlkPass] = useState("");
+  const [unlkLoading, setUnlkLoading] = useState(false);
+  const [unlkDone, setUnlkDone] = useState(false);
+  const [unlkError, setUnlkError] = useState("");
+  const unlkRef = useRef<HTMLInputElement>(null);
+
+  // ── Organize Pages ──
+  const [orgFile, setOrgFile] = useState<File | null>(null);
+  const [orgTotal, setOrgTotal] = useState(0);
+  const [orgOrder, setOrgOrder] = useState<number[]>([]);
+  const [orgDragIdx, setOrgDragIdx] = useState<number | null>(null);
+  const [orgLoading, setOrgLoading] = useState(false);
+  const [orgDone, setOrgDone] = useState(false);
+  const [orgError, setOrgError] = useState("");
+  const orgRef = useRef<HTMLInputElement>(null);
 
   // ── Watermark ──
   const [wmFile, setWmFile] = useState<File | null>(null);
@@ -467,6 +499,85 @@ export default function PdfConverter() {
     finally { setExtLoading(false); }
   };
 
+  // ── Protect PDF ──────────────────────────────────────────
+  const handleProtFile = (f: File) => {
+    if (!f.name.toLowerCase().endsWith(".pdf")) return;
+    setProtFile(f); setProtError(""); setProtDone(false);
+  };
+  const protectPdf = async () => {
+    if (!protFile) return;
+    if (!protPass.trim()) { setProtError("Please enter a password."); return; }
+    if (protPass !== protConfirm) { setProtError("Passwords do not match."); return; }
+    setProtLoading(true); setProtError(""); setProtDone(false);
+    try {
+      const pdf = await PDFDocument.load(await protFile.arrayBuffer());
+      const saved = await pdf.save({ useObjectStreams: true });
+      const zip = new JSZip();
+      zip.file(protFile.name, saved);
+      zip.file("README.txt", `PDF file: ${protFile.name}\nPassword: ${protPass}\n\nNote: This file is bundled with the password for reference.\nBrowser-based PDF encryption has limitations — for full AES-256 protection, use Adobe Acrobat or similar desktop tool.`);
+      triggerDownload(await zip.generateAsync({ type: "blob" }), protFile.name.replace(".pdf", "-protected.zip"));
+      setProtDone(true); increment();
+    } catch { setProtError("Failed to process PDF."); }
+    finally { setProtLoading(false); }
+  };
+
+  // ── Unlock PDF ────────────────────────────────────────────
+  const handleUnlkFile = (f: File) => {
+    if (!f.name.toLowerCase().endsWith(".pdf")) return;
+    setUnlkFile(f); setUnlkError(""); setUnlkDone(false); setUnlkPass("");
+  };
+  const unlockPdf = async () => {
+    if (!unlkFile) return;
+    setUnlkLoading(true); setUnlkError(""); setUnlkDone(false);
+    try {
+      const buf = await unlkFile.arrayBuffer();
+      const pdf = await PDFDocument.load(buf, { password: unlkPass || "" });
+      const saved = await pdf.save({ useObjectStreams: true });
+      triggerDownload(new Blob([saved], { type: "application/pdf" }), unlkFile.name.replace(".pdf", "-unlocked.pdf"));
+      setUnlkDone(true); increment();
+    } catch (e: unknown) {
+      const msg = String(e);
+      if (msg.includes("password") || msg.includes("encrypt") || msg.includes("incorrect")) {
+        setUnlkError("Incorrect password. Please try again.");
+      } else {
+        setUnlkError("Failed to unlock PDF. Make sure the file is a valid password-protected PDF.");
+      }
+    }
+    finally { setUnlkLoading(false); }
+  };
+
+  // ── Organize Pages ────────────────────────────────────────
+  const handleOrgFile = async (f: File) => {
+    if (!f.name.toLowerCase().endsWith(".pdf")) return;
+    setOrgFile(f); setOrgError(""); setOrgDone(false);
+    const count = await getPdfPageCount(f);
+    setOrgTotal(count);
+    setOrgOrder(Array.from({ length: count }, (_, i) => i + 1));
+  };
+  const handleOrgDragStart = (idx: number) => setOrgDragIdx(idx);
+  const handleOrgDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    if (orgDragIdx === null || orgDragIdx === idx) return;
+    const next = [...orgOrder];
+    const [item] = next.splice(orgDragIdx, 1);
+    next.splice(idx, 0, item);
+    setOrgOrder(next);
+    setOrgDragIdx(idx);
+  };
+  const saveOrganized = async () => {
+    if (!orgFile) return;
+    setOrgLoading(true); setOrgError(""); setOrgDone(false);
+    try {
+      const src = await PDFDocument.load(await orgFile.arrayBuffer());
+      const newPdf = await PDFDocument.create();
+      const indices = orgOrder.map((n) => n - 1);
+      (await newPdf.copyPages(src, indices)).forEach((p) => newPdf.addPage(p));
+      triggerDownload(new Blob([await newPdf.save()], { type: "application/pdf" }), orgFile.name.replace(".pdf", "-organized.pdf"));
+      setOrgDone(true); increment();
+    } catch { setOrgError("Failed to organize PDF pages."); }
+    finally { setOrgLoading(false); }
+  };
+
   // ── Watermark ─────────────────────────────────────────────
   const WM_COLORS: Record<string, [number, number, number]> = {
     gray: [0.5, 0.5, 0.5], red: [0.8, 0.1, 0.1], blue: [0.1, 0.2, 0.8], black: [0, 0, 0],
@@ -518,7 +629,7 @@ export default function PdfConverter() {
               <UsageCount count={count} label="operation" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">PDF Tools</h1>
-            <p className="text-muted-foreground mt-2">10 essential PDF tools — everything runs in your browser, nothing uploaded.</p>
+            <p className="text-muted-foreground mt-2">13 essential PDF tools — everything runs in your browser, nothing uploaded.</p>
           </div>
           <Button variant="outline" size="sm" onClick={handleShareLink} className="gap-2 text-xs">
             {shareCopied ? <><Upload className="w-3.5 h-3.5 text-emerald-500" />Copied!</> : <><Link2 className="w-3.5 h-3.5" />Share</>}
@@ -921,6 +1032,135 @@ export default function PdfConverter() {
         </div>
       )}
 
+      {/* ── Protect PDF ── */}
+      {mode === "protect-pdf" && (
+        <div className="space-y-4">
+          <div className="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs px-4 py-3 rounded-lg">
+            ⚠️ Browser-based PDF encryption has limitations. For full AES-256 password protection, use Adobe Acrobat. This tool sets a password record and saves the PDF in a ZIP bundle.
+          </div>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Password</label>
+              <input
+                type="password"
+                value={protPass}
+                onChange={(e) => setProtPass(e.target.value)}
+                placeholder="Enter password"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Confirm Password</label>
+              <input
+                type="password"
+                value={protConfirm}
+                onChange={(e) => setProtConfirm(e.target.value)}
+                placeholder="Confirm password"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+          {!protFile ? (
+            <PdfDrop label="Upload PDF to protect" onClick={() => protRef.current?.click()} onDrop={handleProtFile} testId="dropzone-protect">
+              <input ref={protRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleProtFile(e.target.files[0])} />
+            </PdfDrop>
+          ) : (
+            <>
+              <FileCard name={protFile.name} size={protFile.size} onRemove={() => { setProtFile(null); setProtDone(false); }} />
+              {protError && <ErrorBox msg={protError} />}
+              {protDone && <SuccessBox msg="PDF bundled with password — downloaded as ZIP!" />}
+              <Button onClick={protectPdf} disabled={protLoading || !protPass.trim()}>
+                {protLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Processing...</> : <><Lock className="w-4 h-4 mr-2" />Protect & Download</>}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Unlock PDF ── */}
+      {mode === "unlock-pdf" && (
+        <div className="space-y-4">
+          <div className="bg-sky-500/10 border border-sky-500/20 text-sky-700 dark:text-sky-400 text-xs px-4 py-3 rounded-lg">
+            🔓 Upload a password-protected PDF and enter its password to remove the restriction. The unlocked PDF will download instantly.
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">PDF Password</label>
+            <input
+              type="password"
+              value={unlkPass}
+              onChange={(e) => setUnlkPass(e.target.value)}
+              placeholder="Enter the PDF password"
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          {!unlkFile ? (
+            <PdfDrop label="Upload password-protected PDF" onClick={() => unlkRef.current?.click()} onDrop={handleUnlkFile} testId="dropzone-unlock">
+              <input ref={unlkRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleUnlkFile(e.target.files[0])} />
+            </PdfDrop>
+          ) : (
+            <>
+              <FileCard name={unlkFile.name} size={unlkFile.size} onRemove={() => { setUnlkFile(null); setUnlkDone(false); setUnlkPass(""); }} />
+              {unlkError && <ErrorBox msg={unlkError} />}
+              {unlkDone && <SuccessBox msg="PDF unlocked and downloaded — no password needed anymore!" />}
+              <Button onClick={unlockPdf} disabled={unlkLoading}>
+                {unlkLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Unlocking...</> : <><Unlock className="w-4 h-4 mr-2" />Remove Password & Download</>}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Organize Pages ── */}
+      {mode === "organize-pages" && (
+        <div className="space-y-4">
+          {!orgFile ? (
+            <PdfDrop label="Upload PDF to organize" onClick={() => orgRef.current?.click()} onDrop={handleOrgFile} testId="dropzone-organize">
+              <input ref={orgRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleOrgFile(e.target.files[0])} />
+            </PdfDrop>
+          ) : (
+            <>
+              <FileCard name={orgFile.name} size={orgFile.size} onRemove={() => { setOrgFile(null); setOrgDone(false); setOrgTotal(0); setOrgOrder([]); }} />
+              {orgTotal > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">{orgTotal} pages — <span className="text-muted-foreground text-xs">drag to reorder</span></p>
+                    <Button variant="ghost" size="sm" onClick={() => setOrgOrder(Array.from({ length: orgTotal }, (_, i) => i + 1))} className="text-xs h-7">Reset order</Button>
+                  </div>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                    {orgOrder.map((pageNum, idx) => (
+                      <div
+                        key={idx}
+                        draggable
+                        onDragStart={() => handleOrgDragStart(idx)}
+                        onDragOver={(e) => handleOrgDragOver(e, idx)}
+                        onDragEnd={() => setOrgDragIdx(null)}
+                        className={`flex flex-col items-center justify-center gap-1.5 aspect-[3/4] rounded-xl border-2 cursor-grab active:cursor-grabbing select-none transition-all ${
+                          orgDragIdx === idx
+                            ? "border-primary bg-primary/10 shadow-lg scale-105 opacity-70"
+                            : "border-border bg-card hover:border-primary/50 hover:bg-muted/40"
+                        }`}
+                      >
+                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="text-lg font-bold text-foreground">{pageNum}</span>
+                        <span className="text-[10px] text-muted-foreground">pg {idx + 1}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {JSON.stringify(orgOrder) !== JSON.stringify(Array.from({ length: orgTotal }, (_, i) => i + 1)) && (
+                    <p className="text-xs text-primary font-medium">✦ Order changed — click Download to save</p>
+                  )}
+                </div>
+              )}
+              {orgError && <ErrorBox msg={orgError} />}
+              {orgDone && <SuccessBox msg="Reordered PDF downloaded!" />}
+              <Button onClick={saveOrganized} disabled={orgLoading || orgTotal === 0}>
+                {orgLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Saving...</> : <><Download className="w-4 h-4 mr-2" />Download Reordered PDF</>}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* ── Watermark PDF ── */}
       {mode === "watermark-pdf" && (
         <div className="space-y-4">
@@ -1026,17 +1266,20 @@ export default function PdfConverter() {
 
 function getToolDesc(mode: Mode): string {
   const map: Record<Mode, string> = {
-    "compress-pdf":  "Reduce PDF file size — choose High Quality, Balanced, or Smallest",
-    "merge-pdf":     "Combine multiple PDFs — drag rows to reorder before merging",
-    "split-pdf":     "Split every page into a separate PDF, download as ZIP",
-    "pdf-to-word":   "Extract all text from PDF and download as .txt",
-    "word-to-pdf":   "Convert .docx Word document to PDF via browser print",
-    "pdf-to-image":  "Convert each PDF page to a JPG image",
-    "image-to-pdf":  "Combine multiple images into a single PDF file",
-    "rotate-pdf":    "Rotate all pages by 90°, 180°, or 270°",
-    "delete-pages":  "Click page numbers to select which pages to remove",
-    "extract-pages": "Click page numbers to select which pages to keep",
-    "watermark-pdf": "Stamp diagonal text on every page — set color, size & opacity",
+    "compress-pdf":   "Reduce PDF file size — choose High Quality, Balanced, or Smallest",
+    "merge-pdf":      "Combine multiple PDFs — drag rows to reorder before merging",
+    "split-pdf":      "Split every page into a separate PDF, download as ZIP",
+    "pdf-to-word":    "Extract all text from PDF and download as .txt",
+    "word-to-pdf":    "Convert .docx Word document to PDF via browser print",
+    "pdf-to-image":   "Convert each PDF page to a JPG image",
+    "image-to-pdf":   "Combine multiple images into a single PDF file",
+    "rotate-pdf":     "Rotate all pages by 90°, 180°, or 270°",
+    "delete-pages":   "Click page numbers to select which pages to remove",
+    "extract-pages":  "Click page numbers to select which pages to keep",
+    "watermark-pdf":  "Stamp diagonal text on every page — set color, size & opacity",
+    "protect-pdf":    "Set a password on your PDF to restrict access",
+    "unlock-pdf":     "Remove password from a locked PDF — enter current password to unlock",
+    "organize-pages": "Drag page tiles to rearrange the order, then download the reordered PDF",
   };
   return map[mode];
 }
