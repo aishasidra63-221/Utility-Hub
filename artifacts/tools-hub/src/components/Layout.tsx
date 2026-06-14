@@ -21,6 +21,7 @@ const tools = [
   { href: "/qr-generator",     label: "QR Generator" },
   { href: "/text-cleaner",     label: "Text Cleaner" },
   { href: "/whatsapp-link",    label: "WhatsApp Link" },
+  { href: "/resume-builder",   label: "Resume Builder" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

@@ -4,7 +4,7 @@ import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
   ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
-  Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench, Heart,
+  Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench, FileUser,
 } from "lucide-react";
 
 import { useSEO } from "@/hooks/useSEO";
@@ -223,6 +223,20 @@ const ALL_TOOLS = [
     accentColor: "group-hover:text-orange-500",
     borderGradient: "from-yellow-400 to-orange-500",
   },
+  {
+    href: "/resume-builder",
+    id: "resume-builder",
+    icon: FileUser,
+    title: "Resume Builder",
+    description: "Create a professional resume with free templates. Fill in your details, preview live, and download as PDF.",
+    badge: "8 templates",
+    category: "utility" as Category,
+    gradient: "from-blue-500/15 to-indigo-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/30",
+    accentColor: "group-hover:text-blue-600",
+    borderGradient: "from-blue-500 to-indigo-400",
+  },
 ];
 
 const FEATURES = [
@@ -236,14 +250,14 @@ const ToolCard = memo(function ToolCard({
   tool,
   count,
   isFavourite,
-  isHearted,
-  onToggleHeart,
+  isStarred,
+  onToggleStar,
 }: {
   tool: (typeof ALL_TOOLS)[number];
   count: number;
   isFavourite: boolean;
-  isHearted: boolean;
-  onToggleHeart: (id: string) => void;
+  isStarred: boolean;
+  onToggleStar: (id: string) => void;
 }) {
   const Icon = tool.icon;
   return (
@@ -295,15 +309,15 @@ const ToolCard = memo(function ToolCard({
           <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1.5" />
         </div>
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleHeart(tool.id); }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleStar(tool.id); }}
           className={`p-1.5 rounded-full transition-all duration-200 ${
-            isHearted
-              ? "text-rose-500 bg-rose-500/10"
-              : "text-muted-foreground/40 hover:text-rose-400 hover:bg-rose-500/10"
+            isStarred
+              ? "text-yellow-500 bg-yellow-500/10"
+              : "text-muted-foreground/40 hover:text-yellow-400 hover:bg-yellow-500/10"
           }`}
-          aria-label={isHearted ? "Remove from favourites" : "Add to favourites"}
+          aria-label={isStarred ? "Remove from favourites" : "Add to favourites"}
         >
-          <Heart className={`w-4 h-4 ${isHearted ? "fill-current" : ""}`} />
+          <Star className={`w-4 h-4 ${isStarred ? "fill-current" : ""}`} />
         </button>
       </div>
     </Link>
@@ -319,15 +333,15 @@ export default function Home() {
 
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [activeCategory, setActiveCategory] = useState<Category>("all");
-  const [heartedIds, setHeartedIds] = useState<Set<string>>(() => {
+  const [starredIds, setStarredIds] = useState<Set<string>>(() => {
     try {
       const saved = localStorage.getItem("toolhub_favourites");
       return saved ? new Set(JSON.parse(saved)) : new Set();
     } catch { return new Set(); }
   });
 
-  const toggleHeart = (id: string) => {
-    setHeartedIds((prev) => {
+  const toggleStar = (id: string) => {
+    setStarredIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       localStorage.setItem("toolhub_favourites", JSON.stringify([...next]));
@@ -355,9 +369,9 @@ export default function Home() {
 
   const filteredTools = useMemo(() => {
     if (activeCategory === "all") return sortedTools;
-    if (activeCategory === "favourites") return sortedTools.filter((t) => heartedIds.has(t.id));
+    if (activeCategory === "favourites") return sortedTools.filter((t) => starredIds.has(t.id));
     return sortedTools.filter((t) => t.category === activeCategory);
-  }, [activeCategory, sortedTools, heartedIds]);
+  }, [activeCategory, sortedTools, starredIds]);
 
   const CATEGORY_TABS: { id: Category; label: string; icon: React.ElementType }[] = [
     { id: "all", label: "All", icon: Layers },
@@ -442,11 +456,11 @@ export default function Home() {
         </div>
 
         {/* ── Tool Grid ── */}
-        {activeCategory === "favourites" && heartedIds.size === 0 ? (
+        {activeCategory === "favourites" && starredIds.size === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Heart className="w-10 h-10 text-muted-foreground/30 mb-3" />
+            <Star className="w-10 h-10 text-muted-foreground/30 mb-3" />
             <p className="text-muted-foreground font-medium">No favourites yet</p>
-            <p className="text-sm text-muted-foreground/60 mt-1">Kisi bhi tool ke card mein ❤️ dabao</p>
+            <p className="text-sm text-muted-foreground/60 mt-1">Kisi bhi tool ke card mein ⭐ dabao</p>
           </div>
         ) : filteredTools.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -468,8 +482,8 @@ export default function Home() {
                     tool={tool}
                     count={counts[tool.id] ?? 0}
                     isFavourite={tool.id === topToolId}
-                    isHearted={heartedIds.has(tool.id)}
-                    onToggleHeart={toggleHeart}
+                    isStarred={starredIds.has(tool.id)}
+                    onToggleStar={toggleStar}
                   />
                 ))}
               </div>
@@ -490,8 +504,8 @@ export default function Home() {
                       tool={tool}
                       count={0}
                       isFavourite={false}
-                      isHearted={heartedIds.has(tool.id)}
-                      onToggleHeart={toggleHeart}
+                      isStarred={starredIds.has(tool.id)}
+                      onToggleStar={toggleStar}
                     />
                   ))}
                   {unusedTools.length % 3 === 2 && (
@@ -511,8 +525,8 @@ export default function Home() {
                 tool={tool}
                 count={counts[tool.id] ?? 0}
                 isFavourite={tool.id === topToolId}
-                isHearted={heartedIds.has(tool.id)}
-                onToggleHeart={toggleHeart}
+                isStarred={starredIds.has(tool.id)}
+                onToggleStar={toggleStar}
               />
             ))}
             {filteredTools.length % 3 === 2 && (

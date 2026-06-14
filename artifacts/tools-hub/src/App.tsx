@@ -25,6 +25,7 @@ const Settings        = lazy(() => import("@/pages/Settings"));
 const PrivacyPolicy   = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("@/pages/TermsConditions"));
 const FAQ             = lazy(() => import("@/pages/FAQ"));
+const ResumeBuilder   = lazy(() => import("@/pages/ResumeBuilder"));
 const NotFound        = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
@@ -90,6 +91,7 @@ function Router() {
           <Route path="/e-signature"         component={ESignature} />
           <Route path="/ocr-tool"            component={OcrTool} />
           <Route path="/pdf-annotator"       component={PdfAnnotator} />
+          <Route path="/resume-builder"      component={ResumeBuilder} />
           <Route path="/settings"          component={Settings} />
           <Route path="/privacy-policy"    component={PrivacyPolicy} />
           <Route path="/terms"             component={TermsConditions} />
