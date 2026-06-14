@@ -329,16 +329,16 @@ export default function Home() {
           {/* Feature badges */}
           <div className="flex flex-wrap justify-center gap-2 mb-5">
             <span className="inline-flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold px-3 py-1.5 rounded-full">
-              🔒 100% Browser-based
+              <ShieldCheck className="w-3.5 h-3.5" />
+              100% Browser-based
             </span>
             <span className="inline-flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-xs font-semibold px-3 py-1.5 rounded-full">
-              ⚡ Instant Processing
-            </span>
-            <span className="inline-flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-semibold px-3 py-1.5 rounded-full">
-              🆓 Completely Free
+              <Zap className="w-3.5 h-3.5" />
+              Instant Processing
             </span>
             <span className="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs font-semibold px-3 py-1.5 rounded-full">
-              📁 No File Uploads
+              <Globe className="w-3.5 h-3.5" />
+              No File Uploads
             </span>
           </div>
 
