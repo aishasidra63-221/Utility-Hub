@@ -326,6 +326,22 @@ export default function Home() {
             Upload, process, download — done in seconds.
           </p>
 
+          {/* Feature badges */}
+          <div className="flex flex-wrap justify-center gap-2 mb-5">
+            <span className="inline-flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold px-3 py-1.5 rounded-full">
+              🔒 100% Browser-based
+            </span>
+            <span className="inline-flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-xs font-semibold px-3 py-1.5 rounded-full">
+              ⚡ Instant Processing
+            </span>
+            <span className="inline-flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-semibold px-3 py-1.5 rounded-full">
+              🆓 Completely Free
+            </span>
+            <span className="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs font-semibold px-3 py-1.5 rounded-full">
+              📁 No File Uploads
+            </span>
+          </div>
+
           {totalUses > 0 && (
             <div className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/60 border border-border px-3 py-1.5 rounded-full">
               <Activity className="w-3.5 h-3.5 text-primary" />
