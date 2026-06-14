@@ -415,7 +415,7 @@ export default function Home() {
             ].map(({ icon: Icon, label }) => (
               <span
                 key={label}
-                className="inline-flex items-center gap-1.5 bg-primary text-white dark:bg-white/15 dark:text-white border border-primary/80 dark:border-white/20 text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm"
+                className="inline-flex items-center gap-1.5 bg-primary/12 text-primary dark:bg-white/10 dark:text-white border border-primary/30 dark:border-white/20 text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap"
               >
                 <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                 {label}
