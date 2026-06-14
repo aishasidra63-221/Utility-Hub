@@ -5,6 +5,7 @@ import {
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
   ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
   Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench, FileUser,
+  Eraser, Sparkles,
 } from "lucide-react";
 
 import { useSEO } from "@/hooks/useSEO";
@@ -237,6 +238,34 @@ const ALL_TOOLS = [
     accentColor: "group-hover:text-blue-600",
     borderGradient: "from-blue-500 to-indigo-400",
   },
+  {
+    href: "/background-remover",
+    id: "bg-remover",
+    icon: Eraser,
+    title: "Background Remover",
+    description: "Remove image backgrounds instantly in your browser. AI-powered, 100% private — no upload, no API needed.",
+    badge: "AI-powered",
+    category: "image" as Category,
+    gradient: "from-violet-500/15 to-purple-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/30",
+    accentColor: "group-hover:text-violet-500",
+    borderGradient: "from-violet-500 to-purple-400",
+  },
+  {
+    href: "/screenshot-beautifier",
+    id: "screenshot-beautifier",
+    icon: Sparkles,
+    title: "Screenshot Beautifier",
+    description: "Add beautiful gradient backgrounds, padding, shadows and rounded corners to your screenshots. Download as PNG.",
+    badge: "12 themes",
+    category: "image" as Category,
+    gradient: "from-pink-500/15 to-rose-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-pink-500 to-purple-600 shadow-lg shadow-pink-500/30",
+    accentColor: "group-hover:text-pink-500",
+    borderGradient: "from-pink-500 to-purple-400",
+  },
 ];
 
 const FEATURES = [
@@ -402,7 +431,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed mb-5">
-            12 powerful utilities that run entirely in your browser.
+            18 powerful utilities that run entirely in your browser.
             Upload, process, download — done in seconds.
           </p>
 

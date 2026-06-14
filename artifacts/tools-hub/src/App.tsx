@@ -25,8 +25,10 @@ const Settings        = lazy(() => import("@/pages/Settings"));
 const PrivacyPolicy   = lazy(() => import("@/pages/PrivacyPolicy"));
 const TermsConditions = lazy(() => import("@/pages/TermsConditions"));
 const FAQ             = lazy(() => import("@/pages/FAQ"));
-const ResumeBuilder   = lazy(() => import("@/pages/ResumeBuilder"));
-const NotFound        = lazy(() => import("@/pages/not-found"));
+const ResumeBuilder        = lazy(() => import("@/pages/ResumeBuilder"));
+const BackgroundRemover    = lazy(() => import("@/pages/BackgroundRemover"));
+const ScreenshotBeautifier = lazy(() => import("@/pages/ScreenshotBeautifier"));
+const NotFound             = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1 } },
@@ -91,7 +93,9 @@ function Router() {
           <Route path="/e-signature"         component={ESignature} />
           <Route path="/ocr-tool"            component={OcrTool} />
           <Route path="/pdf-annotator"       component={PdfAnnotator} />
-          <Route path="/resume-builder"      component={ResumeBuilder} />
+          <Route path="/resume-builder"          component={ResumeBuilder} />
+          <Route path="/background-remover"    component={BackgroundRemover} />
+          <Route path="/screenshot-beautifier" component={ScreenshotBeautifier} />
           <Route path="/settings"          component={Settings} />
           <Route path="/privacy-policy"    component={PrivacyPolicy} />
           <Route path="/terms"             component={TermsConditions} />

@@ -73,6 +73,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ["react", "react-dom", "wouter", "@tanstack/react-query"],
+    exclude: ["@imgly/background-removal", "onnxruntime-web"],
   },
   server: {
     port,
