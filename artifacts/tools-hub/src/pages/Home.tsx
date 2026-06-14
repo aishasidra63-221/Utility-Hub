@@ -407,19 +407,20 @@ export default function Home() {
           </p>
 
           {/* Feature badges */}
-          <div className="flex flex-wrap justify-center gap-2 mb-5">
-            <span className="inline-flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold px-3 py-1.5 rounded-full">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              100% Browser-based
-            </span>
-            <span className="inline-flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-xs font-semibold px-3 py-1.5 rounded-full">
-              <Zap className="w-3.5 h-3.5" />
-              Instant Processing
-            </span>
-            <span className="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-600 dark:text-orange-400 text-xs font-semibold px-3 py-1.5 rounded-full">
-              <Globe className="w-3.5 h-3.5" />
-              No File Uploads
-            </span>
+          <div className="grid grid-cols-3 gap-2 mb-5 max-w-lg mx-auto w-full px-2">
+            {[
+              { icon: ShieldCheck, label: "Browser-based" },
+              { icon: Zap,         label: "Instant" },
+              { icon: Globe,       label: "No Uploads" },
+            ].map(({ icon: Icon, label }) => (
+              <span
+                key={label}
+                className="inline-flex items-center justify-center gap-1 bg-primary/10 border border-primary/25 text-primary dark:bg-white/10 dark:border-white/20 dark:text-white text-[11px] sm:text-xs font-semibold px-2 py-1.5 rounded-full"
+              >
+                <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                <span className="truncate">{label}</span>
+              </span>
+            ))}
           </div>
 
           {totalUses > 0 && (
