@@ -4,7 +4,7 @@ import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
   ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
-  Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench,
+  Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench, Heart,
 } from "lucide-react";
 
 import { useSEO } from "@/hooks/useSEO";
@@ -236,10 +236,14 @@ const ToolCard = memo(function ToolCard({
   tool,
   count,
   isFavourite,
+  isHearted,
+  onToggleHeart,
 }: {
   tool: (typeof ALL_TOOLS)[number];
   count: number;
   isFavourite: boolean;
+  isHearted: boolean;
+  onToggleHeart: (id: string) => void;
 }) {
   const Icon = tool.icon;
   return (
@@ -252,7 +256,7 @@ const ToolCard = memo(function ToolCard({
       <div className={`absolute inset-0 bg-gradient-to-br ${tool.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
 
       {isFavourite && (
-        <span className="absolute top-3 right-3 text-primary opacity-30 group-hover:opacity-70 transition-opacity z-10">
+        <span className="absolute top-3 left-3 text-primary opacity-30 group-hover:opacity-70 transition-opacity z-10">
           <Star className="w-3.5 h-3.5 fill-current" />
         </span>
       )}
@@ -285,9 +289,22 @@ const ToolCard = memo(function ToolCard({
         </p>
       </div>
 
-      <div className="relative flex items-center gap-1 text-xs font-semibold text-primary mt-auto z-10">
-        Open tool
-        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1.5" />
+      <div className="relative flex items-center justify-between mt-auto z-10">
+        <div className="flex items-center gap-1 text-xs font-semibold text-primary">
+          Open tool
+          <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1.5" />
+        </div>
+        <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleHeart(tool.id); }}
+          className={`p-1.5 rounded-full transition-all duration-200 ${
+            isHearted
+              ? "text-rose-500 bg-rose-500/10"
+              : "text-muted-foreground/40 hover:text-rose-400 hover:bg-rose-500/10"
+          }`}
+          aria-label={isHearted ? "Remove from favourites" : "Add to favourites"}
+        >
+          <Heart className={`w-4 h-4 ${isHearted ? "fill-current" : ""}`} />
+        </button>
       </div>
     </Link>
   );
@@ -302,6 +319,21 @@ export default function Home() {
 
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [activeCategory, setActiveCategory] = useState<Category>("all");
+  const [heartedIds, setHeartedIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem("toolhub_favourites");
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  const toggleHeart = (id: string) => {
+    setHeartedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      localStorage.setItem("toolhub_favourites", JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   useEffect(() => {
     setCounts(getAllToolCounts());
@@ -323,9 +355,9 @@ export default function Home() {
 
   const filteredTools = useMemo(() => {
     if (activeCategory === "all") return sortedTools;
-    if (activeCategory === "favourites") return usedTools;
+    if (activeCategory === "favourites") return sortedTools.filter((t) => heartedIds.has(t.id));
     return sortedTools.filter((t) => t.category === activeCategory);
-  }, [activeCategory, sortedTools, usedTools]);
+  }, [activeCategory, sortedTools, heartedIds]);
 
   const CATEGORY_TABS: { id: Category; label: string; icon: React.ElementType }[] = [
     { id: "all", label: "All", icon: Layers },
@@ -410,11 +442,11 @@ export default function Home() {
         </div>
 
         {/* ── Tool Grid ── */}
-        {activeCategory === "favourites" && usedTools.length === 0 ? (
+        {activeCategory === "favourites" && heartedIds.size === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Star className="w-10 h-10 text-muted-foreground/30 mb-3" />
+            <Heart className="w-10 h-10 text-muted-foreground/30 mb-3" />
             <p className="text-muted-foreground font-medium">No favourites yet</p>
-            <p className="text-sm text-muted-foreground/60 mt-1">Use some tools and they'll appear here</p>
+            <p className="text-sm text-muted-foreground/60 mt-1">Kisi bhi tool ke card mein ❤️ dabao</p>
           </div>
         ) : filteredTools.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -426,7 +458,7 @@ export default function Home() {
               <div className="flex items-center gap-2 mb-5">
                 <Star className="w-3.5 h-3.5 text-primary fill-primary" />
                 <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                  Your Favourites
+                  Your Most Used
                 </h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -436,6 +468,8 @@ export default function Home() {
                     tool={tool}
                     count={counts[tool.id] ?? 0}
                     isFavourite={tool.id === topToolId}
+                    isHearted={heartedIds.has(tool.id)}
+                    onToggleHeart={toggleHeart}
                   />
                 ))}
               </div>
@@ -451,7 +485,14 @@ export default function Home() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {unusedTools.map((tool) => (
-                    <ToolCard key={tool.id} tool={tool} count={0} isFavourite={false} />
+                    <ToolCard
+                      key={tool.id}
+                      tool={tool}
+                      count={0}
+                      isFavourite={false}
+                      isHearted={heartedIds.has(tool.id)}
+                      onToggleHeart={toggleHeart}
+                    />
                   ))}
                   {unusedTools.length % 3 === 2 && (
                     <div className="hidden lg:flex flex-col gap-4 p-6 rounded-2xl border border-dashed border-border items-center justify-center text-center">
@@ -465,7 +506,14 @@ export default function Home() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTools.map((tool) => (
-              <ToolCard key={tool.id} tool={tool} count={counts[tool.id] ?? 0} isFavourite={tool.id === topToolId} />
+              <ToolCard
+                key={tool.id}
+                tool={tool}
+                count={counts[tool.id] ?? 0}
+                isFavourite={tool.id === topToolId}
+                isHearted={heartedIds.has(tool.id)}
+                onToggleHeart={toggleHeart}
+              />
             ))}
             {filteredTools.length % 3 === 2 && (
               <div className="hidden lg:flex flex-col gap-4 p-6 rounded-2xl border border-dashed border-border items-center justify-center text-center">
