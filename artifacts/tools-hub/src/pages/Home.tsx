@@ -1,13 +1,16 @@
-import { useState, useEffect, useMemo, memo } from "react";
+import React, { useState, useEffect, useMemo, memo } from "react";
 import { Link } from "wouter";
 import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
   ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
-  Check, X, Trophy, PenLine, Highlighter, ScanText,
+  Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench,
 } from "lucide-react";
+
 import { useSEO } from "@/hooks/useSEO";
 import { getAllToolCounts } from "@/hooks/useToolCounter";
+
+type Category = "all" | "favourites" | "image" | "pdf" | "generator" | "utility";
 
 const ALL_TOOLS = [
   {
@@ -17,6 +20,7 @@ const ALL_TOOLS = [
     title: "Image Compressor",
     description: "Compress JPG, PNG, and WebP images instantly in your browser. Reduce file size while keeping quality.",
     badge: "Browser-only",
+    category: "image" as Category,
     gradient: "from-blue-500/15 to-cyan-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/30",
@@ -30,6 +34,7 @@ const ALL_TOOLS = [
     title: "Image Converter",
     description: "Convert JPG, PNG, and WebP formats in bulk. Change format and quality, download all as ZIP.",
     badge: "Batch",
+    category: "image" as Category,
     gradient: "from-pink-500/15 to-rose-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-pink-500 to-rose-600 shadow-lg shadow-pink-500/30",
@@ -43,6 +48,7 @@ const ALL_TOOLS = [
     title: "Image Resizer",
     description: "Resize images to any dimension — HD, Full HD, Instagram, custom. Batch resize with aspect ratio lock.",
     badge: "Presets",
+    category: "image" as Category,
     gradient: "from-cyan-500/15 to-teal-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-cyan-500 to-teal-600 shadow-lg shadow-cyan-500/30",
@@ -56,37 +62,12 @@ const ALL_TOOLS = [
     title: "Image Cropper",
     description: "Drag to crop any area. Free crop, 1:1, 4:3, 16:9 and more. Download the exact region you need.",
     badge: "Drag & crop",
+    category: "image" as Category,
     gradient: "from-sky-500/15 to-indigo-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-sky-500 to-indigo-600 shadow-lg shadow-sky-500/30",
     accentColor: "group-hover:text-sky-500",
     borderGradient: "from-sky-500 to-indigo-400",
-  },
-  {
-    href: "/password-generator",
-    id: "password-generator",
-    icon: Key,
-    title: "Password Generator",
-    description: "Generate strong, random passwords. Choose length, symbols, numbers. Cryptographically secure — nothing leaves your browser.",
-    badge: "Secure",
-    gradient: "from-emerald-500/15 to-green-500/5",
-    iconColor: "text-white",
-    iconBg: "bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg shadow-emerald-500/30",
-    accentColor: "group-hover:text-emerald-500",
-    borderGradient: "from-emerald-500 to-green-400",
-  },
-  {
-    href: "/unit-converter",
-    id: "unit-converter",
-    icon: Ruler,
-    title: "Unit Converter",
-    description: "Convert length, weight, temperature, volume, area, and speed. Instant results with a full reference table.",
-    badge: "6 categories",
-    gradient: "from-violet-500/15 to-indigo-500/5",
-    iconColor: "text-white",
-    iconBg: "bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/30",
-    accentColor: "group-hover:text-violet-500",
-    borderGradient: "from-violet-500 to-indigo-400",
   },
   {
     href: "/color-palette",
@@ -95,6 +76,7 @@ const ALL_TOOLS = [
     title: "Color Palette Extractor",
     description: "Upload any image and extract its dominant colors as hex codes. Copy instantly. Perfect for designers.",
     badge: "For designers",
+    category: "image" as Category,
     gradient: "from-fuchsia-500/15 to-pink-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-fuchsia-500 to-pink-600 shadow-lg shadow-fuchsia-500/30",
@@ -108,6 +90,7 @@ const ALL_TOOLS = [
     title: "HEIC to JPG",
     description: "Convert iPhone HEIC photos to JPG instantly. Batch convert, download as ZIP. Works 100% in your browser.",
     badge: "iPhone photos",
+    category: "image" as Category,
     gradient: "from-orange-500/15 to-amber-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg shadow-orange-500/30",
@@ -121,6 +104,7 @@ const ALL_TOOLS = [
     title: "PDF Tools",
     description: "13 PDF tools — compress, merge, split, protect, watermark, organize pages and more. No upload.",
     badge: "13 tools",
+    category: "pdf" as Category,
     gradient: "from-red-500/15 to-rose-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-red-500 to-rose-600 shadow-lg shadow-red-500/30",
@@ -134,6 +118,7 @@ const ALL_TOOLS = [
     title: "E-Signature",
     description: "Draw or type your signature and embed it into any PDF page. Free, private, no upload required.",
     badge: "Free & Private",
+    category: "pdf" as Category,
     gradient: "from-indigo-500/15 to-blue-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg shadow-indigo-500/30",
@@ -147,6 +132,7 @@ const ALL_TOOLS = [
     title: "PDF Annotator",
     description: "Highlight text, draw, add arrows and sticky notes on PDF pages. Download annotated PDF instantly.",
     badge: "Highlight & Draw",
+    category: "pdf" as Category,
     gradient: "from-yellow-500/15 to-amber-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-yellow-500 to-amber-500 shadow-lg shadow-yellow-500/30",
@@ -160,11 +146,26 @@ const ALL_TOOLS = [
     title: "OCR Text Extractor",
     description: "Extract text from scanned images, photos, and documents. Supports English, Hindi, and 6 more languages.",
     badge: "8 languages",
+    category: "pdf" as Category,
     gradient: "from-teal-500/15 to-cyan-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg shadow-teal-500/30",
     accentColor: "group-hover:text-teal-500",
     borderGradient: "from-teal-500 to-cyan-400",
+  },
+  {
+    href: "/password-generator",
+    id: "password-generator",
+    icon: Key,
+    title: "Password Generator",
+    description: "Generate strong, random passwords. Choose length, symbols, numbers. Cryptographically secure — nothing leaves your browser.",
+    badge: "Secure",
+    category: "generator" as Category,
+    gradient: "from-emerald-500/15 to-green-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg shadow-emerald-500/30",
+    accentColor: "group-hover:text-emerald-500",
+    borderGradient: "from-emerald-500 to-green-400",
   },
   {
     href: "/qr-generator",
@@ -173,24 +174,12 @@ const ALL_TOOLS = [
     title: "QR Code Generator",
     description: "Generate a QR code for any URL or text instantly. Download as PNG in seconds.",
     badge: "Instant",
+    category: "generator" as Category,
     gradient: "from-teal-500/15 to-emerald-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg shadow-teal-500/30",
     accentColor: "group-hover:text-teal-500",
     borderGradient: "from-teal-500 to-emerald-400",
-  },
-  {
-    href: "/text-cleaner",
-    id: "text-cleaner",
-    icon: AlignLeft,
-    title: "Text Cleaner",
-    description: "Remove extra spaces, normalize line breaks, change case, and strip emojis from messy text.",
-    badge: "Live preview",
-    gradient: "from-orange-500/15 to-yellow-500/5",
-    iconColor: "text-white",
-    iconBg: "bg-gradient-to-br from-yellow-500 to-orange-500 shadow-lg shadow-yellow-500/30",
-    accentColor: "group-hover:text-orange-500",
-    borderGradient: "from-yellow-400 to-orange-500",
   },
   {
     href: "/whatsapp-link",
@@ -199,11 +188,40 @@ const ALL_TOOLS = [
     title: "WhatsApp Link",
     description: "Create a direct WhatsApp chat link with a pre-filled message. Also generates a scannable QR code.",
     badge: "With QR",
+    category: "generator" as Category,
     gradient: "from-green-500/15 to-lime-500/5",
     iconColor: "text-white",
     iconBg: "bg-gradient-to-br from-green-500 to-lime-600 shadow-lg shadow-green-500/30",
     accentColor: "group-hover:text-green-500",
     borderGradient: "from-green-500 to-lime-400",
+  },
+  {
+    href: "/unit-converter",
+    id: "unit-converter",
+    icon: Ruler,
+    title: "Unit Converter",
+    description: "Convert length, weight, temperature, volume, area, and speed. Instant results with a full reference table.",
+    badge: "6 categories",
+    category: "utility" as Category,
+    gradient: "from-violet-500/15 to-indigo-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/30",
+    accentColor: "group-hover:text-violet-500",
+    borderGradient: "from-violet-500 to-indigo-400",
+  },
+  {
+    href: "/text-cleaner",
+    id: "text-cleaner",
+    icon: AlignLeft,
+    title: "Text Cleaner",
+    description: "Remove extra spaces, normalize line breaks, change case, and strip emojis from messy text.",
+    badge: "Live preview",
+    category: "utility" as Category,
+    gradient: "from-orange-500/15 to-yellow-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-yellow-500 to-orange-500 shadow-lg shadow-yellow-500/30",
+    accentColor: "group-hover:text-orange-500",
+    borderGradient: "from-yellow-400 to-orange-500",
   },
 ];
 
@@ -283,6 +301,7 @@ export default function Home() {
   });
 
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [activeCategory, setActiveCategory] = useState<Category>("all");
 
   useEffect(() => {
     setCounts(getAllToolCounts());
@@ -301,6 +320,21 @@ export default function Home() {
   const usedTools = sortedTools.filter((t) => (counts[t.id] ?? 0) > 0);
   const unusedTools = sortedTools.filter((t) => (counts[t.id] ?? 0) === 0);
   const topToolId = usedTools[0]?.id ?? null;
+
+  const filteredTools = useMemo(() => {
+    if (activeCategory === "all") return sortedTools;
+    if (activeCategory === "favourites") return usedTools;
+    return sortedTools.filter((t) => t.category === activeCategory);
+  }, [activeCategory, sortedTools, usedTools]);
+
+  const CATEGORY_TABS: { id: Category; label: string; icon: React.ElementType }[] = [
+    { id: "all", label: "All", icon: Layers },
+    { id: "favourites", label: "Favourites", icon: Star },
+    { id: "image", label: "Image Tools", icon: Image },
+    { id: "pdf", label: "PDF Tools", icon: FileText },
+    { id: "generator", label: "Generator Tools", icon: QrCode },
+    { id: "utility", label: "Utility Tools", icon: Wrench },
+  ];
 
   return (
     <div>
@@ -354,8 +388,39 @@ export default function Home() {
       </section>
 
       <div className="max-w-6xl mx-auto px-4 pb-16">
+        {/* ── Category Tabs ── */}
+        <div className="flex flex-wrap gap-2 mb-6 mt-2">
+          {CATEGORY_TABS.map(({ id, label, icon: Icon }) => {
+            const isActive = activeCategory === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveCategory(id)}
+                className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 border ${
+                  isActive
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-muted/60 text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
         {/* ── Tool Grid ── */}
-        {hasHistory ? (
+        {activeCategory === "favourites" && usedTools.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <Star className="w-10 h-10 text-muted-foreground/30 mb-3" />
+            <p className="text-muted-foreground font-medium">No favourites yet</p>
+            <p className="text-sm text-muted-foreground/60 mt-1">Use some tools and they'll appear here</p>
+          </div>
+        ) : filteredTools.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="text-muted-foreground">No tools in this category</p>
+          </div>
+        ) : activeCategory === "all" && hasHistory ? (
           <div className="space-y-10">
             <div>
               <div className="flex items-center gap-2 mb-5">
@@ -399,12 +464,14 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ALL_TOOLS.map((tool) => (
-              <ToolCard key={tool.id} tool={tool} count={0} isFavourite={false} />
+            {filteredTools.map((tool) => (
+              <ToolCard key={tool.id} tool={tool} count={counts[tool.id] ?? 0} isFavourite={tool.id === topToolId} />
             ))}
-            <div className="hidden lg:flex flex-col gap-4 p-6 rounded-2xl border border-dashed border-border items-center justify-center text-center">
-              <p className="text-sm text-muted-foreground/50">More tools coming soon</p>
-            </div>
+            {filteredTools.length % 3 === 2 && (
+              <div className="hidden lg:flex flex-col gap-4 p-6 rounded-2xl border border-dashed border-border items-center justify-center text-center">
+                <p className="text-sm text-muted-foreground/50">More tools coming soon</p>
+              </div>
+            )}
           </div>
         )}
 
