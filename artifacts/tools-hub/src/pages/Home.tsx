@@ -407,7 +407,7 @@ export default function Home() {
           </p>
 
           {/* Feature badges */}
-          <div className="grid grid-cols-3 gap-2 mb-5 max-w-lg mx-auto w-full px-2">
+          <div className="flex flex-wrap justify-center gap-2 mb-5">
             {[
               { icon: ShieldCheck, label: "Browser-based" },
               { icon: Zap,         label: "Instant" },
@@ -415,10 +415,10 @@ export default function Home() {
             ].map(({ icon: Icon, label }) => (
               <span
                 key={label}
-                className="inline-flex items-center justify-center gap-1 bg-primary/10 border border-primary/25 text-primary dark:bg-white/10 dark:border-white/20 dark:text-white text-[11px] sm:text-xs font-semibold px-2 py-1.5 rounded-full"
+                className="inline-flex items-center gap-1.5 bg-primary text-white dark:bg-white/15 dark:text-white border border-primary/80 dark:border-white/20 text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap shadow-sm"
               >
-                <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
-                <span className="truncate">{label}</span>
+                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                {label}
               </span>
             ))}
           </div>
