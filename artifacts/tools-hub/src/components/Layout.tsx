@@ -24,6 +24,9 @@ const tools = [
   { href: "/resume-builder",        label: "Resume Builder" },
   { href: "/background-remover",    label: "Background Remover" },
   { href: "/screenshot-beautifier", label: "Screenshot Beautifier" },
+  { href: "/favicon-generator",     label: "Favicon Generator" },
+  { href: "/target-compressor",     label: "Target Size Compressor" },
+  { href: "/exif-stripper",         label: "EXIF Stripper" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

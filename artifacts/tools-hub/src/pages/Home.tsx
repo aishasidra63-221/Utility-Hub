@@ -5,7 +5,7 @@ import {
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
   ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
   Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench, FileUser,
-  Eraser, Sparkles,
+  Eraser, Sparkles, Target,
 } from "lucide-react";
 
 import { useSEO } from "@/hooks/useSEO";
@@ -266,6 +266,48 @@ const ALL_TOOLS = [
     accentColor: "group-hover:text-pink-500",
     borderGradient: "from-pink-500 to-purple-400",
   },
+  {
+    href: "/favicon-generator",
+    id: "favicon-generator",
+    icon: Globe,
+    title: "Favicon Generator",
+    description: "Upload any image and get all favicon sizes (16×16 to 512×512) as a ZIP. Ready to use on any website.",
+    badge: "9 sizes",
+    category: "generator" as Category,
+    gradient: "from-sky-500/15 to-cyan-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-sky-500 to-cyan-600 shadow-lg shadow-sky-500/30",
+    accentColor: "group-hover:text-sky-500",
+    borderGradient: "from-sky-500 to-cyan-400",
+  },
+  {
+    href: "/target-compressor",
+    id: "target-compressor",
+    icon: Target,
+    title: "Target Size Compressor",
+    description: "Set a target file size — 200KB, 500KB, or any custom value — and the tool finds the right quality automatically.",
+    badge: "New",
+    category: "image" as Category,
+    gradient: "from-orange-500/15 to-amber-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg shadow-orange-500/30",
+    accentColor: "group-hover:text-orange-500",
+    borderGradient: "from-orange-500 to-amber-400",
+  },
+  {
+    href: "/exif-stripper",
+    id: "exif-stripper",
+    icon: ShieldCheck,
+    title: "EXIF Metadata Remover",
+    description: "Strip GPS location, camera model, and all hidden metadata from photos before sharing. 100% private, no upload.",
+    badge: "Privacy",
+    category: "utility" as Category,
+    gradient: "from-emerald-500/15 to-teal-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30",
+    accentColor: "group-hover:text-emerald-500",
+    borderGradient: "from-emerald-500 to-teal-400",
+  },
 ];
 
 const FEATURES = [
@@ -431,7 +473,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed mb-5">
-            18 powerful utilities that run entirely in your browser.
+            21 powerful utilities that run entirely in your browser.
             Upload, process, download — done in seconds.
           </p>
 
