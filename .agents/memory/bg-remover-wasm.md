@@ -1,59 +1,53 @@
 ---
 name: Background Remover WASM fix
-description: Root cause + fix for @imgly/background-removal@1.7.0 "Aborted(CompileError: WebAssembly)" in Replit
+description: Root cause + fix for @imgly/background-removal@1.7.0 stuck/hanging in Replit
 ---
 
-## Actual Root Cause (confirmed by reading ort source)
+## Root Cause Summary
 
-`ort@1.17.3` WASM backend selects file via:
-```js
-Ga = (simd, threaded) => simd ? (threaded ? "ort-wasm-simd-threaded.wasm" : "ort-wasm-simd.wasm") : ...
-Ha = numThreads => numThreads === 1 ? false : (numThreads > 1 && SharedArrayBuffer !== undefined)
-```
+`@imgly/background-removal@1.7.0` internally uses `(await import("onnxruntime-web")).default` to get ort.
+Our code imports as `await import("onnxruntime-web")` (namespace object). These are **different objects**:
+- `ortMod.env.wasm` — named export (what our code was patching — WRONG target)
+- `ortMod.default.env.wasm` — default export's env (what the library uses — CORRECT target)
 
-`locateFile` logic:
-```js
-let s = typeof wasmPaths === "string" ? wasmPaths : undefined;  // CDN prefix
-let h = Ga(simd, Ha(numThreads));                               // filename
-let g = typeof wasmPaths === "object" ? wasmPaths[h] : undefined; // lookup by filename key
-// For .wasm: uses g || (s ?? defaultBase) + h
-```
+Patching the wrong object means the library's own assignments go through unblocked:
+- `ort2.env.wasm.numThreads = navigator.hardwareConcurrency` (e.g. 4)
+- `ort2.env.wasm.wasmPaths = { mjs: blobUrl, wasm: blobUrl }` (threaded WASM blob URLs)
 
-The library sets `ort.env.wasm.wasmPaths = { mjs: blobUrl, wasm: blobUrl }` — keys are `mjs`/`wasm`,
-NOT filename keys. So `g = wasmPaths["ort-wasm-simd.wasm"] = undefined`. Ort falls back to bundled
-base path `B` (Vite output dir) which has no WASM files → `Aborted(CompileError: WebAssembly)`.
+Result: ort tries to use threaded WASM (`ort-wasm-simd-threaded.wasm`), which needs SharedArrayBuffer.
+In Replit's proxied iframe environment, `crossOriginIsolated = false` → SharedArrayBuffer unavailable → inference hangs silently at "Processing image: 0%".
 
-The `crossOriginIsolated` / SharedArrayBuffer issue is a red herring for the compiled error —
-the REAL issue is ort can't find the WASM binary at all.
+## The Correct Fix (in BackgroundRemover.tsx)
 
-## The Fix (in BackgroundRemover.tsx)
-
-Lock BOTH `numThreads` AND `wasmPaths` via `Object.defineProperty` BEFORE importing the library:
+Target `.default.env.wasm`:
 
 ```ts
-const CDN = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/";
-const ort = await import("onnxruntime-web");
+const localWasmPath = `${window.location.origin}${import.meta.env.BASE_URL}bg-removal/`;
+const ortMod = await import("onnxruntime-web");
+const ortObj = (ortMod as any).default ?? ortMod;   // ← KEY: use .default
+const wasmEnv = ortObj.env.wasm as any;
 const noop = () => {};
-Object.defineProperty(ort.env.wasm, "numThreads", { get: () => 1, set: noop, configurable: true });
-Object.defineProperty(ort.env.wasm, "wasmPaths",  { get: () => CDN, set: noop, configurable: true });
+try { Object.defineProperty(wasmEnv, "numThreads", { get: () => 1, set: noop, configurable: true }); } catch {}
+try { Object.defineProperty(wasmEnv, "wasmPaths",  { get: () => localWasmPath, set: noop, configurable: true }); } catch {}
+
 const { removeBackground } = await import("@imgly/background-removal");
 ```
 
-**Why this works:**
-- `numThreads=1` → `Ha(1) = false` → `h = "ort-wasm-simd.wasm"` (non-threaded, no SharedArrayBuffer)
-- `wasmPaths = CDN string` → `s = CDN` → ort constructs `CDN + "ort-wasm-simd.wasm"` ✅
-- jsdelivr serves that file with `CORP: cross-origin` ✅
+**Why:**
+- `numThreads=1` forces non-threaded WASM → no SharedArrayBuffer needed
+- `wasmPaths = localWasmPath string` → ort constructs `localWasmPath + "ort-wasm-simd.wasm"` (served from public/bg-removal/)
+- Wrapped in try/catch because the property may already be defined as non-configurable on second call
 
-**Why previous attempts failed:**
-- Only locking `numThreads` → library still set `wasmPaths = {wasm: blobUrl}` → ort's `g=undefined` fallback
-- Custom resources.json WASM entry → library created blob URL, but ort used filename key lookup → still fell back to base path
-- COI service worker → `crossOriginIsolated` can't be true in cross-origin iframe without parent `allow="cross-origin-isolated"`
+## resources.json — why loadAsUrl still works
+The library's `loadAsUrl("/onnxruntime-web/ort-wasm-simd-threaded.wasm", config)` reads from
+`public/bg-removal/resources.json` which HAS those keys (chunks point to CDN). The blob URL is created
+but since our setter is noop, the `wasmPaths` assignment is ignored. Our getter returns `localWasmPath`.
 
-## Supporting infrastructure (keep these in place)
-- `public/coi-serviceworker.js` + service worker registration in `index.html` — adds COOP/COEP headers, may help in some contexts
-- `public/bg-removal/resources.json` — still needed so library's `loadAsUrl()` succeeds for WASM/MJS entries (library checks size); ort ignores the blob URL anyway due to our wasmPaths lock
-- Model chunks (staticimgly.com) in resources.json are still required and work correctly
+## Local WASM files (public/bg-removal/)
+Keep all three:
+- `ort-wasm-simd.wasm` — used when numThreads=1 + SIMD supported
+- `ort-wasm.wasm` — fallback when SIMD not supported  
+- `ort-wasm-simd-threaded.wasm` — NOT used (threaded blocked), but present in resources.json
 
-## CORS requirements for model chunks
-- jsdelivr: `CORP: cross-origin` ✅
-- staticimgly.com: `CORP: cross-origin` ✅
+## onnxruntime-web version
+Pinned to `1.17.3` in package.json. v1.21+ dropped non-threaded WASM entirely — do not upgrade.

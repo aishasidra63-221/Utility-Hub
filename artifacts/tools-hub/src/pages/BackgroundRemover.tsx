@@ -40,17 +40,19 @@ export default function BackgroundRemover() {
     setLoading(true);
     setProgress("Initializing AI…");
     try {
-      // Serve WASM files locally (copied to public/bg-removal/) to avoid CDN blocks.
-      // numThreads=1 → uses ort-wasm-simd.wasm (no SharedArrayBuffer needed).
+      // The @imgly/background-removal library internally uses
+      // `(await import("onnxruntime-web")).default` — so we must patch
+      // `.default.env.wasm`, NOT `ort.env.wasm` (those are different objects).
+      // numThreads=1 → uses ort-wasm-simd.wasm (no SharedArrayBuffer/COOP needed).
       const localWasmPath = `${window.location.origin}${import.meta.env.BASE_URL}bg-removal/`;
-      const ort = await import("onnxruntime-web");
+      const ortMod = await import("onnxruntime-web");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ortObj = (ortMod as any).default ?? ortMod;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const wasmEnv = ortObj.env.wasm as any;
       const noop = () => {};
-      Object.defineProperty(ort.env.wasm, "numThreads", {
-        get: () => 1, set: noop, configurable: true,
-      });
-      Object.defineProperty(ort.env.wasm, "wasmPaths", {
-        get: () => localWasmPath, set: noop, configurable: true,
-      });
+      try { Object.defineProperty(wasmEnv, "numThreads", { get: () => 1, set: noop, configurable: true }); } catch {}
+      try { Object.defineProperty(wasmEnv, "wasmPaths", { get: () => localWasmPath, set: noop, configurable: true }); } catch {}
 
       const { removeBackground } = await import("@imgly/background-removal");
       setProgress("Downloading AI model (~25MB)…");
