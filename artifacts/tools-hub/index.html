@@ -24,6 +24,21 @@
   </head>
   <body>
     <script>
+      /* COI service worker — enables crossOriginIsolated for WASM threading */
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/coi-serviceworker.js").then(function(reg) {
+          /* First install: reload when SW takes control so COEP/COOP headers apply */
+          if (!navigator.serviceWorker.controller) {
+            navigator.serviceWorker.addEventListener("controllerchange", function() {
+              window.location.reload();
+            });
+          }
+        }).catch(function(err) {
+          console.warn("COI service worker failed:", err);
+        });
+      }
+    </script>
+    <script>
       (function() {
         try {
           var s = JSON.parse(localStorage.getItem("toolhub_settings") || "{}");

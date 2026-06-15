@@ -38,30 +38,38 @@ export default function BackgroundRemover() {
     setFileName(file.name.replace(/\.[^.]+$/, "") + "_no_bg.png");
     setOriginal(URL.createObjectURL(file));
     setLoading(true);
-    setProgress("Loading AI model…");
+    setProgress("Initializing AI…");
     try {
+      // Configure ONNX Runtime to use single-threaded WASM (no crossOriginIsolated needed)
+      const ort = await import("onnxruntime-web");
+      ort.env.wasm.numThreads = 1;
+      ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/";
+
       const { removeBackground } = await import("@imgly/background-removal");
-      setProgress("Removing background…");
+      setProgress("Downloading AI model (~25MB)…");
       const blob = await removeBackground(file, {
-        publicPath: `https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/`,
+        publicPath: "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/",
         model: "small",
         output: { quality: 0.9, format: "image/png" },
         progress: (key: string, current: number, total: number) => {
           if (total > 0) {
             const pct = Math.round((current / total) * 100);
-            if (key.includes("fetch")) {
+            if (key.includes("fetch") || key.includes("model")) {
               setProgress(`Downloading AI model: ${pct}%`);
             } else {
-              setProgress(`Processing: ${pct}%`);
+              setProgress(`Processing image: ${pct}%`);
             }
           }
         },
       });
       setResult(URL.createObjectURL(blob));
       increment();
-    } catch (e) {
-      console.error(e);
-      setError("Could not remove background. Please try a different image.");
+    } catch (e: any) {
+      console.error("Background removal error:", e);
+      setError(
+        "Could not remove background. " +
+        (e?.message ? `(${e.message.slice(0, 120)})` : "Please try a different image.")
+      );
     } finally {
       setLoading(false);
       setProgress("");
@@ -118,7 +126,7 @@ export default function BackgroundRemover() {
       <div className="mb-5 flex items-start gap-2.5 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3 text-sm text-primary">
         <Loader2 className="w-4 h-4 mt-0.5 flex-shrink-0 opacity-70" />
         <span>
-          <strong>First use:</strong> The AI model (~80MB) downloads once to your browser. After that it runs instantly offline.
+          <strong>First use:</strong> The AI model (~25MB) downloads once to your browser. After that it runs instantly offline.
         </span>
       </div>
 

@@ -1,0 +1,1 @@
+- [Background Remover WASM fix](bg-remover-wasm.md) — onnxruntime-web@1.21+ dropped non-threaded WASM; fix is to use @1.17.3 + set numThreads=1 + wasmPaths to CDN.
