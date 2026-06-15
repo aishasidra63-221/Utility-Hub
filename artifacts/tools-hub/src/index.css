@@ -432,6 +432,18 @@
     margin-left: -2.5px;
   }
 
+  @keyframes starRemove {
+    0%   { transform: scale(1) rotate(0deg); }
+    20%  { transform: scale(1.2) rotate(-15deg); }
+    45%  { transform: scale(0.7) rotate(10deg); }
+    70%  { transform: scale(0.9) rotate(-5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  .star-remove {
+    animation: starRemove 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+  }
+
   .star-ring {
     position: absolute;
     inset: -6px;

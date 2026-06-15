@@ -357,6 +357,7 @@ const ToolCard = memo(function ToolCard({
 }) {
   const Icon = tool.icon;
   const [burst, setBurst] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   const handleStar = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -364,6 +365,9 @@ const ToolCard = memo(function ToolCard({
     if (!isStarred) {
       setBurst(true);
       setTimeout(() => setBurst(false), 600);
+    } else {
+      setRemoving(true);
+      setTimeout(() => setRemoving(false), 400);
     }
     onToggleStar(tool.id);
   };
@@ -433,7 +437,7 @@ const ToolCard = memo(function ToolCard({
               style={{ "--tx": p.tx, "--ty": p.ty } as React.CSSProperties}
             />
           ))}
-          <Star className={`w-5 h-5 relative ${isStarred ? "fill-current" : ""} ${burst ? "star-pop" : ""}`} />
+          <Star className={`w-5 h-5 relative ${isStarred ? "fill-current" : ""} ${burst ? "star-pop" : ""} ${removing ? "star-remove" : ""}`} />
         </button>
       </div>
     </Link>
