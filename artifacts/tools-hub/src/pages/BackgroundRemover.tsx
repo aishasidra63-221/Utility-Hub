@@ -48,7 +48,7 @@ export default function BackgroundRemover() {
       const { removeBackground } = await import("@imgly/background-removal");
       setProgress("Downloading AI model (~25MB)…");
       const blob = await removeBackground(file, {
-        publicPath: "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/",
+        publicPath: "https://staticimgly.com/@imgly/background-removal-data/1.7.0/dist/",
         model: "small",
         output: { quality: 0.9, format: "image/png" },
         progress: (key: string, current: number, total: number) => {
