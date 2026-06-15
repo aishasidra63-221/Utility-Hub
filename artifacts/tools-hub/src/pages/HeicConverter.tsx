@@ -170,8 +170,8 @@ export default function HeicConverter() {
       <div className="rounded-xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground mb-6 flex items-start gap-2">
         <span className="text-base leading-none mt-0.5">💡</span>
         <span>
-          <strong className="text-foreground">iPhone pe:</strong> Files app → photo select karo → Share → "Save to Files" se .heic file milegi.
-          WhatsApp aur other apps se photos already JPG format mein aati hain.
+          <strong className="text-foreground">On iPhone:</strong> Open Files app → select photo → Share → "Save to Files" to get the .heic file.
+          Photos shared via WhatsApp and other apps are already converted to JPG.
         </span>
       </div>
 

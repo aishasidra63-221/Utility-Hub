@@ -556,7 +556,7 @@ export default function Home() {
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Star className="w-10 h-10 text-muted-foreground/30 mb-3" />
             <p className="text-muted-foreground font-medium">No favourites yet</p>
-            <p className="text-sm text-muted-foreground/60 mt-1">Kisi bhi tool ke card mein ⭐ dabao</p>
+            <p className="text-sm text-muted-foreground/60 mt-1">Click the ⭐ on any tool card to save it here</p>
           </div>
         ) : filteredTools.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
