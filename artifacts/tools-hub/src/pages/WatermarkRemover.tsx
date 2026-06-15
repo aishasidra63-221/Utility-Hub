@@ -10,51 +10,47 @@ import { useToolCounter } from "@/hooks/useToolCounter";
 interface Rect { x: number; y: number; w: number; h: number }
 
 /**
- * Content-aware patch: fills a rectangular region by sampling pixels from
- * surrounding border and blending inward with distance-weighted interpolation.
+ * Content-aware patch: fills a rect by blending surrounding border pixels.
+ * Uses inverse-distance weighting from a border ring of `patchRadius` px.
  */
-function patchRegion(imgData: ImageData, rect: Rect, patchRadius = 12): void {
+function patchRegion(imgData: ImageData, rect: Rect, patchRadius = 14): void {
   const { data, width, height } = imgData;
-  const { x, y, w, h } = rect;
-  const x1 = Math.max(0, x);
-  const y1 = Math.max(0, y);
-  const x2 = Math.min(width - 1, x + w);
-  const y2 = Math.min(height - 1, y + h);
+  const x1 = Math.max(0, rect.x);
+  const y1 = Math.max(0, rect.y);
+  const x2 = Math.min(width  - 1, rect.x + rect.w);
+  const y2 = Math.min(height - 1, rect.y + rect.h);
+  const pr = Math.min(patchRadius, 24);
 
-  // Collect border samples
+  // Collect border samples (outside the rect)
   const samples: { px: number; py: number }[] = [];
-  const pr = Math.min(patchRadius, 20);
   for (let bx = x1 - pr; bx <= x2 + pr; bx++) {
     for (let by = y1 - pr; by <= y2 + pr; by++) {
-      if (bx < x1 || bx > x2 || by < y1 || by > y2) {
-        if (bx >= 0 && bx < width && by >= 0 && by < height) {
-          samples.push({ px: bx, py: by });
-        }
+      if ((bx < x1 || bx > x2 || by < y1 || by > y2) &&
+           bx >= 0 && bx < width && by >= 0 && by < height) {
+        samples.push({ px: bx, py: by });
       }
     }
   }
 
-  // For each interior pixel, fill with weighted average of border samples
+  // Fill each interior pixel with IDW-blended border colours
   for (let py = y1; py <= y2; py++) {
     for (let px = x1; px <= x2; px++) {
-      let rSum = 0, gSum = 0, bSum = 0, wSum = 0;
+      let rS = 0, gS = 0, bS = 0, wS = 0;
       for (const s of samples) {
-        const dx = px - s.px;
-        const dy = py - s.py;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 0.5) continue;
-        const w = 1 / (dist * dist);
+        const d = Math.hypot(px - s.px, py - s.py);
+        if (d < 0.5) continue;
+        const w = 1 / (d * d);
         const si = (s.py * width + s.px) * 4;
-        rSum += data[si] * w;
-        gSum += data[si + 1] * w;
-        bSum += data[si + 2] * w;
-        wSum += w;
+        rS += data[si]     * w;
+        gS += data[si + 1] * w;
+        bS += data[si + 2] * w;
+        wS += w;
       }
-      if (wSum > 0) {
+      if (wS > 0) {
         const di = (py * width + px) * 4;
-        data[di]     = Math.round(rSum / wSum);
-        data[di + 1] = Math.round(gSum / wSum);
-        data[di + 2] = Math.round(bSum / wSum);
+        data[di]     = Math.round(rS / wS);
+        data[di + 1] = Math.round(gS / wS);
+        data[di + 2] = Math.round(bS / wS);
       }
     }
   }
@@ -64,66 +60,62 @@ export default function WatermarkRemover() {
   useSEO({
     title: "Free Watermark Remover — Remove Watermarks from Images | ToolsHub",
     description:
-      "Remove watermarks from images using AI content-aware fill. Draw over the watermark, let AI patch it. 100% private, browser only.",
+      "Remove watermarks from images with content-aware fill. Draw over them manually — 100% private, browser only.",
   });
 
   const { count, increment } = useToolCounter("watermark-remover");
 
-  const [original, setOriginal] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState("");
-  const [error, setError] = useState("");
-  const [fileName, setFileName] = useState("");
-  const [dragOver, setDragOver] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
-  const [mode, setMode] = useState<"auto" | "manual">("auto");
-  const [rects, setRects] = useState<Rect[]>([]);
-  const [drawing, setDrawing] = useState(false);
+  const [original,    setOriginal]    = useState<string | null>(null);
+  const [result,      setResult]      = useState<string | null>(null);
+  const [loading,     setLoading]     = useState(false);
+  const [progress,    setProgress]    = useState("");
+  const [error,       setError]       = useState("");
+  const [fileName,    setFileName]    = useState("");
+  const [dragOver,    setDragOver]    = useState(false);
+  const [linkCopied,  setLinkCopied]  = useState(false);
+  const [mode,        setMode]        = useState<"auto" | "manual">("manual");
+  const [rects,       setRects]       = useState<Rect[]>([]);
   const [currentRect, setCurrentRect] = useState<Rect | null>(null);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const inputRef   = useRef<HTMLInputElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
+  const imgRef     = useRef<HTMLImageElement | null>(null);
   const imgDataRef = useRef<ImageData | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const drawStart = useRef<{ x: number; y: number } | null>(null);
+  const drawStart  = useRef<{ x: number; y: number } | null>(null);
+  const isDrawing  = useRef(false);
 
+  // ── Load file: create img element and cache pixel data ──
   const processFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
       setError("Only image files are supported (JPG, PNG, WebP).");
       return;
     }
-    setError("");
-    setResult(null);
-    setRects([]);
-    setCurrentRect(null);
+    setError(""); setResult(null); setRects([]); setCurrentRect(null);
     setFileName(file.name.replace(/\.[^.]+$/, "") + "_clean.png");
-    const objectUrl = URL.createObjectURL(file);
-    setOriginal(objectUrl);
 
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const i = new Image();
-      i.onload = () => resolve(i);
-      i.onerror = reject;
-      i.src = objectUrl;
+    const url = URL.createObjectURL(file);
+
+    const img = await new Promise<HTMLImageElement>((res, rej) => {
+      const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url;
     });
     imgRef.current = img;
+
+    // Capture pixel data into an off-screen canvas
+    const tmpCanvas = document.createElement("canvas");
+    tmpCanvas.width  = img.naturalWidth;
+    tmpCanvas.height = img.naturalHeight;
+    const ctx = tmpCanvas.getContext("2d")!;
+    ctx.drawImage(img, 0, 0);
+    imgDataRef.current = ctx.getImageData(0, 0, tmpCanvas.width, tmpCanvas.height);
+
+    setOriginal(url);
   }, []);
 
-  // Draw image onto canvas when original loads
-  useEffect(() => {
-    if (!original || !canvasRef.current || !imgRef.current) return;
-    const canvas = canvasRef.current;
-    const img = imgRef.current;
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext("2d")!;
-    ctx.drawImage(img, 0, 0);
-    imgDataRef.current = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  }, [original]);
+  const handleFiles = useCallback((files: FileList | File[]) => {
+    const f = Array.from(files)[0]; if (f) processFile(f);
+  }, [processFile]);
 
-  // Detect bright/white watermark patches automatically
+  // ── Auto-detect bright/white watermark patches ──
   const autoDetect = useCallback(() => {
     if (!imgDataRef.current) return;
     const { data, width, height } = imgDataRef.current;
@@ -137,21 +129,20 @@ export default function WatermarkRemover() {
           for (let dx = 0; dx < blockSize; dx++) {
             const i = ((by + dy) * width + (bx + dx)) * 4;
             const r = data[i], g = data[i + 1], b = data[i + 2];
-            const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-            // High brightness with low saturation = likely watermark
+            const lum  = 0.299 * r + 0.587 * g + 0.114 * b;
             const maxC = Math.max(r, g, b);
             const minC = Math.min(r, g, b);
-            const sat = maxC > 0 ? (maxC - minC) / maxC : 0;
+            const sat  = maxC > 0 ? (maxC - minC) / maxC : 0;
             if (lum > 210 && sat < 0.15) brightCnt++;
           }
         }
-        if (brightCnt > blockSize * blockSize * 0.7) {
+        if (brightCnt > blockSize * blockSize * 0.65) {
           found.push({ x: bx, y: by, w: blockSize, h: blockSize });
         }
       }
     }
 
-    // Merge adjacent blocks
+    // Merge adjacent / overlapping blocks
     const merged: Rect[] = [];
     const used = new Set<number>();
     for (let i = 0; i < found.length; i++) {
@@ -165,13 +156,11 @@ export default function WatermarkRemover() {
           const f = found[j];
           if (f.x <= x + w + blockSize && f.x + f.w >= x - blockSize &&
               f.y <= y + h + blockSize && f.y + f.h >= y - blockSize) {
-            x = Math.min(x, f.x);
-            y = Math.min(y, f.y);
-            const x2 = Math.max(x + w, f.x + f.w);
-            const y2 = Math.max(y + h, f.y + f.h);
-            w = x2 - x; h = y2 - y;
-            used.add(j);
-            changed = true;
+            const nx2 = Math.max(x + w, f.x + f.w);
+            const ny2 = Math.max(y + h, f.y + f.h);
+            x = Math.min(x, f.x); y = Math.min(y, f.y);
+            w = nx2 - x; h = ny2 - y;
+            used.add(j); changed = true;
           }
         }
       }
@@ -179,28 +168,34 @@ export default function WatermarkRemover() {
       if (w > blockSize * 2 && h > blockSize * 2) merged.push({ x, y, w, h });
     }
 
-    setRects(merged.slice(0, 8));
     if (merged.length === 0) {
-      setError("No watermark detected automatically. Switch to manual mode to draw over it.");
+      setError("No bright watermark detected. Switch to Manual mode to draw over it yourself.");
+    } else {
+      setError("");
+      setRects(merged.slice(0, 8));
     }
   }, []);
 
+  // Run auto-detect when image loads in auto mode
   useEffect(() => {
     if (original && mode === "auto") autoDetect();
   }, [original, mode, autoDetect]);
 
-  // Draw overlay rects
+  // ── Overlay canvas: sync dimensions and redraw rects ──
   useEffect(() => {
-    if (!overlayRef.current || !imgRef.current) return;
     const overlay = overlayRef.current;
-    const img = imgRef.current;
-    overlay.width = img.naturalWidth;
-    overlay.height = img.naturalHeight;
+    const img     = imgRef.current;
+    if (!overlay || !img) return;
+
+    if (overlay.width  !== img.naturalWidth)  overlay.width  = img.naturalWidth;
+    if (overlay.height !== img.naturalHeight) overlay.height = img.naturalHeight;
+
     const ctx = overlay.getContext("2d")!;
     ctx.clearRect(0, 0, overlay.width, overlay.height);
     ctx.strokeStyle = "rgba(239,68,68,0.9)";
-    ctx.lineWidth = Math.max(2, img.naturalWidth / 300);
-    ctx.fillStyle = "rgba(239,68,68,0.15)";
+    ctx.fillStyle   = "rgba(239,68,68,0.18)";
+    ctx.lineWidth   = Math.max(2, img.naturalWidth / 300);
+
     for (const r of rects) {
       ctx.fillRect(r.x, r.y, r.w, r.h);
       ctx.strokeRect(r.x, r.y, r.w, r.h);
@@ -209,28 +204,27 @@ export default function WatermarkRemover() {
       ctx.fillRect(currentRect.x, currentRect.y, currentRect.w, currentRect.h);
       ctx.strokeRect(currentRect.x, currentRect.y, currentRect.w, currentRect.h);
     }
-  }, [rects, currentRect]);
+  }, [rects, currentRect, original]); // `original` triggers dim-init on first load
 
-  const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // ── Canvas coordinate conversion (CSS px → image px) ──
+  const getCoords = (e: React.MouseEvent<HTMLCanvasElement>): { x: number; y: number } => {
     const canvas = overlayRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    const bounds = canvas.getBoundingClientRect();
     return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY,
+      x: (e.clientX - bounds.left)  * (canvas.width  / bounds.width),
+      y: (e.clientY - bounds.top)   * (canvas.height / bounds.height),
     };
   };
 
   const onMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (mode !== "manual") return;
-    const { x, y } = getCanvasCoords(e);
-    drawStart.current = { x, y };
-    setDrawing(true);
+    e.preventDefault();
+    drawStart.current = getCoords(e);
+    isDrawing.current = true;
   };
   const onMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!drawing || !drawStart.current || mode !== "manual") return;
-    const { x, y } = getCanvasCoords(e);
+    if (!isDrawing.current || !drawStart.current) return;
+    const { x, y } = getCoords(e);
     const sx = drawStart.current.x, sy = drawStart.current.y;
     setCurrentRect({
       x: Math.min(sx, x), y: Math.min(sy, y),
@@ -238,14 +232,16 @@ export default function WatermarkRemover() {
     });
   };
   const onMouseUp = () => {
-    if (!drawing || !currentRect) { setDrawing(false); return; }
-    if (currentRect.w > 5 && currentRect.h > 5) {
+    if (!isDrawing.current) return;
+    isDrawing.current = false;
+    if (currentRect && currentRect.w > 6 && currentRect.h > 6) {
       setRects((prev) => [...prev, currentRect]);
     }
     setCurrentRect(null);
-    setDrawing(false);
+    drawStart.current = null;
   };
 
+  // ── Apply content-aware fill to all marked regions ──
   const removeWatermarks = useCallback(async () => {
     if (!imgDataRef.current || rects.length === 0) return;
     setLoading(true);
@@ -253,6 +249,7 @@ export default function WatermarkRemover() {
     await new Promise((r) => setTimeout(r, 30));
 
     try {
+      // Deep-copy pixel data so we don't mutate the original
       const imgData = new ImageData(
         new Uint8ClampedArray(imgDataRef.current.data),
         imgDataRef.current.width,
@@ -261,13 +258,14 @@ export default function WatermarkRemover() {
       for (const rect of rects) {
         patchRegion(imgData, rect);
       }
+
       const tmpCanvas = document.createElement("canvas");
-      tmpCanvas.width = imgData.width;
+      tmpCanvas.width  = imgData.width;
       tmpCanvas.height = imgData.height;
-      const ctx = tmpCanvas.getContext("2d")!;
-      ctx.putImageData(imgData, 0, 0);
+      tmpCanvas.getContext("2d")!.putImageData(imgData, 0, 0);
+
       tmpCanvas.toBlob((blob) => {
-        if (!blob) { setError("Failed to generate result."); return; }
+        if (!blob) { setError("Failed to generate result."); setLoading(false); return; }
         setResult(URL.createObjectURL(blob));
         increment();
         setLoading(false);
@@ -278,7 +276,7 @@ export default function WatermarkRemover() {
       setLoading(false);
       setProgress("");
     }
-  }, [imgDataRef, rects, increment]);
+  }, [rects, increment]);
 
   const reset = () => {
     setOriginal(null); setResult(null); setError("");
@@ -289,35 +287,28 @@ export default function WatermarkRemover() {
   const download = () => {
     if (!result) return;
     const a = document.createElement("a");
-    a.href = result;
-    a.download = fileName || "clean.png";
-    a.click();
+    a.href = result; a.download = fileName || "clean.png"; a.click();
   };
-
-  const handleFiles = useCallback((files: FileList | File[]) => {
-    const file = Array.from(files)[0];
-    if (file) processFile(file);
-  }, [processFile]);
 
   const handleShareLink = async () => {
     await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
+    setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500);
   };
 
+  // ─────────────────────────────── RENDER ───────────────────────────────
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
+      {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col items-center text-center gap-3">
           <div>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
-              <Droplets className="w-3.5 h-3.5" />
-              <span>Image Tools</span>
+              <Droplets className="w-3.5 h-3.5" /><span>Image Tools</span>
               <UsageCount count={count} label="watermarks removed" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Watermark Remover</h1>
             <p className="text-muted-foreground mt-2">
-              AI detects and removes watermarks using content-aware fill. Or draw over them manually — everything runs in your browser.
+              Draw over any watermark and AI fills it in seamlessly. Or let auto-detect find white/bright marks. 100% browser — nothing uploaded.
             </p>
           </div>
           <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
@@ -327,11 +318,12 @@ export default function WatermarkRemover() {
       <div className="mb-5 flex items-start gap-2.5 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3 text-sm text-primary">
         <Wand2 className="w-4 h-4 mt-0.5 flex-shrink-0 opacity-70" />
         <span>
-          <strong>Browser only.</strong> No image is uploaded to any server. Content-aware fill reconstructs the patched area from surrounding pixels.
+          <strong>Content-aware fill.</strong> Reconstructs the patched area from surrounding pixels — no image leaves your browser.
         </span>
       </div>
 
-      {!original ? (
+      {/* ── Upload state ── */}
+      {!original && (
         <ImageDropZone
           dragOver={dragOver}
           onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
@@ -339,16 +331,18 @@ export default function WatermarkRemover() {
           onDragLeave={() => setDragOver(false)}
           onClick={() => inputRef.current?.click()}
           title="Drop a watermarked image"
-          subtitle="Best for white/light watermarks. Use manual mode for logos or dark marks."
+          subtitle="Draw over the watermark to remove it — works on any type"
           badges={["JPG", "PNG", "WebP"]}
           buttonLabel="Select Image"
         >
           <input ref={inputRef} type="file" accept="image/*" className="hidden"
             onChange={(e) => e.target.files && handleFiles(e.target.files)} />
         </ImageDropZone>
-      ) : result ? (
+      )}
+
+      {/* ── Result state ── */}
+      {original && result && (
         <div className="space-y-5">
-          {/* Before / after */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="px-4 py-2.5 border-b border-border">
@@ -368,63 +362,102 @@ export default function WatermarkRemover() {
               </div>
             </div>
           </div>
+
           {error && <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">{error}</div>}
+
           <div className="flex flex-wrap gap-3">
             <Button onClick={download} className="gap-2">
-              <Download className="w-4 h-4" />
-              Download Clean Image
+              <Download className="w-4 h-4" /> Download Clean Image
             </Button>
             <Button variant="outline" onClick={reset} className="gap-2">
-              <RefreshCw className="w-4 h-4" />
-              New Image
+              <RefreshCw className="w-4 h-4" /> New Image
             </Button>
           </div>
+          <div className="bg-card border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground">
+            💡 <strong>Tip:</strong> For better results on complex backgrounds, try drawing smaller, more precise rectangles around just the watermark text.
+          </div>
         </div>
-      ) : (
+      )}
+
+      {/* ── Drawing / processing state ── */}
+      {original && !result && (
         <div className="space-y-5">
           {/* Mode toggle */}
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">Detection mode:</span>
-            <button
-              onClick={() => { setMode("auto"); setRects([]); if (original) autoDetect(); }}
-              className={`px-4 py-1.5 rounded-lg text-sm font-semibold border transition-all gap-2 flex items-center ${
-                mode === "auto" ? "bg-primary text-primary-foreground border-primary" : "bg-muted text-muted-foreground border-border hover:border-primary/40"
-              }`}
-            >
-              <Wand2 className="w-3.5 h-3.5" /> Auto Detect
-            </button>
-            <button
-              onClick={() => { setMode("manual"); setRects([]); }}
-              className={`px-4 py-1.5 rounded-lg text-sm font-semibold border transition-all gap-2 flex items-center ${
-                mode === "manual" ? "bg-primary text-primary-foreground border-primary" : "bg-muted text-muted-foreground border-border hover:border-primary/40"
-              }`}
-            >
-              <MousePointer className="w-3.5 h-3.5" /> Manual Draw
-            </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-medium text-muted-foreground">Mode:</span>
+            {(["manual", "auto"] as const).map((m) => (
+              <button key={m}
+                onClick={() => {
+                  setMode(m); setRects([]); setError("");
+                  if (m === "auto") autoDetect();
+                }}
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold border transition-all flex items-center gap-1.5 ${
+                  mode === m
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-muted text-muted-foreground border-border hover:border-primary/40"
+                }`}
+              >
+                {m === "manual"
+                  ? <><MousePointer className="w-3.5 h-3.5" /> Manual Draw</>
+                  : <><Wand2 className="w-3.5 h-3.5" /> Auto Detect</>
+                }
+              </button>
+            ))}
           </div>
 
-          {mode === "manual" && (
+          {/* Hint banners */}
+          {mode === "manual" && rects.length === 0 && (
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2.5 text-sm text-amber-700 dark:text-amber-400">
-              Draw rectangles over the watermark(s) on the image below, then click Remove.
+              <strong>Click and drag</strong> on the image below to mark the watermark area, then click Remove.
+            </div>
+          )}
+          {mode === "manual" && rects.length > 0 && (
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5 text-sm text-emerald-700 dark:text-emerald-400">
+              {rects.length} area{rects.length !== 1 ? "s" : ""} marked — click <strong>Remove</strong> to apply.
+            </div>
+          )}
+          {mode === "auto" && rects.length > 0 && (
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5 text-sm text-emerald-700 dark:text-emerald-400">
+              {rects.length} bright region{rects.length !== 1 ? "s" : ""} detected — click <strong>Remove</strong> to apply.
             </div>
           )}
 
-          {/* Canvas with overlay */}
-          <div className="relative bg-card border border-border rounded-xl overflow-hidden">
+          {/* Image + overlay canvas */}
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                {mode === "auto" ? `${rects.length} region${rects.length !== 1 ? "s" : ""} detected` : "Draw over watermarks"}
+                {mode === "manual" ? "Draw over the watermark" : `${rects.length} region${rects.length !== 1 ? "s" : ""} detected`}
               </p>
               {rects.length > 0 && (
-                <button onClick={() => setRects([])} className="text-xs text-destructive hover:underline">Clear all</button>
+                <button onClick={() => setRects([])} className="text-xs text-destructive hover:underline">
+                  Clear all
+                </button>
               )}
             </div>
-            <div className="relative w-full" style={{ maxHeight: 420, overflow: "hidden" }}>
-              <canvas ref={canvasRef} className="w-full object-contain block" style={{ display: "block" }} />
+
+            {/*
+              Display the original image with a transparent canvas overlay.
+              The image uses w-full so it fills the container.
+              The canvas is absolutely positioned over it — same CSS size.
+              Canvas pixel dimensions are set to naturalWidth × naturalHeight
+              in the useEffect, and we convert coords via scale factor.
+            */}
+            <div className="relative w-full" style={{ lineHeight: 0 }}>
+              <img
+                src={original}
+                alt="original"
+                className="w-full object-contain block"
+                style={{ maxHeight: 460, display: "block" }}
+              />
               <canvas
                 ref={overlayRef}
-                className="absolute inset-0 w-full h-full"
-                style={{ cursor: mode === "manual" ? "crosshair" : "default" }}
+                className="absolute inset-0"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  cursor: mode === "manual" ? "crosshair" : "default",
+                  touchAction: "none",
+                }}
                 onMouseDown={onMouseDown}
                 onMouseMove={onMouseMove}
                 onMouseUp={onMouseUp}
@@ -433,7 +466,19 @@ export default function WatermarkRemover() {
             </div>
           </div>
 
-          {error && <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">{error}</div>}
+          {error && (
+            <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+              {error}
+              {error.includes("Manual") && (
+                <button
+                  onClick={() => { setMode("manual"); setError(""); }}
+                  className="ml-2 underline font-semibold"
+                >
+                  Switch now →
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-3">
             <Button
@@ -441,15 +486,13 @@ export default function WatermarkRemover() {
               disabled={rects.length === 0 || loading}
               className="gap-2"
             >
-              {loading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />{progress || "Removing…"}</>
-              ) : (
-                <><Wand2 className="w-4 h-4" />Remove Watermark{rects.length > 1 ? "s" : ""}</>
-              )}
+              {loading
+                ? <><Loader2 className="w-4 h-4 animate-spin" />{progress || "Removing…"}</>
+                : <><Wand2 className="w-4 h-4" />Remove Watermark{rects.length > 1 ? "s" : ""}</>
+              }
             </Button>
             <Button variant="outline" onClick={reset} className="gap-2">
-              <RefreshCw className="w-4 h-4" />
-              New Image
+              <RefreshCw className="w-4 h-4" /> New Image
             </Button>
             <input ref={inputRef} type="file" accept="image/*" className="hidden"
               onChange={(e) => e.target.files && handleFiles(e.target.files)} />
