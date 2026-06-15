@@ -402,7 +402,7 @@ const ToolCard = memo(function ToolCard({
           }`}
           aria-label={isStarred ? "Remove from favourites" : "Add to favourites"}
         >
-          <Star className={`w-4 h-4 ${isStarred ? "fill-current" : ""}`} />
+          <Star className={`w-5 h-5 ${isStarred ? "fill-current" : ""}`} />
         </button>
       </div>
     </Link>
