@@ -80,6 +80,10 @@ export default defineConfig({
     strictPort: true,
     host: "0.0.0.0",
     allowedHosts: true,
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
     fs: {
       strict: true,
     },
@@ -88,5 +92,9 @@ export default defineConfig({
     port,
     host: "0.0.0.0",
     allowedHosts: true,
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
   },
 });
