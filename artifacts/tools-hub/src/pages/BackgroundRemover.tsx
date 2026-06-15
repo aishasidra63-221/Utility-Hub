@@ -40,18 +40,24 @@ export default function BackgroundRemover() {
     setLoading(true);
     setProgress("Initializing AI…");
     try {
-      // Lock numThreads=1 BEFORE library can override it (threaded WASM needs
-      // SharedArrayBuffer which is blocked in Replit's cross-origin iframe context)
+      // Root cause: ort@1.17.3 with numThreads=1 computes filename="ort-wasm-simd.wasm"
+      // then looks it up as d["ort-wasm-simd.wasm"] in the library's {wasm:blobUrl} object
+      // → undefined → falls back to bundled base URL which has no WASM → Aborted(CompileError).
+      //
+      // Fix: lock wasmPaths to the CDN string prefix BEFORE the library overrides it.
+      // ort sees a string → constructs CDN + "ort-wasm-simd.wasm" (non-threaded, no SAB needed).
+      const CDN = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/";
       const ort = await import("onnxruntime-web");
+      const noop = () => {};
       Object.defineProperty(ort.env.wasm, "numThreads", {
-        get: () => 1,
-        set: (_v: number) => { /* noop — prevent library from enabling threads */ },
-        configurable: true,
+        get: () => 1, set: noop, configurable: true,
+      });
+      Object.defineProperty(ort.env.wasm, "wasmPaths", {
+        get: () => CDN, set: noop, configurable: true,
       });
 
       const { removeBackground } = await import("@imgly/background-removal");
       setProgress("Downloading AI model (~25MB)…");
-      // publicPath → our custom resources.json that swaps threaded WASM for non-threaded
       const publicPath = `${window.location.origin}${import.meta.env.BASE_URL}bg-removal/`;
       const blob = await removeBackground(file, {
         publicPath,
