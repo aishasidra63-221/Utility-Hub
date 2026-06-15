@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo, memo, useRef } from "react";
+import React, { useState, useEffect, useMemo, memo } from "react";
 import { Link } from "wouter";
 import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
   ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
   Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench, FileUser,
-  Eraser, Sparkles, Target, Pipette, Search,
+  Eraser, Sparkles, Target, Pipette,
 } from "lucide-react";
 
 import { useSEO } from "@/hooks/useSEO";
@@ -418,8 +418,6 @@ export default function Home() {
 
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [activeCategory, setActiveCategory] = useState<Category>("all");
-  const [query, setQuery] = useState("");
-  const searchRef = useRef<HTMLInputElement>(null);
   const [starredIds, setStarredIds] = useState<Set<string>>(() => {
     try {
       const saved = localStorage.getItem("toolhub_favourites");
@@ -455,18 +453,10 @@ export default function Home() {
   const topToolId = usedTools[0]?.id ?? null;
 
   const filteredTools = useMemo(() => {
-    let tools = sortedTools;
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      tools = tools.filter(
-        (t) => t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
-      );
-      return tools;
-    }
-    if (activeCategory === "all") return tools;
-    if (activeCategory === "favourites") return tools.filter((t) => starredIds.has(t.id));
-    return tools.filter((t) => t.category === activeCategory);
-  }, [activeCategory, sortedTools, starredIds, query]);
+    if (activeCategory === "all") return sortedTools;
+    if (activeCategory === "favourites") return sortedTools.filter((t) => starredIds.has(t.id));
+    return sortedTools.filter((t) => t.category === activeCategory);
+  }, [activeCategory, sortedTools, starredIds]);
 
   const CATEGORY_TABS: { id: Category; label: string; icon: React.ElementType }[] = [
     { id: "all", label: "All", icon: Layers },
@@ -518,28 +508,7 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Search bar */}
-          <div className="relative max-w-md mx-auto mb-4">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-            <input
-              ref={searchRef}
-              type="text"
-              value={query}
-              onChange={(e) => { setQuery(e.target.value); setActiveCategory("all"); }}
-              placeholder="Search tools… (e.g. compress, PDF, QR)"
-              className="w-full pl-10 pr-10 py-3 rounded-2xl border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all shadow-sm"
-            />
-            {query && (
-              <button
-                onClick={() => { setQuery(""); searchRef.current?.focus(); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {totalUses > 0 && !query && (
+          {totalUses > 0 && (
             <div className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/60 border border-border px-3 py-1.5 rounded-full">
               <Activity className="w-3.5 h-3.5 text-primary" />
               You've used these tools{" "}
@@ -551,41 +520,33 @@ export default function Home() {
       </section>
 
       <div className="max-w-6xl mx-auto px-4 pb-16">
-        {/* ── Category Tabs — hidden while searching ── */}
-        {!query && (
-          <div className="flex flex-wrap gap-2 mb-6 mt-2">
-            {CATEGORY_TABS.map(({ id, label, icon: Icon }) => {
-              const isActive = activeCategory === id;
-              return (
-                <button
-                  key={id}
-                  onClick={() => setActiveCategory(id)}
-                  className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 border ${
-                    isActive
-                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                      : "bg-muted/60 text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* ── Category Tabs ── */}
+        <div className="flex flex-wrap gap-2 mb-6 mt-2">
+          {CATEGORY_TABS.map(({ id, label, icon: Icon }) => {
+            const isActive = activeCategory === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveCategory(id)}
+                className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 border ${
+                  isActive
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-muted/60 text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
 
         {/* ── Tool Grid ── */}
-        {query && filteredTools.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Search className="w-10 h-10 text-muted-foreground/30 mb-3" />
-            <p className="text-muted-foreground font-medium">No tools found for &ldquo;{query}&rdquo;</p>
-            <button onClick={() => setQuery("")} className="mt-3 text-sm text-primary hover:underline">Clear search</button>
-          </div>
-        ) : activeCategory === "favourites" && starredIds.size === 0 ? (
+        {activeCategory === "favourites" && starredIds.size === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Star className="w-10 h-10 text-muted-foreground/30 mb-3" />
             <p className="text-muted-foreground font-medium">No favourites yet</p>
-            <p className="text-sm text-muted-foreground/60 mt-1">Star any tool card to save it here</p>
+            <p className="text-sm text-muted-foreground/60 mt-1">Kisi bhi tool ke card mein ⭐ dabao</p>
           </div>
         ) : filteredTools.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
