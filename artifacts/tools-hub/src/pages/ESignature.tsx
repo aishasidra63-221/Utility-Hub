@@ -13,15 +13,6 @@ import { useToolCounter } from "@/hooks/useToolCounter";
 type Tab = "draw" | "type";
 type Position = "top-left" | "top-right" | "center" | "bottom-left" | "bottom-right";
 
-const POS_LABELS: { id: Position; label: string }[] = [
-  { id: "top-left",     label: "Top Left" },
-  { id: "top-center",   label: "Top Center" } as never,
-  { id: "top-right",    label: "Top Right" },
-  { id: "center",       label: "Center" },
-  { id: "bottom-left",  label: "Bottom Left" },
-  { id: "bottom-right", label: "Bottom Right" },
-];
-
 const POSITIONS: { id: Position; label: string }[] = [
   { id: "top-left",    label: "Top Left" },
   { id: "top-right",   label: "Top Right" },

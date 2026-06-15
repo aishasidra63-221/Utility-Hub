@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useLayoutEffect } from "react";
 import { Download, Palette, Loader2, RefreshCw } from "lucide-react";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
@@ -111,12 +111,23 @@ export default function PhotoColorizer() {
   const [fileName, setFileName] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [sliderPos, setSliderPos] = useState(50);
+  const [sliderContainerW, setSliderContainerW] = useState(0);
   const [linkCopied, setLinkCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const currentFile = useRef<File | null>(null);
+
+  useLayoutEffect(() => {
+    if (!result || !sliderRef.current) return;
+    const el = sliderRef.current;
+    const update = () => setSliderContainerW(el.offsetWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [result]);
 
   const processFile = useCallback(async (file: File, m: ColorMode) => {
     if (!file.type.startsWith("image/")) {
@@ -177,6 +188,7 @@ export default function PhotoColorizer() {
     setResult(null);
     setError("");
     setSliderPos(50);
+    setSliderContainerW(0);
     imgRef.current = null;
     currentFile.current = null;
   };
@@ -292,7 +304,7 @@ export default function PhotoColorizer() {
                 <div className="absolute inset-0 overflow-hidden" style={{ width: `${sliderPos}%` }}>
                   <img src={original} alt="original"
                     className="absolute top-0 left-0 object-contain block"
-                    style={{ maxHeight: 440, width: sliderRef.current?.offsetWidth ?? "100%" }} />
+                    style={{ maxHeight: 440, width: sliderContainerW || "100%" }} />
                 </div>
                 <div className="absolute top-0 bottom-0 w-0.5 bg-white shadow-lg z-10 pointer-events-none" style={{ left: `${sliderPos}%` }}>
                   <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center border border-border">
