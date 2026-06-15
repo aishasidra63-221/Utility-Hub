@@ -5,7 +5,7 @@ import {
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
   ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
   Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench, FileUser,
-  Eraser, Sparkles, Target,
+  Eraser, Sparkles, Target, Pipette,
 } from "lucide-react";
 
 import { useSEO } from "@/hooks/useSEO";
@@ -308,6 +308,20 @@ const ALL_TOOLS = [
     accentColor: "group-hover:text-emerald-500",
     borderGradient: "from-emerald-500 to-teal-400",
   },
+  {
+    href: "/color-picker",
+    id: "color-picker",
+    icon: Pipette,
+    title: "Color Picker",
+    description: "Click anywhere on an image to pick its exact color. Get HEX, RGB, and HSL values. Screen eyedropper support.",
+    badge: "New",
+    category: "utility" as Category,
+    gradient: "from-violet-500/15 to-fuchsia-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-500/30",
+    accentColor: "group-hover:text-violet-500",
+    borderGradient: "from-violet-500 to-fuchsia-400",
+  },
 ];
 
 const FEATURES = [
@@ -473,7 +487,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed mb-5">
-            21 powerful utilities that run entirely in your browser.
+            22 powerful utilities that run entirely in your browser.
             Upload, process, download — done in seconds.
           </p>
 

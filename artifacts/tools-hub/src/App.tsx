@@ -31,6 +31,7 @@ const ScreenshotBeautifier = lazy(() => import("@/pages/ScreenshotBeautifier"));
 const FaviconGenerator     = lazy(() => import("@/pages/FaviconGenerator"));
 const TargetSizeCompressor = lazy(() => import("@/pages/TargetSizeCompressor"));
 const ExifStripper         = lazy(() => import("@/pages/ExifStripper"));
+const ColorPicker          = lazy(() => import("@/pages/ColorPicker"));
 const NotFound             = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
@@ -102,6 +103,7 @@ function Router() {
           <Route path="/favicon-generator"     component={FaviconGenerator} />
           <Route path="/target-compressor"     component={TargetSizeCompressor} />
           <Route path="/exif-stripper"         component={ExifStripper} />
+          <Route path="/color-picker"          component={ColorPicker} />
           <Route path="/settings"          component={Settings} />
           <Route path="/privacy-policy"    component={PrivacyPolicy} />
           <Route path="/terms"             component={TermsConditions} />
