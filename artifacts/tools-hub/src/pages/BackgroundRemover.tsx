@@ -7,6 +7,10 @@ import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
 
+// Cache pipeline so model downloads only once per session
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _pipe: any = null;
+
 export default function BackgroundRemover() {
   useSEO({
     title: "Free Background Remover — Remove Image Background Instantly | ToolsHub",
@@ -39,46 +43,55 @@ export default function BackgroundRemover() {
     setOriginal(URL.createObjectURL(file));
     setLoading(true);
     setProgress("Initializing AI…");
-    try {
-      // The @imgly/background-removal library internally uses
-      // `(await import("onnxruntime-web")).default` — so we must patch
-      // `.default.env.wasm`, NOT `ort.env.wasm` (those are different objects).
-      // numThreads=1 → uses ort-wasm-simd.wasm (no SharedArrayBuffer/COOP needed).
-      const localWasmPath = `${window.location.origin}${import.meta.env.BASE_URL}bg-removal/`;
-      const ortMod = await import("onnxruntime-web");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ortObj = (ortMod as any).default ?? ortMod;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const wasmEnv = ortObj.env.wasm as any;
-      const noop = () => {};
-      try { Object.defineProperty(wasmEnv, "numThreads", { get: () => 1, set: noop, configurable: true }); } catch {}
-      try { Object.defineProperty(wasmEnv, "wasmPaths", { get: () => localWasmPath, set: noop, configurable: true }); } catch {}
 
-      const { removeBackground } = await import("@imgly/background-removal");
-      setProgress("Downloading AI model (~25MB)…");
-      const publicPath = `${window.location.origin}${import.meta.env.BASE_URL}bg-removal/`;
-      const blob = await removeBackground(file, {
-        publicPath,
-        model: "small",
-        output: { quality: 0.9, format: "image/png" },
-        progress: (key: string, current: number, total: number) => {
-          if (total > 0) {
-            const pct = Math.round((current / total) * 100);
-            if (key.includes("fetch") || key.includes("model")) {
+    try {
+      const { pipeline, env } = await import("@huggingface/transformers");
+
+      // Force single-threaded WASM — no SharedArrayBuffer / cross-origin isolation needed
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (env.backends.onnx as any).wasm.numThreads = 1;
+
+      if (!_pipe) {
+        setProgress("Downloading AI model (~20MB, first time only)…");
+        _pipe = await pipeline("background-removal", "Xenova/modnet", {
+          device: "wasm",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          progress_callback: (prog: any) => {
+            if (
+              (prog.status === "download" || prog.status === "progress") &&
+              prog.total > 0
+            ) {
+              const pct = Math.round((prog.loaded / prog.total) * 100);
               setProgress(`Downloading AI model: ${pct}%`);
-            } else {
-              setProgress(`Processing image: ${pct}%`);
+            } else if (prog.status === "initiate") {
+              setProgress("Preparing AI model…");
+            } else if (prog.status === "done") {
+              setProgress("Model ready — processing image…");
             }
-          }
-        },
-      });
+          },
+        });
+      }
+
+      setProgress("Removing background…");
+
+      const imageUrl = URL.createObjectURL(file);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const output = await (_pipe as any)(imageUrl);
+      URL.revokeObjectURL(imageUrl);
+
+      // output is a RawImage with alpha channel applied
+      const blob = await output.toBlob("image/png");
       setResult(URL.createObjectURL(blob));
       increment();
     } catch (e: any) {
       console.error("Background removal error:", e);
+      // If pipeline is broken, reset it so next attempt re-initialises
+      _pipe = null;
       setError(
         "Could not remove background. " +
-        (e?.message ? `(${e.message.slice(0, 120)})` : "Please try a different image.")
+          (e?.message
+            ? `(${e.message.slice(0, 120)})`
+            : "Please try a different image.")
       );
     } finally {
       setLoading(false);
@@ -86,10 +99,13 @@ export default function BackgroundRemover() {
     }
   }, [increment]);
 
-  const handleFiles = useCallback((files: FileList | File[]) => {
-    const file = Array.from(files)[0];
-    if (file) processFile(file);
-  }, [processFile]);
+  const handleFiles = useCallback(
+    (files: FileList | File[]) => {
+      const file = Array.from(files)[0];
+      if (file) processFile(file);
+    },
+    [processFile]
+  );
 
   const reset = () => {
     setOriginal(null);
@@ -136,7 +152,7 @@ export default function BackgroundRemover() {
       <div className="mb-5 flex items-start gap-2.5 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3 text-sm text-primary">
         <Loader2 className="w-4 h-4 mt-0.5 flex-shrink-0 opacity-70" />
         <span>
-          <strong>First use:</strong> The AI model (~25MB) downloads once to your browser. After that it runs instantly offline.
+          <strong>First use:</strong> The AI model (~20MB) downloads once to your browser. After that it runs offline — no internet needed.
         </span>
       </div>
 
@@ -208,13 +224,13 @@ export default function BackgroundRemover() {
                 Download PNG
               </Button>
             )}
-            {loading && originalFile && (
+            {loading && (
               <Button disabled className="gap-2 opacity-60">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 {progress || "Processing…"}
               </Button>
             )}
-            <Button variant="outline" onClick={() => { reset(); }} className="gap-2">
+            <Button variant="outline" onClick={reset} className="gap-2">
               <RefreshCw className="w-4 h-4" />
               New Image
             </Button>

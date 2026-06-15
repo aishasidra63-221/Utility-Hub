@@ -1,53 +1,45 @@
 ---
-name: Background Remover WASM fix
-description: Root cause + fix for @imgly/background-removal@1.7.0 stuck/hanging in Replit
+name: Background Remover — implementation
+description: Final working approach for in-browser BG removal after repeated @imgly/background-removal failures
 ---
 
-## Root Cause Summary
+## Final Working Solution
 
-`@imgly/background-removal@1.7.0` internally uses `(await import("onnxruntime-web")).default` to get ort.
-Our code imports as `await import("onnxruntime-web")` (namespace object). These are **different objects**:
-- `ortMod.env.wasm` — named export (what our code was patching — WRONG target)
-- `ortMod.default.env.wasm` — default export's env (what the library uses — CORRECT target)
+Replaced `@imgly/background-removal` with `@huggingface/transformers` (already in package.json).
 
-Patching the wrong object means the library's own assignments go through unblocked:
-- `ort2.env.wasm.numThreads = navigator.hardwareConcurrency` (e.g. 4)
-- `ort2.env.wasm.wasmPaths = { mjs: blobUrl, wasm: blobUrl }` (threaded WASM blob URLs)
+```tsx
+const { pipeline, env } = await import("@huggingface/transformers");
 
-Result: ort tries to use threaded WASM (`ort-wasm-simd-threaded.wasm`), which needs SharedArrayBuffer.
-In Replit's proxied iframe environment, `crossOriginIsolated = false` → SharedArrayBuffer unavailable → inference hangs silently at "Processing image: 0%".
+// Single-threaded WASM — no SharedArrayBuffer / COOP/COEP needed
+(env.backends.onnx as any).wasm.numThreads = 1;
 
-## The Correct Fix (in BackgroundRemover.tsx)
+const pipe = await pipeline("background-removal", "Xenova/modnet", {
+  device: "wasm",
+  progress_callback: (prog: any) => { /* download progress */ },
+});
 
-Target `.default.env.wasm`:
-
-```ts
-const localWasmPath = `${window.location.origin}${import.meta.env.BASE_URL}bg-removal/`;
-const ortMod = await import("onnxruntime-web");
-const ortObj = (ortMod as any).default ?? ortMod;   // ← KEY: use .default
-const wasmEnv = ortObj.env.wasm as any;
-const noop = () => {};
-try { Object.defineProperty(wasmEnv, "numThreads", { get: () => 1, set: noop, configurable: true }); } catch {}
-try { Object.defineProperty(wasmEnv, "wasmPaths",  { get: () => localWasmPath, set: noop, configurable: true }); } catch {}
-
-const { removeBackground } = await import("@imgly/background-removal");
+const output = await pipe(imageUrl);  // returns RawImage with alpha applied
+const blob = await output.toBlob("image/png");
 ```
 
-**Why:**
-- `numThreads=1` forces non-threaded WASM → no SharedArrayBuffer needed
-- `wasmPaths = localWasmPath string` → ort constructs `localWasmPath + "ort-wasm-simd.wasm"` (served from public/bg-removal/)
-- Wrapped in try/catch because the property may already be defined as non-configurable on second call
+Cache `pipe` in a module-level variable (`let _pipe = null`) so the model (~20MB) downloads only once per session.
+Reset `_pipe = null` in the catch block so a failed init re-tries on next use.
 
-## resources.json — why loadAsUrl still works
-The library's `loadAsUrl("/onnxruntime-web/ort-wasm-simd-threaded.wasm", config)` reads from
-`public/bg-removal/resources.json` which HAS those keys (chunks point to CDN). The blob URL is created
-but since our setter is noop, the `wasmPaths` assignment is ignored. Our getter returns `localWasmPath`.
+## Why @imgly/background-removal failed (do not retry)
 
-## Local WASM files (public/bg-removal/)
-Keep all three:
-- `ort-wasm-simd.wasm` — used when numThreads=1 + SIMD supported
-- `ort-wasm.wasm` — fallback when SIMD not supported  
-- `ort-wasm-simd-threaded.wasm` — NOT used (threaded blocked), but present in resources.json
+- Always uses `ort-wasm-simd-threaded.wasm` internally — even with numThreads=1 patches
+- Threaded WASM requires SharedArrayBuffer → requires `crossOriginIsolated = true`
+- Replit dev preview runs in a proxy iframe — `crossOriginIsolated` is always false there
+- `Object.defineProperty` patches (both named-export and default-export variants) were not reliably intercepting the library's internal ort setup
+- Result: inference hangs silently at "Processing image: 0%" forever
 
-## onnxruntime-web version
-Pinned to `1.17.3` in package.json. v1.21+ dropped non-threaded WASM entirely — do not upgrade.
+## Why @huggingface/transformers works
+
+- Exposes `env.backends.onnx.wasm.numThreads = 1` directly (no monkey-patching needed)
+- `background-removal` pipeline built-in with `Xenova/modnet` default (~20MB)
+- Pipeline returns `RawImage` with alpha already applied — call `.toBlob("image/png")` directly
+- No CDN WASM dependencies — library bundles its own WASM
+
+## Model choice
+- `Xenova/modnet` — ~20MB, MODNet architecture, portrait/subject matting, confirmed working
+- `briaai/RMBG-1.4` — ~175MB fp32, general purpose, not yet tried with this setup
