@@ -28,8 +28,8 @@ const FAQ             = lazy(() => import("@/pages/FAQ"));
 const ResumeBuilder        = lazy(() => import("@/pages/ResumeBuilder"));
 const BackgroundRemover    = lazy(() => import("@/pages/BackgroundRemover"));
 const WordCounter          = lazy(() => import("@/pages/WordCounter"));
-const FaviconGenerator     = lazy(() => import("@/pages/FaviconGenerator"));
-const TargetSizeCompressor = lazy(() => import("@/pages/TargetSizeCompressor"));
+const VideoToGif           = lazy(() => import("@/pages/VideoToGif"));
+const PomodoroTimer        = lazy(() => import("@/pages/PomodoroTimer"));
 const ExifStripper         = lazy(() => import("@/pages/ExifStripper"));
 const ColorPicker          = lazy(() => import("@/pages/ColorPicker"));
 const NotFound             = lazy(() => import("@/pages/not-found"));
@@ -145,8 +145,8 @@ function Router() {
             <Route path="/resume-builder"          component={ResumeBuilder} />
             <Route path="/background-remover"    component={BackgroundRemover} />
             <Route path="/word-counter"          component={WordCounter} />
-            <Route path="/favicon-generator"     component={FaviconGenerator} />
-            <Route path="/target-compressor"     component={TargetSizeCompressor} />
+            <Route path="/video-to-gif"          component={VideoToGif} />
+            <Route path="/pomodoro-timer"        component={PomodoroTimer} />
             <Route path="/exif-stripper"         component={ExifStripper} />
             <Route path="/color-picker"          component={ColorPicker} />
             <Route path="/settings"          component={Settings} />

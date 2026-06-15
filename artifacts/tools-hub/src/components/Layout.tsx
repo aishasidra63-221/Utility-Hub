@@ -24,8 +24,8 @@ const tools = [
   { href: "/resume-builder",        label: "Resume Builder" },
   { href: "/background-remover",    label: "Background Remover" },
   { href: "/word-counter", label: "Word Counter" },
-  { href: "/favicon-generator",     label: "Favicon Generator" },
-  { href: "/target-compressor",     label: "Target Size Compressor" },
+  { href: "/video-to-gif",           label: "Video to GIF" },
+  { href: "/pomodoro-timer",        label: "Pomodoro Timer" },
   { href: "/exif-stripper",         label: "EXIF Stripper" },
   { href: "/color-picker",          label: "Color Picker" },
 ];
