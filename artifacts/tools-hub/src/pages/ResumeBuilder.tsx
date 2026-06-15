@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
+import { Link } from "wouter";
 import { useSEO } from "@/hooks/useSEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Download, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Download, Plus, Trash2, ChevronDown, ChevronUp, FileUser, Home, Link2 } from "lucide-react";
 
 const TEMPLATES = [
   { id: "classic",   label: "Classic",   accent: "#2563eb" },
@@ -87,11 +88,38 @@ export default function ResumeBuilder() {
 
   const acc = template.accent;
 
+  const [linkCopied, setLinkCopied] = useState(false);
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }).catch(() => {});
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Resume Builder</h1>
-        <p className="text-muted-foreground text-sm mt-1">Fill in your details, pick a template, and download as PDF.</p>
+    <div className="max-w-7xl mx-auto px-4 py-10">
+      {/* ── Page header ── */}
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mb-3">
+          <Link href="/" className="flex items-center gap-1 hover:text-foreground transition-colors">
+            <Home className="w-3 h-3" /> Home
+          </Link>
+          <span>/</span>
+          <span className="flex items-center gap-1 text-foreground font-medium">
+            <FileUser className="w-3 h-3" /> Resume Builder
+          </span>
+        </div>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Resume Builder</h1>
+        <p className="text-muted-foreground max-w-lg mx-auto mb-4">
+          Fill in your details, pick a template, and download as PDF — free, no signup, nothing uploaded.
+        </p>
+        <button
+          onClick={copyLink}
+          className="inline-flex items-center gap-2 text-xs text-muted-foreground border border-border rounded-full px-4 py-1.5 hover:bg-accent hover:text-foreground transition-colors"
+        >
+          <Link2 className="w-3.5 h-3.5" />
+          {linkCopied ? "Link copied!" : "Share this tool"}
+        </button>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">

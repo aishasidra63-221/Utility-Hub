@@ -83,14 +83,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span className="text-sm font-extrabold tracking-tight">ToolsHub</span>
           </Link>
 
-          {/* Desktop nav — only on large screens */}
-          <nav className="hidden lg:flex items-center gap-0.5" aria-label="Tools navigation">
+          {/* Desktop nav — scrollable, only on large screens */}
+          <nav
+            className="hidden lg:flex items-center gap-0.5 overflow-x-auto scrollbar-none flex-1 min-w-0"
+            aria-label="Tools navigation"
+            style={{ maskImage: "linear-gradient(to right, transparent 0, black 8px, black calc(100% - 8px), transparent 100%)" }}
+          >
             {tools.map((tool) => (
               <Link
                 key={tool.href}
                 href={tool.href}
                 data-testid={`nav-link-${tool.href.slice(1)}`}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
+                className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
                   location === tool.href
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"

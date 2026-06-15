@@ -436,4 +436,13 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
+
+  /* Hide scrollbar while keeping scroll functionality (used in nav) */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
