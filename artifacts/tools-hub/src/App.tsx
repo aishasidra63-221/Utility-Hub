@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, Component, type ReactNode } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -46,6 +46,41 @@ function PageLoader() {
   );
 }
 
+interface EBState { hasError: boolean; error: Error | null }
+class ErrorBoundary extends Component<{ children: ReactNode }, EBState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error): EBState {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[300px] gap-4 px-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center text-2xl">⚠️</div>
+          <div>
+            <p className="font-semibold text-foreground">Something went wrong</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {this.state.error?.message?.includes("Loading chunk")
+                ? "Failed to load — please check your connection and refresh."
+                : "An unexpected error occurred. Try refreshing the page."}
+            </p>
+          </div>
+          <button
+            onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            Refresh
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const SHORTCUT_MAP: Record<string, string> = {
   "1": "/image-compressor",
   "2": "/image-converter",
@@ -75,42 +110,53 @@ function KeyboardShortcuts() {
   return null;
 }
 
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [location]);
+  return null;
+}
+
 function Router() {
   return (
     <Layout>
       <KeyboardShortcuts />
-      <Suspense fallback={<PageLoader />}>
-        <Switch>
-          <Route path="/"                  component={Home} />
-          <Route path="/image-compressor"  component={ImageCompressor} />
-          <Route path="/image-converter"   component={ImageConverter} />
-          <Route path="/pdf-converter"     component={PdfConverter} />
-          <Route path="/qr-generator"      component={QrGenerator} />
-          <Route path="/text-cleaner"      component={TextCleaner} />
-          <Route path="/whatsapp-link"     component={WhatsappLink} />
-          <Route path="/image-resizer"     component={ImageResizer} />
-          <Route path="/image-cropper"        component={ImageCropper} />
-          <Route path="/password-generator"  component={PasswordGenerator} />
-          <Route path="/unit-converter"       component={UnitConverter} />
-          <Route path="/color-palette"       component={ColorPalette} />
-          <Route path="/heic-converter"      component={HeicConverter} />
-          <Route path="/e-signature"         component={ESignature} />
-          <Route path="/ocr-tool"            component={OcrTool} />
-          <Route path="/pdf-annotator"       component={PdfAnnotator} />
-          <Route path="/resume-builder"          component={ResumeBuilder} />
-          <Route path="/background-remover"    component={BackgroundRemover} />
-          <Route path="/screenshot-beautifier" component={ScreenshotBeautifier} />
-          <Route path="/favicon-generator"     component={FaviconGenerator} />
-          <Route path="/target-compressor"     component={TargetSizeCompressor} />
-          <Route path="/exif-stripper"         component={ExifStripper} />
-          <Route path="/color-picker"          component={ColorPicker} />
-          <Route path="/settings"          component={Settings} />
-          <Route path="/privacy-policy"    component={PrivacyPolicy} />
-          <Route path="/terms"             component={TermsConditions} />
-          <Route path="/faq"               component={FAQ} />
-          <Route                           component={NotFound} />
-        </Switch>
-      </Suspense>
+      <ScrollToTop />
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
+          <Switch>
+            <Route path="/"                  component={Home} />
+            <Route path="/image-compressor"  component={ImageCompressor} />
+            <Route path="/image-converter"   component={ImageConverter} />
+            <Route path="/pdf-converter"     component={PdfConverter} />
+            <Route path="/qr-generator"      component={QrGenerator} />
+            <Route path="/text-cleaner"      component={TextCleaner} />
+            <Route path="/whatsapp-link"     component={WhatsappLink} />
+            <Route path="/image-resizer"     component={ImageResizer} />
+            <Route path="/image-cropper"        component={ImageCropper} />
+            <Route path="/password-generator"  component={PasswordGenerator} />
+            <Route path="/unit-converter"       component={UnitConverter} />
+            <Route path="/color-palette"       component={ColorPalette} />
+            <Route path="/heic-converter"      component={HeicConverter} />
+            <Route path="/e-signature"         component={ESignature} />
+            <Route path="/ocr-tool"            component={OcrTool} />
+            <Route path="/pdf-annotator"       component={PdfAnnotator} />
+            <Route path="/resume-builder"          component={ResumeBuilder} />
+            <Route path="/background-remover"    component={BackgroundRemover} />
+            <Route path="/screenshot-beautifier" component={ScreenshotBeautifier} />
+            <Route path="/favicon-generator"     component={FaviconGenerator} />
+            <Route path="/target-compressor"     component={TargetSizeCompressor} />
+            <Route path="/exif-stripper"         component={ExifStripper} />
+            <Route path="/color-picker"          component={ColorPicker} />
+            <Route path="/settings"          component={Settings} />
+            <Route path="/privacy-policy"    component={PrivacyPolicy} />
+            <Route path="/terms"             component={TermsConditions} />
+            <Route path="/faq"               component={FAQ} />
+            <Route                           component={NotFound} />
+          </Switch>
+        </Suspense>
+      </ErrorBoundary>
     </Layout>
   );
 }

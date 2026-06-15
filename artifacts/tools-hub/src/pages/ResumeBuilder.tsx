@@ -1,9 +1,18 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import { useSEO } from "@/hooks/useSEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Download, Plus, Trash2, ChevronDown, ChevronUp, FileUser, Home, Link2 } from "lucide-react";
+
+const LS_KEY = "toolshub:resume";
+
+function loadSaved() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
 
 const TEMPLATES = [
   { id: "classic",   label: "Classic",   accent: "#2563eb" },
@@ -27,28 +36,41 @@ export default function ResumeBuilder() {
   });
 
   const printRef = useRef<HTMLDivElement>(null);
+  const saved = loadSaved();
 
-  const [template, setTemplate] = useState(TEMPLATES[0]);
-  const [name, setName]       = useState("Your Name");
-  const [title, setTitle]     = useState("Software Engineer");
-  const [email, setEmail]     = useState("you@example.com");
-  const [phone, setPhone]     = useState("+91 98765 43210");
-  const [location, setLocation] = useState("Mumbai, India");
-  const [summary, setSummary] = useState("Passionate professional with experience in building impactful products. Eager to contribute to a dynamic team.");
+  const [template, setTemplate] = useState(() => {
+    const t = saved?.templateId ? TEMPLATES.find(t => t.id === saved.templateId) : null;
+    return t ?? TEMPLATES[0];
+  });
+  const [name, setName]         = useState(saved?.name       ?? "Your Name");
+  const [title, setTitle]       = useState(saved?.title      ?? "Software Engineer");
+  const [email, setEmail]       = useState(saved?.email      ?? "you@example.com");
+  const [phone, setPhone]       = useState(saved?.phone      ?? "+91 98765 43210");
+  const [location, setLocation] = useState(saved?.location   ?? "Mumbai, India");
+  const [summary, setSummary]   = useState(saved?.summary    ?? "Passionate professional with experience in building impactful products. Eager to contribute to a dynamic team.");
 
-  const [experiences, setExperiences] = useState<Experience[]>([
+  const [experiences, setExperiences] = useState<Experience[]>(saved?.experiences ?? [
     { id: 1, title: "Senior Developer", company: "Tech Corp", period: "2022 – Present", desc: "Led development of key product features and mentored junior developers." },
     { id: 2, title: "Junior Developer", company: "StartupXYZ", period: "2020 – 2022", desc: "Built responsive web applications using React and Node.js." },
   ]);
-  const [educations, setEducations] = useState<Education[]>([
+  const [educations, setEducations] = useState<Education[]>(saved?.educations ?? [
     { id: 1, degree: "B.Tech Computer Science", school: "Mumbai University", year: "2020" },
   ]);
-  const [skills, setSkills] = useState<Skill[]>([
+  const [skills, setSkills] = useState<Skill[]>(saved?.skills ?? [
     { id: 1, name: "React" }, { id: 2, name: "TypeScript" }, { id: 3, name: "Node.js" },
     { id: 4, name: "Python" }, { id: 5, name: "SQL" }, { id: 6, name: "Git" },
   ]);
   const [newSkill, setNewSkill] = useState("");
   const [openSections, setOpenSections] = useState({ personal: true, experience: true, education: true, skills: true });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        templateId: template.id, name, title, email, phone, location, summary,
+        experiences, educations, skills,
+      }));
+    } catch { /* quota exceeded — ignore */ }
+  }, [template, name, title, email, phone, location, summary, experiences, educations, skills]);
 
   const toggle = (s: keyof typeof openSections) => setOpenSections(p => ({ ...p, [s]: !p[s] }));
 

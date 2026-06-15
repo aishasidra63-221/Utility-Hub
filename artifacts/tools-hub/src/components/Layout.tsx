@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [location] = useLocation();
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (theme === "dark") {
@@ -60,11 +61,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* ── Header ── */}
       <header
+        ref={menuRef}
         className={`sticky top-0 z-50 border-b border-border transition-all duration-200 ${
           scrolled
             ? "bg-background/80 backdrop-blur-xl shadow-sm"
@@ -72,10 +96,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }`}
       >
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-          {/* Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2 font-bold text-foreground hover:text-primary transition-colors group"
+            className="flex items-center gap-2 font-bold text-foreground hover:text-primary transition-colors group flex-shrink-0"
           >
             <div className="p-1.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
               <ToolsHubIcon className="w-4 h-4 text-primary" />
@@ -83,7 +106,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span className="text-sm font-extrabold tracking-tight">ToolsHub</span>
           </Link>
 
-          {/* Desktop nav — scrollable, only on large screens */}
           <nav
             className="hidden lg:flex items-center gap-0.5 overflow-x-auto scrollbar-none flex-1 min-w-0"
             aria-label="Tools navigation"
@@ -117,7 +139,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Settings className="w-4 h-4" />
               </Button>
             </Link>
-            {/* Hamburger — visible on mobile & tablet, hidden on large screens */}
             <Button
               variant="ghost"
               size="icon"
@@ -125,22 +146,40 @@ export function Layout({ children }: { children: React.ReactNode }) {
               onClick={() => setMobileOpen(!mobileOpen)}
               data-testid="button-mobile-menu"
               aria-label="Toggle menu"
+              aria-expanded={mobileOpen}
             >
-              {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              <span
+                className="relative w-4 h-4 flex items-center justify-center"
+                style={{ transition: "transform 0.2s" }}
+              >
+                <Menu
+                  className="w-4 h-4 absolute transition-all duration-200"
+                  style={{ opacity: mobileOpen ? 0 : 1, transform: mobileOpen ? "rotate(90deg) scale(0.5)" : "rotate(0deg) scale(1)" }}
+                />
+                <X
+                  className="w-4 h-4 absolute transition-all duration-200"
+                  style={{ opacity: mobileOpen ? 1 : 0, transform: mobileOpen ? "rotate(0deg) scale(1)" : "rotate(-90deg) scale(0.5)" }}
+                />
+              </span>
             </Button>
           </div>
         </div>
 
-        {/* Mobile menu */}
-        {mobileOpen && (
-          <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-xl px-4 py-3 flex flex-col gap-1">
+        <div
+          className="lg:hidden overflow-hidden transition-all duration-300 ease-in-out"
+          style={{
+            maxHeight: mobileOpen ? "80dvh" : "0px",
+            opacity: mobileOpen ? 1 : 0,
+          }}
+        >
+          <div className="border-t border-border bg-background/98 backdrop-blur-xl px-4 py-3 flex flex-col gap-0.5 overflow-y-auto"
+               style={{ maxHeight: "calc(80dvh - 1px)" }}>
             {tools.map((tool) => (
               <Link
                 key={tool.href}
                 href={tool.href}
-                onClick={() => setMobileOpen(false)}
                 data-testid={`mobile-nav-link-${tool.href.slice(1)}`}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   location === tool.href
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -151,8 +190,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ))}
             <Link
               href="/settings"
-              onClick={() => setMobileOpen(false)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+              className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                 location === "/settings"
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -162,16 +200,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
               Settings
             </Link>
           </div>
-        )}
+        </div>
       </header>
 
-      {/* ── Main ── */}
       <main className="flex-1">{children}</main>
 
-      {/* ── Footer ── */}
       <footer className="border-t border-border bg-card/50 pt-10 pb-6 mt-8">
         <div className="max-w-6xl mx-auto px-4 space-y-6">
-          {/* Top row: logo + tools nav */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
             <div className="flex items-center gap-2 flex-shrink-0">
               <div className="p-1.5 rounded-lg bg-primary/10">
@@ -196,24 +231,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
 
-          {/* Divider */}
           <div className="border-t border-border" />
 
-          {/* Bottom row: legal links + copyright */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground order-2 sm:order-1">
               © {new Date().getFullYear()} ToolsHub. All rights reserved.
             </p>
             <nav className="flex items-center gap-5 order-1 sm:order-2" aria-label="Legal">
-              <Link href="/faq" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">
-                FAQ
-              </Link>
-              <Link href="/privacy-policy" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">
-                Terms &amp; Conditions
-              </Link>
+              <Link href="/faq" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">FAQ</Link>
+              <Link href="/privacy-policy" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">Privacy Policy</Link>
+              <Link href="/terms" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">Terms &amp; Conditions</Link>
             </nav>
           </div>
         </div>
