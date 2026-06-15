@@ -40,20 +40,16 @@ export default function BackgroundRemover() {
     setLoading(true);
     setProgress("Initializing AI…");
     try {
-      // Root cause: ort@1.17.3 with numThreads=1 computes filename="ort-wasm-simd.wasm"
-      // then looks it up as d["ort-wasm-simd.wasm"] in the library's {wasm:blobUrl} object
-      // → undefined → falls back to bundled base URL which has no WASM → Aborted(CompileError).
-      //
-      // Fix: lock wasmPaths to the CDN string prefix BEFORE the library overrides it.
-      // ort sees a string → constructs CDN + "ort-wasm-simd.wasm" (non-threaded, no SAB needed).
-      const CDN = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/";
+      // Serve WASM files locally (copied to public/bg-removal/) to avoid CDN blocks.
+      // numThreads=1 → uses ort-wasm-simd.wasm (no SharedArrayBuffer needed).
+      const localWasmPath = `${window.location.origin}${import.meta.env.BASE_URL}bg-removal/`;
       const ort = await import("onnxruntime-web");
       const noop = () => {};
       Object.defineProperty(ort.env.wasm, "numThreads", {
         get: () => 1, set: noop, configurable: true,
       });
       Object.defineProperty(ort.env.wasm, "wasmPaths", {
-        get: () => CDN, set: noop, configurable: true,
+        get: () => localWasmPath, set: noop, configurable: true,
       });
 
       const { removeBackground } = await import("@imgly/background-removal");
