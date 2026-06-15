@@ -25,7 +25,7 @@ async function getPdfjs() {
   return lib;
 }
 
-async function pdfPageToImageData(file: File, pageNum: number, scale = 2): Promise<ImageData> {
+async function pdfPageToCanvas(file: File, pageNum: number, scale = 2): Promise<HTMLCanvasElement> {
   const lib = await getPdfjs();
   const pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
   const page = await pdf.getPage(pageNum);
@@ -33,7 +33,7 @@ async function pdfPageToImageData(file: File, pageNum: number, scale = 2): Promi
   const canvas = document.createElement("canvas");
   canvas.width = vp.width; canvas.height = vp.height;
   await page.render({ canvasContext: canvas.getContext("2d")!, viewport: vp }).promise;
-  return canvas.getContext("2d")!.getImageData(0, 0, canvas.width, canvas.height);
+  return canvas;
 }
 
 async function getPdfPageCount(file: File): Promise<number> {
@@ -130,8 +130,8 @@ export default function OcrTool() {
         for (let i = 1; i <= totalPages; i++) {
           setProgressLabel(`Processing page ${i} of ${totalPages}…`);
           setProgressPct(0);
-          const imageData = await pdfPageToImageData(file, i);
-          const { data: { text: pageText } } = await worker.recognize(imageData);
+          const canvas = await pdfPageToCanvas(file, i);
+          const { data: { text: pageText } } = await worker.recognize(canvas);
           pageTexts.push(pageText.trim());
         }
 
