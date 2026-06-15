@@ -491,23 +491,6 @@ export default function Home() {
             Upload, process, download — done in seconds.
           </p>
 
-          {/* Feature badges */}
-          <div className="flex flex-wrap justify-center gap-2 mb-5">
-            {[
-              { icon: ShieldCheck, label: "Browser-based" },
-              { icon: Zap,         label: "Instant" },
-              { icon: Globe,       label: "No Uploads" },
-            ].map(({ icon: Icon, label }) => (
-              <span
-                key={label}
-                className="inline-flex items-center gap-1.5 bg-primary/10 text-primary dark:bg-white/10 dark:text-white border border-primary/25 dark:border-white/20 text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap"
-              >
-                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                {label}
-              </span>
-            ))}
-          </div>
-
           {totalUses > 0 && (
             <div className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/60 border border-border px-3 py-1.5 rounded-full">
               <Activity className="w-3.5 h-3.5 text-primary" />
