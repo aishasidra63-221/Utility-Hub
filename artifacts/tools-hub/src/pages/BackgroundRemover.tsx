@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Download, Eraser, X, Loader2, RefreshCw } from "lucide-react";
+import { Download, Eraser, Loader2, RefreshCw } from "lucide-react";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "@/components/ShareButton";
@@ -7,9 +7,107 @@ import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
 
-// Cache pipeline so model downloads only once per session
+// Cached pipeline — downloads model only once per session
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _pipe: any = null;
+
+/**
+ * Check if a PNG blob has any non-transparent pixels.
+ * Returns { hasContent, invertedBlob } where invertedBlob is
+ * the blob with alpha inverted if no content was found.
+ */
+async function validateAndFixAlpha(blob: Blob): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      canvas.width  = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // Count pixels that have alpha > 10 (anything visible)
+      let visiblePixels = 0;
+      for (let i = 3; i < data.length; i += 4) {
+        if (data[i] > 10) visiblePixels++;
+      }
+
+      const totalPixels = canvas.width * canvas.height;
+      const visibleRatio = visiblePixels / totalPixels;
+
+      if (visibleRatio > 0.01) {
+        // Output looks fine — return as-is
+        resolve(blob);
+        return;
+      }
+
+      // Nothing visible — mask is likely inverted. Flip all alpha values.
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      for (let i = 3; i < imageData.data.length; i += 4) {
+        imageData.data[i] = 255 - imageData.data[i];
+      }
+      ctx.putImageData(imageData, 0, 0);
+      canvas.toBlob((fixed) => {
+        if (fixed) resolve(fixed);
+        else reject(new Error("Failed to fix alpha channel"));
+      }, "image/png");
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Failed to load result")); };
+    img.src = url;
+  });
+}
+
+/**
+ * Apply a greyscale mask image to an original image as its alpha channel.
+ * Used as a fallback when the pipeline gives us raw segmentation masks.
+ */
+async function applyMaskToImage(
+  originalUrl: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  maskImage: any,
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const orig = new Image();
+    orig.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width  = orig.naturalWidth;
+      canvas.height = orig.naturalHeight;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(orig, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // maskImage may be a RawImage — get its grayscale data
+      const maskCanvas = document.createElement("canvas");
+      const mw = maskImage.width ?? canvas.width;
+      const mh = maskImage.height ?? canvas.height;
+      maskCanvas.width  = mw;
+      maskCanvas.height = mh;
+      const mCtx = maskCanvas.getContext("2d")!;
+
+      // Draw mask onto canvas to get pixel data
+      // RawImage can be converted to ImageData directly
+      if (maskImage.data instanceof Uint8ClampedArray || maskImage.data instanceof Uint8Array) {
+        const channels = maskImage.channels ?? 1;
+        for (let i = 0; i < mw * mh; i++) {
+          const val = maskImage.data[i * channels]; // first channel = grey
+          // Scale to original image dimensions
+          const destX = Math.round((i % mw) * (canvas.width  / mw));
+          const destY = Math.round(Math.floor(i / mw) * (canvas.height / mh));
+          const destI = (destY * canvas.width + destX) * 4;
+          if (destI + 3 < imgData.data.length) imgData.data[destI + 3] = val;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      canvas.toBlob((b) => { if (b) resolve(b); else reject(new Error("toBlob failed")); }, "image/png");
+    };
+    orig.onerror = reject;
+    orig.src = originalUrl;
+  });
+}
 
 export default function BackgroundRemover() {
   useSEO({
@@ -21,11 +119,10 @@ export default function BackgroundRemover() {
   const { count, increment } = useToolCounter("bg-remover");
 
   const [original, setOriginal] = useState<string | null>(null);
-  const [originalFile, setOriginalFile] = useState<File | null>(null);
-  const [result, setResult] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [result,   setResult]   = useState<string | null>(null);
+  const [loading,  setLoading]  = useState(false);
   const [progress, setProgress] = useState("");
-  const [error, setError] = useState("");
+  const [error,    setError]    = useState("");
   const [fileName, setFileName] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -38,31 +135,28 @@ export default function BackgroundRemover() {
     }
     setError("");
     setResult(null);
-    setOriginalFile(file);
     setFileName(file.name.replace(/\.[^.]+$/, "") + "_no_bg.png");
-    setOriginal(URL.createObjectURL(file));
+
+    const originalUrl = URL.createObjectURL(file);
+    setOriginal(originalUrl);
     setLoading(true);
     setProgress("Initializing AI…");
 
     try {
       const { pipeline, env } = await import("@huggingface/transformers");
 
-      // Force single-threaded WASM — no SharedArrayBuffer / cross-origin isolation needed
+      // Single-threaded WASM — no SharedArrayBuffer / COOP headers needed
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (env.backends.onnx as any).wasm.numThreads = 1;
 
       if (!_pipe) {
-        setProgress("Downloading AI model (~20MB, first time only)…");
+        setProgress("Downloading AI model (~20 MB, first time only)…");
         _pipe = await pipeline("background-removal", "Xenova/modnet", {
           device: "wasm",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           progress_callback: (prog: any) => {
-            if (
-              (prog.status === "download" || prog.status === "progress") &&
-              prog.total > 0
-            ) {
-              const pct = Math.round((prog.loaded / prog.total) * 100);
-              setProgress(`Downloading AI model: ${pct}%`);
+            if ((prog.status === "download" || prog.status === "progress") && prog.total > 0) {
+              setProgress(`Downloading AI model: ${Math.round((prog.loaded / prog.total) * 100)}%`);
             } else if (prog.status === "initiate") {
               setProgress("Preparing AI model…");
             } else if (prog.status === "done") {
@@ -73,25 +167,46 @@ export default function BackgroundRemover() {
       }
 
       setProgress("Removing background…");
-
       const imageUrl = URL.createObjectURL(file);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const output = await (_pipe as any)(imageUrl);
+      const raw = await (_pipe as any)(imageUrl);
       URL.revokeObjectURL(imageUrl);
 
-      // output is a RawImage with alpha channel applied
-      const blob = await output.toBlob("image/png");
-      setResult(URL.createObjectURL(blob));
+      // ── Handle v3 (RawImage) and v4 (array / segmentation) output ──
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let resultBlob: Blob | null = null;
+
+      if (raw && typeof raw.toBlob === "function") {
+        // Direct RawImage (transformers v3 / some v4 builds)
+        resultBlob = await raw.toBlob("image/png");
+      } else if (Array.isArray(raw) && raw.length > 0) {
+        const first = raw[0];
+        if (typeof first?.toBlob === "function") {
+          // Array<RawImage>
+          resultBlob = await first.toBlob("image/png");
+        } else if (first?.mask) {
+          // Segmentation-style: [{ label, score, mask: RawImage }]
+          setProgress("Applying mask…");
+          resultBlob = await applyMaskToImage(originalUrl, first.mask);
+        }
+      }
+
+      if (!resultBlob) {
+        throw new Error("Unexpected pipeline output — could not extract result image.");
+      }
+
+      setProgress("Validating result…");
+      // Detect & fix inverted alpha (whole image transparent)
+      const fixedBlob = await validateAndFixAlpha(resultBlob);
+
+      setResult(URL.createObjectURL(fixedBlob));
       increment();
     } catch (e: any) {
       console.error("Background removal error:", e);
-      // If pipeline is broken, reset it so next attempt re-initialises
-      _pipe = null;
+      _pipe = null; // reset so next attempt re-initialises
       setError(
         "Could not remove background. " +
-          (e?.message
-            ? `(${e.message.slice(0, 120)})`
-            : "Please try a different image.")
+          (e?.message ? `(${e.message.slice(0, 140)})` : "Please try a different image.")
       );
     } finally {
       setLoading(false);
@@ -99,17 +214,13 @@ export default function BackgroundRemover() {
     }
   }, [increment]);
 
-  const handleFiles = useCallback(
-    (files: FileList | File[]) => {
-      const file = Array.from(files)[0];
-      if (file) processFile(file);
-    },
-    [processFile]
-  );
+  const handleFiles = useCallback((files: FileList | File[]) => {
+    const file = Array.from(files)[0];
+    if (file) processFile(file);
+  }, [processFile]);
 
   const reset = () => {
     setOriginal(null);
-    setOriginalFile(null);
     setResult(null);
     setError("");
   };
@@ -137,7 +248,7 @@ export default function BackgroundRemover() {
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">
               <Eraser className="w-3.5 h-3.5" />
               <span>Image Tools</span>
-              <UsageCount count={count} label="background removed" />
+              <UsageCount count={count} label="backgrounds removed" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Background Remover</h1>
             <p className="text-muted-foreground mt-2">
@@ -148,11 +259,11 @@ export default function BackgroundRemover() {
         </div>
       </div>
 
-      {/* First use notice */}
+      {/* Info notice */}
       <div className="mb-5 flex items-start gap-2.5 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3 text-sm text-primary">
         <Loader2 className="w-4 h-4 mt-0.5 flex-shrink-0 opacity-70" />
         <span>
-          <strong>First use:</strong> The AI model (~20MB) downloads once to your browser. After that it runs offline — no internet needed.
+          <strong>First use:</strong> The AI model (~20 MB) downloads once to your browser. After that it runs offline — no internet needed.
         </span>
       </div>
 
@@ -192,9 +303,14 @@ export default function BackgroundRemover() {
                   <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">✓ Done</span>
                 )}
               </div>
+              {/* Checkerboard shows transparency */}
               <div
                 className="p-3 flex items-center justify-center min-h-[200px]"
-                style={{ backgroundImage: "repeating-conic-gradient(#d0d0d8 0% 25%, white 0% 50%)", backgroundSize: "18px 18px" }}
+                style={{
+                  backgroundImage:
+                    "repeating-conic-gradient(#c8c8d0 0% 25%, #ffffff 0% 50%)",
+                  backgroundSize: "18px 18px",
+                }}
               >
                 {loading ? (
                   <div className="flex flex-col items-center gap-3 text-center px-4">
@@ -240,7 +356,7 @@ export default function BackgroundRemover() {
 
           {result && !loading && (
             <div className="bg-card border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground">
-              💡 <strong>Tip:</strong> The result is a transparent PNG. You can place it on any background — in Canva, PowerPoint, or any design tool.
+              💡 <strong>Tip:</strong> The result is a transparent PNG. Drop it into Canva, PowerPoint, or any design tool to place it on any background.
             </div>
           )}
         </div>
