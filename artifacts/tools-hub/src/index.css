@@ -395,6 +395,52 @@
     animation: dropzone-drag 1.2s ease-in-out infinite;
   }
 
+  /* ── Star favourite animation ── */
+  @keyframes starPop {
+    0%   { transform: scale(1) rotate(0deg); }
+    25%  { transform: scale(1.75) rotate(-25deg); }
+    55%  { transform: scale(0.85) rotate(10deg); }
+    80%  { transform: scale(1.1) rotate(-5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  @keyframes particleFly {
+    0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.2); }
+  }
+
+  @keyframes ringPulse {
+    0%   { transform: scale(0.6); opacity: 0.9; }
+    100% { transform: scale(2.8); opacity: 0; }
+  }
+
+  .star-pop {
+    animation: starPop 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+  }
+
+  .star-particle {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #eab308;
+    animation: particleFly 0.55s ease-out forwards;
+    pointer-events: none;
+    top: 50%;
+    left: 50%;
+    margin-top: -2.5px;
+    margin-left: -2.5px;
+  }
+
+  .star-ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2.5px solid #eab308;
+    animation: ringPulse 0.45s ease-out forwards;
+    pointer-events: none;
+  }
+
   /* ── Performance & smoothness ── */
 
   /* GPU-accelerate card hover transforms */

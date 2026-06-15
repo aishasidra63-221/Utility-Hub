@@ -331,6 +331,17 @@ const FEATURES = [
   { icon: Smartphone,  label: "Works Everywhere", sub: "Desktop & mobile" },
 ];
 
+const STAR_PARTICLES = [
+  { tx: "0px",   ty: "-22px" },
+  { tx: "16px",  ty: "-16px" },
+  { tx: "22px",  ty: "0px"   },
+  { tx: "16px",  ty: "16px"  },
+  { tx: "0px",   ty: "22px"  },
+  { tx: "-16px", ty: "16px"  },
+  { tx: "-22px", ty: "0px"   },
+  { tx: "-16px", ty: "-16px" },
+];
+
 const ToolCard = memo(function ToolCard({
   tool,
   count,
@@ -345,6 +356,18 @@ const ToolCard = memo(function ToolCard({
   onToggleStar: (id: string) => void;
 }) {
   const Icon = tool.icon;
+  const [burst, setBurst] = useState(false);
+
+  const handleStar = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isStarred) {
+      setBurst(true);
+      setTimeout(() => setBurst(false), 600);
+    }
+    onToggleStar(tool.id);
+  };
+
   return (
     <Link
       href={tool.href}
@@ -394,15 +417,23 @@ const ToolCard = memo(function ToolCard({
           <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1.5" />
         </div>
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleStar(tool.id); }}
-          className={`p-1.5 rounded-full transition-all duration-200 ${
+          onClick={handleStar}
+          className={`relative p-1.5 rounded-full transition-all duration-200 overflow-visible ${
             isStarred
               ? "text-yellow-500 bg-yellow-500/10"
               : "text-muted-foreground/40 hover:text-yellow-400 hover:bg-yellow-500/10"
           }`}
           aria-label={isStarred ? "Remove from favourites" : "Add to favourites"}
         >
-          <Star className={`w-5 h-5 ${isStarred ? "fill-current" : ""}`} />
+          {burst && <span className="star-ring" />}
+          {burst && STAR_PARTICLES.map((p, i) => (
+            <span
+              key={i}
+              className="star-particle"
+              style={{ "--tx": p.tx, "--ty": p.ty } as React.CSSProperties}
+            />
+          ))}
+          <Star className={`w-5 h-5 relative ${isStarred ? "fill-current" : ""} ${burst ? "star-pop" : ""}`} />
         </button>
       </div>
     </Link>
