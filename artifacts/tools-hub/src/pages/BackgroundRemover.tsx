@@ -40,15 +40,21 @@ export default function BackgroundRemover() {
     setLoading(true);
     setProgress("Initializing AI…");
     try {
-      // Configure ONNX Runtime to use single-threaded WASM (no crossOriginIsolated needed)
+      // Lock numThreads=1 BEFORE library can override it (threaded WASM needs
+      // SharedArrayBuffer which is blocked in Replit's cross-origin iframe context)
       const ort = await import("onnxruntime-web");
-      ort.env.wasm.numThreads = 1;
-      ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/";
+      Object.defineProperty(ort.env.wasm, "numThreads", {
+        get: () => 1,
+        set: (_v: number) => { /* noop — prevent library from enabling threads */ },
+        configurable: true,
+      });
 
       const { removeBackground } = await import("@imgly/background-removal");
       setProgress("Downloading AI model (~25MB)…");
+      // publicPath → our custom resources.json that swaps threaded WASM for non-threaded
+      const publicPath = `${window.location.origin}${import.meta.env.BASE_URL}bg-removal/`;
       const blob = await removeBackground(file, {
-        publicPath: "https://staticimgly.com/@imgly/background-removal-data/1.7.0/dist/",
+        publicPath,
         model: "small",
         output: { quality: 0.9, format: "image/png" },
         progress: (key: string, current: number, total: number) => {
