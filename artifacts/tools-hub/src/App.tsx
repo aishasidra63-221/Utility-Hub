@@ -32,6 +32,10 @@ const VideoToGif           = lazy(() => import("@/pages/VideoToGif"));
 const PomodoroTimer        = lazy(() => import("@/pages/PomodoroTimer"));
 const ExifStripper         = lazy(() => import("@/pages/ExifStripper"));
 const ColorPicker          = lazy(() => import("@/pages/ColorPicker"));
+const ImageUpscaler        = lazy(() => import("@/pages/ImageUpscaler"));
+const PhotoColorizer       = lazy(() => import("@/pages/PhotoColorizer"));
+const WatermarkRemover     = lazy(() => import("@/pages/WatermarkRemover"));
+const FaceBlur             = lazy(() => import("@/pages/FaceBlur"));
 const NotFound             = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
@@ -149,6 +153,10 @@ function Router() {
             <Route path="/pomodoro-timer"        component={PomodoroTimer} />
             <Route path="/exif-stripper"         component={ExifStripper} />
             <Route path="/color-picker"          component={ColorPicker} />
+            <Route path="/image-upscaler"        component={ImageUpscaler} />
+            <Route path="/photo-colorizer"       component={PhotoColorizer} />
+            <Route path="/watermark-remover"     component={WatermarkRemover} />
+            <Route path="/face-blur"             component={FaceBlur} />
             <Route path="/settings"          component={Settings} />
             <Route path="/privacy-policy"    component={PrivacyPolicy} />
             <Route path="/terms"             component={TermsConditions} />

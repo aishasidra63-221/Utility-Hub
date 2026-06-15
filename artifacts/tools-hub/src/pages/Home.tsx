@@ -5,7 +5,7 @@ import {
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
   ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
   Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench, FileUser,
-  Eraser, BookOpen, Film, Timer, Pipette,
+  Eraser, BookOpen, Film, Timer, Pipette, ZoomIn, Droplets, EyeOff,
 } from "lucide-react";
 
 import { useSEO } from "@/hooks/useSEO";
@@ -322,6 +322,62 @@ const ALL_TOOLS = [
     accentColor: "group-hover:text-violet-500",
     borderGradient: "from-violet-500 to-fuchsia-400",
   },
+  {
+    href: "/image-upscaler",
+    id: "image-upscaler",
+    icon: ZoomIn,
+    title: "AI Image Upscaler",
+    description: "Upscale any image 2× or 4× in your browser. Lanczos algorithm with AI sharpening. Topaz alternative — FREE.",
+    badge: "AI-powered",
+    category: "image" as Category,
+    gradient: "from-indigo-500/15 to-blue-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg shadow-indigo-500/30",
+    accentColor: "group-hover:text-indigo-500",
+    borderGradient: "from-indigo-500 to-blue-400",
+  },
+  {
+    href: "/photo-colorizer",
+    id: "photo-colorizer",
+    icon: Palette,
+    title: "Photo Colorizer",
+    description: "Upload a black & white photo and AI adds natural colors. Before/after slider. 100% browser-based, no upload.",
+    badge: "AI-powered",
+    category: "image" as Category,
+    gradient: "from-rose-500/15 to-pink-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-rose-500 to-pink-600 shadow-lg shadow-rose-500/30",
+    accentColor: "group-hover:text-rose-500",
+    borderGradient: "from-rose-500 to-pink-400",
+  },
+  {
+    href: "/watermark-remover",
+    id: "watermark-remover",
+    icon: Droplets,
+    title: "Watermark Remover",
+    description: "AI detects & removes watermarks using content-aware fill. Manual selection option. Browser only, no upload.",
+    badge: "AI-powered",
+    category: "image" as Category,
+    gradient: "from-teal-500/15 to-cyan-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-teal-500 to-cyan-600 shadow-lg shadow-teal-500/30",
+    accentColor: "group-hover:text-teal-500",
+    borderGradient: "from-teal-500 to-cyan-400",
+  },
+  {
+    href: "/face-blur",
+    id: "face-blur",
+    icon: EyeOff,
+    title: "AI Face Blur",
+    description: "Auto-detect and blur all faces in any photo. Adjustable intensity, manual mode. Privacy-focused, browser only.",
+    badge: "AI-powered",
+    category: "image" as Category,
+    gradient: "from-slate-500/15 to-gray-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-slate-500 to-gray-600 shadow-lg shadow-slate-500/30",
+    accentColor: "group-hover:text-slate-500",
+    borderGradient: "from-slate-500 to-gray-400",
+  },
 ];
 
 const FEATURES = [
@@ -518,7 +574,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed mb-5">
-            22 powerful utilities that run entirely in your browser.
+            26 powerful utilities that run entirely in your browser.
             Upload, process, download — done in seconds.
           </p>
 
