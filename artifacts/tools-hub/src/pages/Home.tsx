@@ -5,7 +5,7 @@ import {
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
   ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
   Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench, FileUser,
-  Eraser, Sparkles, Target, Pipette,
+  Eraser, BookOpen, Target, Pipette,
 } from "lucide-react";
 
 import { useSEO } from "@/hooks/useSEO";
@@ -253,18 +253,18 @@ const ALL_TOOLS = [
     borderGradient: "from-violet-500 to-purple-400",
   },
   {
-    href: "/screenshot-beautifier",
-    id: "screenshot-beautifier",
-    icon: Sparkles,
-    title: "Screenshot Beautifier",
-    description: "Add beautiful gradient backgrounds, padding, shadows and rounded corners to your screenshots. Download as PNG.",
-    badge: "12 themes",
-    category: "image" as Category,
-    gradient: "from-pink-500/15 to-rose-500/5",
+    href: "/word-counter",
+    id: "word-counter",
+    icon: BookOpen,
+    title: "Word Counter",
+    description: "Count words, characters, sentences and reading time instantly. Fast, private and browser-based.",
+    badge: "Instant",
+    category: "utility" as Category,
+    gradient: "from-amber-500/15 to-orange-500/5",
     iconColor: "text-white",
-    iconBg: "bg-gradient-to-br from-pink-500 to-purple-600 shadow-lg shadow-pink-500/30",
-    accentColor: "group-hover:text-pink-500",
-    borderGradient: "from-pink-500 to-purple-400",
+    iconBg: "bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/30",
+    accentColor: "group-hover:text-amber-500",
+    borderGradient: "from-amber-500 to-orange-400",
   },
   {
     href: "/favicon-generator",

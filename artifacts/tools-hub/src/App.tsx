@@ -27,7 +27,7 @@ const TermsConditions = lazy(() => import("@/pages/TermsConditions"));
 const FAQ             = lazy(() => import("@/pages/FAQ"));
 const ResumeBuilder        = lazy(() => import("@/pages/ResumeBuilder"));
 const BackgroundRemover    = lazy(() => import("@/pages/BackgroundRemover"));
-const ScreenshotBeautifier = lazy(() => import("@/pages/ScreenshotBeautifier"));
+const WordCounter          = lazy(() => import("@/pages/WordCounter"));
 const FaviconGenerator     = lazy(() => import("@/pages/FaviconGenerator"));
 const TargetSizeCompressor = lazy(() => import("@/pages/TargetSizeCompressor"));
 const ExifStripper         = lazy(() => import("@/pages/ExifStripper"));
@@ -144,7 +144,7 @@ function Router() {
             <Route path="/pdf-annotator"       component={PdfAnnotator} />
             <Route path="/resume-builder"          component={ResumeBuilder} />
             <Route path="/background-remover"    component={BackgroundRemover} />
-            <Route path="/screenshot-beautifier" component={ScreenshotBeautifier} />
+            <Route path="/word-counter"          component={WordCounter} />
             <Route path="/favicon-generator"     component={FaviconGenerator} />
             <Route path="/target-compressor"     component={TargetSizeCompressor} />
             <Route path="/exif-stripper"         component={ExifStripper} />

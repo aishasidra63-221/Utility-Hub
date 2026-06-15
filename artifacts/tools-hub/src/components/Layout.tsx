@@ -23,7 +23,7 @@ const tools = [
   { href: "/whatsapp-link",    label: "WhatsApp Link" },
   { href: "/resume-builder",        label: "Resume Builder" },
   { href: "/background-remover",    label: "Background Remover" },
-  { href: "/screenshot-beautifier", label: "Screenshot Beautifier" },
+  { href: "/word-counter", label: "Word Counter" },
   { href: "/favicon-generator",     label: "Favicon Generator" },
   { href: "/target-compressor",     label: "Target Size Compressor" },
   { href: "/exif-stripper",         label: "EXIF Stripper" },
