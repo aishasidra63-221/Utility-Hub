@@ -442,15 +442,11 @@ export default function Home() {
   }, []);
 
   const totalUses = Object.values(counts).reduce((a, b) => a + b, 0);
-  const hasHistory = totalUses > 0;
-
   const sortedTools = useMemo(() => {
     return [...ALL_TOOLS].sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0));
   }, [counts]);
 
-  const usedTools = sortedTools.filter((t) => (counts[t.id] ?? 0) > 0);
-  const unusedTools = sortedTools.filter((t) => (counts[t.id] ?? 0) === 0);
-  const topToolId = usedTools[0]?.id ?? null;
+  const topToolId = sortedTools.find((t) => (counts[t.id] ?? 0) > 0)?.id ?? null;
 
   const filteredTools = useMemo(() => {
     if (activeCategory === "all") return sortedTools;
@@ -534,57 +530,6 @@ export default function Home() {
         ) : filteredTools.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-muted-foreground">No tools in this category</p>
-          </div>
-        ) : activeCategory === "all" && hasHistory ? (
-          <div className="space-y-10">
-            <div>
-              <div className="flex items-center gap-2 mb-5">
-                <Star className="w-3.5 h-3.5 text-primary fill-primary" />
-                <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                  Your Most Used
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {usedTools.map((tool) => (
-                  <ToolCard
-                    key={tool.id}
-                    tool={tool}
-                    count={counts[tool.id] ?? 0}
-                    isFavourite={tool.id === topToolId}
-                    isStarred={starredIds.has(tool.id)}
-                    onToggleStar={toggleStar}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {unusedTools.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-5">
-                  <span className="w-3.5 h-3.5 rounded-full border-2 border-muted-foreground/30 inline-block" />
-                  <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                    Not Tried Yet
-                  </h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {unusedTools.map((tool) => (
-                    <ToolCard
-                      key={tool.id}
-                      tool={tool}
-                      count={0}
-                      isFavourite={false}
-                      isStarred={starredIds.has(tool.id)}
-                      onToggleStar={toggleStar}
-                    />
-                  ))}
-                  {unusedTools.length % 3 === 2 && (
-                    <div className="hidden lg:flex flex-col gap-4 p-6 rounded-2xl border border-dashed border-border items-center justify-center text-center">
-                      <p className="text-sm text-muted-foreground/50">More tools coming soon</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
