@@ -594,7 +594,7 @@ const ToolCard = memo(function ToolCard({
               style={{ "--tx": p.tx, "--ty": p.ty } as React.CSSProperties}
             />
           ))}
-          <Star className={`w-7 h-7 relative ${isStarred ? "fill-current" : ""} ${burst ? "star-pop" : ""} ${removing ? "star-remove" : ""}`} />
+          <Star className={`w-6 h-6 relative ${isStarred ? "fill-current" : ""} ${burst ? "star-pop" : ""} ${removing ? "star-remove" : ""}`} />
         </button>
       </div>
     </Link>
