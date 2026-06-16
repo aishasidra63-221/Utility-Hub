@@ -1,1 +1,2 @@
 - [Background Remover library](bg-remover-library.md) — use @imgly/background-removal, NOT @huggingface/transformers; transformers has unreliable backend init and produces corrupted output.
+- [Background Removal WASM configuration](bg-removal-config.md) — publicPath must be a full URL (`window.location.origin + '/bg-removal/'`); local WASM required due to COEP blocking CDN.
