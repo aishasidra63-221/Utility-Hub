@@ -143,18 +143,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
 
-          {/* Back button — shown on all non-home pages */}
-          {location !== "/" && (
-            <button
-              onClick={() => window.history.back()}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex-shrink-0 group"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-              <span className="text-xs font-medium hidden sm:inline">Back</span>
-            </button>
-          )}
-
           {/* Logo */}
           <Link
             href="/"
@@ -369,7 +357,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ── MAIN ── */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        {location !== "/" && (
+          <div className="max-w-6xl mx-auto px-4 pt-4">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+              All tools
+            </Link>
+          </div>
+        )}
+        {children}
+      </main>
 
       {/* ── FOOTER ── */}
       <footer className="border-t border-border bg-card/50 pt-10 pb-6 mt-8">
