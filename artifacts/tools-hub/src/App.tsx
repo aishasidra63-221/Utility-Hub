@@ -47,6 +47,8 @@ const Security         = lazy(() => import("@/pages/Security"));
 const AboutUs          = lazy(() => import("@/pages/AboutUs"));
 const Contact          = lazy(() => import("@/pages/Contact"));
 const ConversionPage   = lazy(() => import("@/pages/ConversionPage"));
+const Blog             = lazy(() => import("@/pages/Blog"));
+const BlogPost         = lazy(() => import("@/pages/BlogPost"));
 const NotFound         = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
@@ -184,6 +186,10 @@ function Router() {
             <Route path="/privacy-policy" component={PrivacyPolicy} />
             <Route path="/terms"          component={TermsConditions} />
             <Route path="/faq"            component={FAQ} />
+
+            {/* ── Blog ── */}
+            <Route path="/blog"        component={Blog} />
+            <Route path="/blog/:slug"  component={BlogPost} />
 
             {/* ── Programmatic SEO: Image Conversions ── */}
             <Route path="/jpg-to-png"   component={ConversionPage} />

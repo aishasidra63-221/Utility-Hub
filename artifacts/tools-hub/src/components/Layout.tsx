@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Settings, Moon, Sun, Globe, Shield, Rocket, Info, X,
-  ChevronRight, Check, ArrowLeft,
+  ChevronRight, Check, ArrowLeft, BookOpen,
 } from "lucide-react";
 
 import { useTheme } from "@/hooks/useSettings";
@@ -328,6 +328,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1 mt-1">{t("nav.more")}</p>
 
           {[
+            { href: "/blog",     label: "Blog",             icon: <BookOpen className="w-4 h-4" />, desc: "Guides for every tool" },
             { href: "/settings", label: t("nav.settings"), icon: <Settings className="w-4 h-4" />, desc: t("nav.settings_desc") },
             { href: "/future",   label: t("nav.future"),   icon: <Rocket className="w-4 h-4" />,   desc: t("nav.future_desc") },
             { href: "/security", label: t("nav.security"), icon: <Shield className="w-4 h-4" />,   desc: t("nav.security_desc") },
@@ -404,6 +405,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   {tool.label}
                 </Link>
               ))}
+              <Link href="/blog"      className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">Blog</Link>
               <Link href="/settings"  className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.settings")}</Link>
               <Link href="/future"    className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.future")}</Link>
               <Link href="/security"  className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.security")}</Link>
@@ -418,6 +420,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               © {new Date().getFullYear()} ToolsHub. All rights reserved.
             </p>
             <nav className="flex items-center gap-5 order-1 sm:order-2" aria-label="Legal">
+              <Link href="/blog"           className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">Blog</Link>
               <Link href="/faq"            className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">{t("nav.faq")}</Link>
               <Link href="/privacy-policy" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">{t("nav.privacy")}</Link>
               <Link href="/terms"          className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">{t("nav.terms")}</Link>

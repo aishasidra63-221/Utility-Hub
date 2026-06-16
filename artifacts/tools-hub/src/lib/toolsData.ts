@@ -1057,4 +1057,5 @@ export const NON_TOOL_PATHS = new Set([
   "/future",
   "/contact",
   "/not-found",
+  "/blog",
 ]);
