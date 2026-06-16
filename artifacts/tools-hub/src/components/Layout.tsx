@@ -364,8 +364,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               href="/"
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group"
             >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-              All tools
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+              Back
             </Link>
           </div>
         )}
