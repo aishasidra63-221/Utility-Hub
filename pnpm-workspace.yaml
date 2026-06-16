@@ -70,8 +70,14 @@ autoInstallPeers: false
 
 onlyBuiltDependencies:
   - '@swc/core'
+  - '@napi-rs/canvas-linux-x64-gnu'
+  - core-js
   - esbuild
   - msw
+  - onnxruntime-node
+  - protobufjs
+  - sharp
+  - tesseract.js
   - unrs-resolver
 
 overrides:
