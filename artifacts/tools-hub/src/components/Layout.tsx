@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Settings, Moon, Sun, Globe, Shield, Rocket, Info, X,
-  ChevronRight, Check,
+  ChevronRight, Check, ArrowLeft,
 } from "lucide-react";
 
 import { useTheme } from "@/hooks/useSettings";
@@ -142,6 +142,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }`}
       >
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
+
+          {/* Back button — shown on all non-home pages */}
+          {location !== "/" && (
+            <button
+              onClick={() => window.history.back()}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex-shrink-0 group"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+              <span className="text-xs font-medium hidden sm:inline">Back</span>
+            </button>
+          )}
 
           {/* Logo */}
           <Link
