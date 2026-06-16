@@ -147,6 +147,7 @@ export default function PdfConverter() {
   const [compLoading, setCompLoading] = useState(false);
   const [compProgress, setCompProgress] = useState(0);
   const [compResult, setCompResult] = useState<{ orig: number; neo: number } | null>(null);
+  const [compBlob, setCompBlob] = useState<Blob | null>(null);
   const [compError, setCompError] = useState("");
   const compRef = useRef<HTMLInputElement>(null);
 
@@ -303,7 +304,7 @@ export default function PdfConverter() {
   };
   const compressPdf = async () => {
     if (!compFile) return;
-    setCompLoading(true); setCompError(""); setCompProgress(0);
+    setCompLoading(true); setCompError(""); setCompProgress(0); setCompBlob(null); setCompResult(null);
     try {
       const level = COMPRESS_LEVELS.find((l) => l.id === compLevel)!;
       let output: Uint8Array;
@@ -315,11 +316,16 @@ export default function PdfConverter() {
         output = await renderPdfPages(compFile, level.scale, level.quality, setCompProgress);
       }
       const blob = new Blob([output instanceof Uint8Array ? output.buffer as ArrayBuffer : output], { type: "application/pdf" });
-      triggerDownload(blob, compFile.name.replace(".pdf", "-compressed.pdf"));
+      setCompBlob(blob);
       setCompResult({ orig: compFile.size, neo: output.byteLength });
       increment();
     } catch { setCompError("Failed to compress PDF."); }
     finally { setCompLoading(false); }
+  };
+
+  const downloadCompressed = () => {
+    if (!compBlob || !compFile) return;
+    triggerDownload(compBlob, compFile.name.replace(".pdf", "-compressed.pdf"));
   };
 
   // ── Merge (drag-to-reorder) ───────────────────────────────
@@ -866,7 +872,7 @@ export default function PdfConverter() {
             </PdfDrop>
           ) : (
             <>
-              <FileCard name={compFile.name} size={compFile.size} onRemove={() => { setCompFile(null); setCompResult(null); }} />
+              <FileCard name={compFile.name} size={compFile.size} onRemove={() => { setCompFile(null); setCompResult(null); setCompBlob(null); setCompError(""); }} />
               {compError && <ErrorBox msg={compError} />}
               {compLoading && <ProgressBar value={compProgress} label="Compressing..." />}
               {compResult && (
@@ -876,9 +882,20 @@ export default function PdfConverter() {
                     : `ℹ️ Already optimized (${formatBytes(compResult.neo)})`}
                 </div>
               )}
-              <Button onClick={compressPdf} disabled={compLoading}>
-                {compLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Compressing...</> : <><Minimize2 className="w-4 h-4 mr-2" />Compress & Download</>}
-              </Button>
+              {!compResult ? (
+                <Button onClick={compressPdf} disabled={compLoading}>
+                  {compLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Compressing...</> : <><Minimize2 className="w-4 h-4 mr-2" />Compress PDF</>}
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button onClick={downloadCompressed} className="flex-1">
+                    <Download className="w-4 h-4 mr-2" />Download Compressed PDF
+                  </Button>
+                  <Button variant="outline" onClick={compressPdf} disabled={compLoading}>
+                    <RefreshCw className="w-4 h-4 mr-2" />Re-compress
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </div>

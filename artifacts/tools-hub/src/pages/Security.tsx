@@ -47,8 +47,8 @@ const trustBadges = [
   { icon: <Eye className="w-5 h-5" />,     title: "No Data Collection",    desc: "We don't track what files you process, what images you compress, or what text you type.", color: "text-emerald-500", bg: "bg-emerald-500/10" },
   { icon: <Lock className="w-5 h-5" />,    title: "No Account Required",   desc: "There's no login, no sign-up, no email. Nothing is tied to your identity.", color: "text-violet-500", bg: "bg-violet-500/10" },
   { icon: <Wifi className="w-5 h-5" />,    title: "Works Offline",         desc: "Once the tool loads, you can disconnect from the internet and it will still work.", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { icon: <Cpu className="w-5 h-5" />,     title: "Your CPU Does the Work", desc: "Heavy tasks like AI background removal use WebAssembly on your own hardware.", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { icon: <Globe className="w-5 h-5" />,   title: "Open Technology",       desc: "Built on open web standards: WebAssembly, Canvas API, Web Workers. No black boxes.", color: "text-primary", bg: "bg-primary/10" },
+  { icon: <Cpu className="w-5 h-5" />,     title: "Your CPU Does the Work", desc: "Heavy tasks like AI background removal and image processing run directly on your own hardware — not ours.", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { icon: <Globe className="w-5 h-5" />,   title: "Open Standards",        desc: "Built entirely on open web standards. No proprietary software, no black boxes, no hidden dependencies.", color: "text-primary", bg: "bg-primary/10" },
 ];
 
 const notCollected = [
@@ -69,7 +69,7 @@ const howItWorks = [
   {
     step: "02",
     title: "Your browser processes it",
-    desc: "JavaScript and WebAssembly (WASM) — tiny programs compiled to run at near-native speed in browsers — do all the heavy lifting.",
+    desc: "Your browser's built-in processing engine handles everything at near-native speed — the same technology powering modern games and apps on the web.",
   },
   {
     step: "03",

@@ -41,7 +41,7 @@ const FAQS = [
   },
   {
     q: "Is the source code open source?",
-    a: "ToolsHub uses several open-source libraries (jszip, browser-image-compression, pdf-lib, pdfjs-dist, qrcode) under their respective licenses. Check the Settings page for details.",
+    a: "ToolsHub is built on open-source technology. All processing runs locally in your browser. No proprietary backends, no data collection.",
   },
 ];
 
