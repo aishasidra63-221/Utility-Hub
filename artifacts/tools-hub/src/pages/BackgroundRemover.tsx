@@ -47,6 +47,7 @@ export default function BackgroundRemover() {
 
       const resultBlob = await removeBackground(file, {
         debug: false,
+        publicPath: "/bg-removal/",
         model: "isnet",
         output: {
           format: "image/png",

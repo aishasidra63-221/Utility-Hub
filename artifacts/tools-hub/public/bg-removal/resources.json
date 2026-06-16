@@ -620,8 +620,8 @@
   "/onnxruntime-web/ort-wasm-simd-threaded.wasm": {
     "chunks": [
       {
-        "hash": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/ort-wasm-simd.wasm",
-        "name": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/ort-wasm-simd.wasm",
+        "hash": "/bg-removal/ort-wasm-simd.wasm",
+        "name": "/bg-removal/ort-wasm-simd.wasm",
         "offsets": [
           0,
           10551547
@@ -634,8 +634,8 @@
   "/onnxruntime-web/ort-wasm-simd-threaded.mjs": {
     "chunks": [
       {
-        "hash": "dummy.mjs",
-        "name": "dummy.mjs",
+        "hash": "/bg-removal/dummy.mjs",
+        "name": "/bg-removal/dummy.mjs",
         "offsets": [
           0,
           19
