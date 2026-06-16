@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, memo } from "react";
+import React, { useState, useEffect, useMemo, memo, useRef } from "react";
 import { Link } from "wouter";
 import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
@@ -398,6 +398,36 @@ const STAR_PARTICLES = [
   { tx: "-16px", ty: "-16px" },
 ];
 
+function ScrollRevealCard({ children, index }: { children: React.ReactNode; index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { threshold: 0.08 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const delay = (index % 6) * 80;
+
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: visible ? `${delay}ms` : "0ms" }}
+      className={`transition-all duration-500 ease-out ${
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
 const ToolCard = memo(function ToolCard({
   tool,
   count,
@@ -624,15 +654,16 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTools.map((tool) => (
-              <ToolCard
-                key={tool.id}
-                tool={tool}
-                count={counts[tool.id] ?? 0}
-                isFavourite={tool.id === topToolId}
-                isStarred={starredIds.has(tool.id)}
-                onToggleStar={toggleStar}
-              />
+            {filteredTools.map((tool, idx) => (
+              <ScrollRevealCard key={tool.id} index={idx}>
+                <ToolCard
+                  tool={tool}
+                  count={counts[tool.id] ?? 0}
+                  isFavourite={tool.id === topToolId}
+                  isStarred={starredIds.has(tool.id)}
+                  onToggleStar={toggleStar}
+                />
+              </ScrollRevealCard>
             ))}
             {filteredTools.length % 3 === 2 && (
               <div className="hidden lg:flex flex-col gap-4 p-6 rounded-2xl border border-dashed border-border items-center justify-center text-center">
