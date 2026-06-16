@@ -11,99 +11,6 @@ import { useToolCounter } from "@/hooks/useToolCounter";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _pipe: any = null;
 
-/**
- * Load an image URL into a HTMLImageElement, returning it once loaded.
- */
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Failed to load image: " + src));
-    img.src = src;
-  });
-}
-
-/**
- * Extract pixel data from an image into a canvas context.
- */
-function imageToPixels(img: HTMLImageElement): ImageData {
-  const canvas = document.createElement("canvas");
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(img, 0, 0);
-  return ctx.getImageData(0, 0, canvas.width, canvas.height);
-}
-
-/**
- * Take the original image and a pipeline output blob (the masked/RGBA result).
- * Extracts ONLY the alpha channel from the pipeline blob, applies it to the
- * original image's RGB values. This avoids premultiplied-alpha corruption of
- * colours that occurs when you read pipeline-output pixels through a canvas.
- *
- * Auto-detects inverted masks (where background=opaque, subject=transparent)
- * and corrects them.
- */
-async function applyMaskAlphaToOriginal(
-  originalUrl: string,
-  maskedBlob: Blob
-): Promise<Blob> {
-  const maskedUrl = URL.createObjectURL(maskedBlob);
-  try {
-    const [origImg, maskedImg] = await Promise.all([
-      loadImage(originalUrl),
-      loadImage(maskedUrl),
-    ]);
-
-    const W = origImg.naturalWidth;
-    const H = origImg.naturalHeight;
-
-    // Read original RGB
-    const origData = imageToPixels(origImg);
-
-    // Read masked output to get its alpha channel
-    const maskedCanvas = document.createElement("canvas");
-    maskedCanvas.width = W;
-    maskedCanvas.height = H;
-    const maskedCtx = maskedCanvas.getContext("2d")!;
-    maskedCtx.drawImage(maskedImg, 0, 0, W, H);
-    const maskedData = maskedCtx.getImageData(0, 0, W, H);
-
-    // Determine if the mask is inverted:
-    // A correct mask has subject=high alpha (255) and background=low alpha (0).
-    // Most images have more background than subject, so avg alpha is normally LOW.
-    // If avg alpha is HIGH (> 128), the mask is likely inverted.
-    let totalAlpha = 0;
-    for (let i = 3; i < maskedData.data.length; i += 4) {
-      totalAlpha += maskedData.data[i];
-    }
-    const avgAlpha = totalAlpha / (W * H);
-    const isInverted = avgAlpha > 200;
-
-    // Apply (possibly corrected) alpha from mask onto original RGB
-    for (let i = 3; i < origData.data.length; i += 4) {
-      const rawAlpha = maskedData.data[i];
-      origData.data[i] = isInverted ? 255 - rawAlpha : rawAlpha;
-    }
-
-    // Write result to a fresh canvas and export
-    const outCanvas = document.createElement("canvas");
-    outCanvas.width = W;
-    outCanvas.height = H;
-    const outCtx = outCanvas.getContext("2d")!;
-    outCtx.putImageData(origData, 0, 0);
-
-    return await new Promise<Blob>((resolve, reject) => {
-      outCanvas.toBlob(
-        (blob) => (blob ? resolve(blob) : reject(new Error("toBlob failed"))),
-        "image/png"
-      );
-    });
-  } finally {
-    URL.revokeObjectURL(maskedUrl);
-  }
-}
-
 export default function BackgroundRemover() {
   useSEO({
     title: "Free Background Remover — Remove Image Background Instantly | ToolsHub",
@@ -140,27 +47,29 @@ export default function BackgroundRemover() {
     try {
       const { pipeline, env } = await import("@huggingface/transformers");
 
-      // Always use single-threaded WASM — avoids unreliable WebGPU adapter
-      // errors and SharedArrayBuffer requirements across all environments.
+      // Always single-threaded WASM — avoids unreliable WebGPU adapter errors.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const onnxWasm = (env.backends.onnx as any).wasm;
       onnxWasm.numThreads = 1;
-      // Point to CDN so WASM binaries are always resolvable regardless of
-      // how the dev-server serves static assets.
       if (!onnxWasm.wasmPaths) {
         onnxWasm.wasmPaths =
           "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/";
       }
 
       if (!_pipe) {
-        setProgress(`Downloading AI model (~20 MB, first time only)…`);
+        setProgress("Downloading AI model (~20 MB, first time only)…");
 
         _pipe = await pipeline("background-removal", "Xenova/modnet", {
           device: "wasm",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           progress_callback: (prog: any) => {
-            if ((prog.status === "download" || prog.status === "progress") && prog.total > 0) {
-              setProgress(`Downloading AI model: ${Math.round((prog.loaded / prog.total) * 100)}%`);
+            if (
+              (prog.status === "download" || prog.status === "progress") &&
+              prog.total > 0
+            ) {
+              setProgress(
+                `Downloading AI model: ${Math.round((prog.loaded / prog.total) * 100)}%`
+              );
             } else if (prog.status === "initiate") {
               setProgress("Preparing AI model…");
             } else if (prog.status === "done") {
@@ -176,40 +85,38 @@ export default function BackgroundRemover() {
       const raw = await (_pipe as any)(imageUrl);
       URL.revokeObjectURL(imageUrl);
 
-      // Normalise pipeline output to a single Blob
+      // The background-removal pipeline returns a RawImage (RGBA) with the
+      // background made transparent at the original image's resolution.
+      // Use it directly — no custom compositing needed.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let rawBlob: Blob | null = null;
+      let resultBlob: Blob | null = null;
 
       if (raw && typeof raw.toBlob === "function") {
-        // Direct RawImage (transformers v3 / v4 background-removal)
-        rawBlob = await raw.toBlob("image/png");
+        resultBlob = await raw.toBlob("image/png");
       } else if (Array.isArray(raw) && raw.length > 0) {
         const first = raw[0];
         if (typeof first?.toBlob === "function") {
-          rawBlob = await first.toBlob("image/png");
+          resultBlob = await first.toBlob("image/png");
         } else if (first?.mask && typeof first.mask.toBlob === "function") {
-          rawBlob = await first.mask.toBlob("image/png");
+          resultBlob = await first.mask.toBlob("image/png");
         }
       }
 
-      if (!rawBlob) {
-        throw new Error("Unexpected pipeline output — could not extract result image.");
+      if (!resultBlob) {
+        throw new Error(
+          "Unexpected pipeline output — could not extract result image."
+        );
       }
 
-      setProgress("Compositing result…");
-      // Always re-composite: extract alpha-only from model output, apply to
-      // original RGB. This avoids colour corruption from premultiplied-alpha
-      // reads and also auto-corrects inverted masks.
-      const finalBlob = await applyMaskAlphaToOriginal(originalUrl, rawBlob);
-
-      setResult(URL.createObjectURL(finalBlob));
+      setResult(URL.createObjectURL(resultBlob));
       increment();
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Background removal error:", e);
-      _pipe = null; // reset so next attempt re-initialises
+      _pipe = null;
+      const msg = e instanceof Error ? e.message : "";
       setError(
         "Could not remove background. " +
-          (e?.message ? `(${e.message.slice(0, 140)})` : "Please try a different image.")
+          (msg ? `(${msg.slice(0, 140)})` : "Please try a different image.")
       );
     } finally {
       setLoading(false);
@@ -217,10 +124,13 @@ export default function BackgroundRemover() {
     }
   }, [increment]);
 
-  const handleFiles = useCallback((files: FileList | File[]) => {
-    const file = Array.from(files)[0];
-    if (file) processFile(file);
-  }, [processFile]);
+  const handleFiles = useCallback(
+    (files: FileList | File[]) => {
+      const file = Array.from(files)[0];
+      if (file) processFile(file);
+    },
+    [processFile]
+  );
 
   const reset = () => {
     setOriginal(null);
@@ -253,9 +163,12 @@ export default function BackgroundRemover() {
               <span>Image Tools</span>
               <UsageCount count={count} label="backgrounds removed" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Background Remover</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Background Remover
+            </h1>
             <p className="text-muted-foreground mt-2">
-              Upload an image and the background is removed instantly. AI runs entirely in your browser — nothing is uploaded.
+              Upload an image and the background is removed instantly. AI runs
+              entirely in your browser — nothing is uploaded.
             </p>
           </div>
           <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
@@ -266,15 +179,23 @@ export default function BackgroundRemover() {
       <div className="mb-5 flex items-start gap-2.5 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3 text-sm text-primary">
         <Loader2 className="w-4 h-4 mt-0.5 flex-shrink-0 opacity-70" />
         <span>
-          <strong>First use:</strong> The AI model (~20 MB) downloads once to your browser. Runs entirely on your CPU — no upload, no server.
+          <strong>First use:</strong> The AI model (~20 MB) downloads once to
+          your browser. Runs entirely on your CPU — no upload, no server.
         </span>
       </div>
 
       {!original ? (
         <ImageDropZone
           dragOver={dragOver}
-          onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            handleFiles(e.dataTransfer.files);
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
           onDragLeave={() => setDragOver(false)}
           onClick={() => inputRef.current?.click()}
           title="Drop an image to remove its background"
@@ -282,8 +203,13 @@ export default function BackgroundRemover() {
           badges={["JPG", "PNG", "WebP"]}
           buttonLabel="Select Image"
         >
-          <input ref={inputRef} type="file" accept="image/*" className="hidden"
-            onChange={(e) => e.target.files && handleFiles(e.target.files)} />
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => e.target.files && handleFiles(e.target.files)}
+          />
         </ImageDropZone>
       ) : (
         <div className="space-y-5">
@@ -291,19 +217,28 @@ export default function BackgroundRemover() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="px-4 py-2.5 border-b border-border">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Original</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Original
+                </p>
               </div>
               <div className="p-3 bg-muted/20 flex items-center justify-center min-h-[200px]">
-                <img src={original} alt="original"
-                  className="max-h-[260px] max-w-full rounded-lg object-contain" />
+                <img
+                  src={original}
+                  alt="original"
+                  className="max-h-[260px] max-w-full rounded-lg object-contain"
+                />
               </div>
             </div>
 
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Background Removed</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Background Removed
+                </p>
                 {result && !loading && (
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">✓ Done</span>
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                    ✓ Done
+                  </span>
                 )}
               </div>
               {/* Checkerboard shows transparency */}
@@ -321,8 +256,11 @@ export default function BackgroundRemover() {
                     <p className="text-sm text-muted-foreground">{progress}</p>
                   </div>
                 ) : result ? (
-                  <img src={result} alt="result"
-                    className="max-h-[260px] max-w-full rounded-lg object-contain" />
+                  <img
+                    src={result}
+                    alt="result"
+                    className="max-h-[260px] max-w-full rounded-lg object-contain"
+                  />
                 ) : (
                   <p className="text-sm text-muted-foreground">Processing…</p>
                 )}
@@ -353,13 +291,20 @@ export default function BackgroundRemover() {
               <RefreshCw className="w-4 h-4" />
               New Image
             </Button>
-            <input ref={inputRef} type="file" accept="image/*" className="hidden"
-              onChange={(e) => e.target.files && handleFiles(e.target.files)} />
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => e.target.files && handleFiles(e.target.files)}
+            />
           </div>
 
           {result && !loading && (
             <div className="bg-card border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground">
-              💡 <strong>Tip:</strong> The result is a transparent PNG. Drop it into Canva, PowerPoint, or any design tool to place it on any background.
+              💡 <strong>Tip:</strong> The result is a transparent PNG. Drop it
+              into Canva, PowerPoint, or any design tool to place it on any
+              background.
             </div>
           )}
         </div>
