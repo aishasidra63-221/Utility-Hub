@@ -153,8 +153,8 @@ export default function UnitConverter() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <UsageCount toolId="unit-converter" />
-          <ShareButton title="Unit Converter" />
+          <UsageCount count={0} label="conversion" />
+          <ShareButton onCopy={async () => { await navigator.clipboard.writeText(window.location.href); }} copied={copied} label="Share" />
         </div>
       </div>
 

@@ -40,7 +40,7 @@ function computeStats(text: string) {
   const words = wordList.filter(Boolean).length;
   const chars = text.length;
   const charsNoSpaces = text.replace(/\s/g, "").length;
-  const sentences = (text.match(/[^.!?]*[.!?]+/g) ?? []).filter(s => s.trim().length > 1).length || (text.trim() ? 1 : 0);
+  const sentences = (text.match(/[^.!?]*[.!?]+/g) ?? ([] as string[])).filter(s => s.trim().length > 1).length || (text.trim() ? 1 : 0);
   const paragraphs = text.split(/\n\s*\n+/).filter(p => p.trim().length > 0).length;
   const readingTime = (words / 200) * 60;
   const speakingTime = (words / 130) * 60;

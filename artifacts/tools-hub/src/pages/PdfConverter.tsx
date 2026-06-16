@@ -51,7 +51,8 @@ async function renderPdfPages(file: File, scale: number, quality: number, onProg
     const vp = page.getViewport({ scale });
     const canvas = document.createElement("canvas");
     canvas.width = vp.width; canvas.height = vp.height;
-    await page.render({ canvasContext: canvas.getContext("2d")!, viewport: vp }).promise;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (page.render as any)({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
     const dataUrl = canvas.toDataURL("image/jpeg", quality);
     const pW = 595, pH = Math.round((vp.height / vp.width) * pW);
     if (first) { newPdf.internal.pageSize.width = pW; newPdf.internal.pageSize.height = pH; first = false; }
@@ -74,7 +75,8 @@ async function pdfToImages(file: File, onProgress?: (p: number) => void): Promis
       const vp = page.getViewport({ scale: 1.5 });
       const canvas = document.createElement("canvas");
       canvas.width = vp.width; canvas.height = vp.height;
-      await page.render({ canvasContext: canvas.getContext("2d")!, viewport: vp }).promise;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (page.render as any)({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
       results[i + j] = canvas.toDataURL("image/jpeg", 0.92);
       if (onProgress) onProgress(Math.round(((i + j + 1) / total) * 100));
     }));
@@ -312,7 +314,7 @@ export default function PdfConverter() {
       } else {
         output = await renderPdfPages(compFile, level.scale, level.quality, setCompProgress);
       }
-      const blob = new Blob([output], { type: "application/pdf" });
+      const blob = new Blob([output instanceof Uint8Array ? output.buffer as ArrayBuffer : output], { type: "application/pdf" });
       triggerDownload(blob, compFile.name.replace(".pdf", "-compressed.pdf"));
       setCompResult({ orig: compFile.size, neo: output.byteLength });
       increment();
@@ -334,7 +336,7 @@ export default function PdfConverter() {
         const pdf = await PDFDocument.load(await file.arrayBuffer());
         (await merged.copyPages(pdf, pdf.getPageIndices())).forEach((p) => merged.addPage(p));
       }
-      triggerDownload(new Blob([await merged.save()], { type: "application/pdf" }), "merged.pdf");
+      const mergedBytes = await merged.save(); triggerDownload(new Blob([mergedBytes.buffer as ArrayBuffer], { type: "application/pdf" }), "merged.pdf");
       increment();
     } catch { setMergeError("Failed to merge PDFs."); }
     finally { setMergeLoading(false); }
@@ -486,7 +488,7 @@ export default function PdfConverter() {
     try {
       const pdf = await PDFDocument.load(await rotFile.arrayBuffer());
       pdf.getPages().forEach((p) => p.setRotation(degrees((p.getRotation().angle + rotDeg) % 360)));
-      triggerDownload(new Blob([await pdf.save()], { type: "application/pdf" }), rotFile.name.replace(".pdf", "-rotated.pdf"));
+      const rotBytes = await pdf.save(); triggerDownload(new Blob([rotBytes.buffer as ArrayBuffer], { type: "application/pdf" }), rotFile.name.replace(".pdf", "-rotated.pdf"));
       setRotDone(true); increment();
     } catch { setRotError("Failed to rotate PDF."); }
     finally { setRotLoading(false); }
@@ -509,7 +511,7 @@ export default function PdfConverter() {
       if (!keep.length) { setDelError("Cannot delete all pages."); setDelLoading(false); return; }
       const newPdf = await PDFDocument.create();
       (await newPdf.copyPages(pdf, keep)).forEach((p) => newPdf.addPage(p));
-      triggerDownload(new Blob([await newPdf.save()], { type: "application/pdf" }), delFile.name.replace(".pdf", "-edited.pdf"));
+      const delBytes = await newPdf.save(); triggerDownload(new Blob([delBytes.buffer as ArrayBuffer], { type: "application/pdf" }), delFile.name.replace(".pdf", "-edited.pdf"));
       setDelDone(true); increment();
     } catch { setDelError("Failed to delete pages."); }
     finally { setDelLoading(false); }
@@ -530,7 +532,7 @@ export default function PdfConverter() {
       const toExtract = [...extSelected].sort((a, b) => a - b).map((n) => n - 1);
       const newPdf = await PDFDocument.create();
       (await newPdf.copyPages(pdf, toExtract)).forEach((p) => newPdf.addPage(p));
-      triggerDownload(new Blob([await newPdf.save()], { type: "application/pdf" }), extFile.name.replace(".pdf", "-extracted.pdf"));
+      const extBytes = await newPdf.save(); triggerDownload(new Blob([extBytes.buffer as ArrayBuffer], { type: "application/pdf" }), extFile.name.replace(".pdf", "-extracted.pdf"));
       setExtDone(true); increment();
     } catch { setExtError("Failed to extract pages."); }
     finally { setExtLoading(false); }
@@ -568,9 +570,10 @@ export default function PdfConverter() {
     setUnlkLoading(true); setUnlkError(""); setUnlkDone(false);
     try {
       const buf = await unlkFile.arrayBuffer();
-      const pdf = await PDFDocument.load(buf, { password: unlkPass || "" });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdf = await PDFDocument.load(buf, { password: unlkPass || "" } as any);
       const saved = await pdf.save({ useObjectStreams: true });
-      triggerDownload(new Blob([saved], { type: "application/pdf" }), unlkFile.name.replace(".pdf", "-unlocked.pdf"));
+      triggerDownload(new Blob([saved.buffer as ArrayBuffer], { type: "application/pdf" }), unlkFile.name.replace(".pdf", "-unlocked.pdf"));
       setUnlkDone(true); increment();
     } catch (e: unknown) {
       const msg = String(e);
@@ -609,7 +612,7 @@ export default function PdfConverter() {
       const newPdf = await PDFDocument.create();
       const indices = orgOrder.map((n) => n - 1);
       (await newPdf.copyPages(src, indices)).forEach((p) => newPdf.addPage(p));
-      triggerDownload(new Blob([await newPdf.save()], { type: "application/pdf" }), orgFile.name.replace(".pdf", "-organized.pdf"));
+      const orgBytes = await newPdf.save(); triggerDownload(new Blob([orgBytes.buffer as ArrayBuffer], { type: "application/pdf" }), orgFile.name.replace(".pdf", "-organized.pdf"));
       setOrgDone(true); increment();
     } catch { setOrgError("Failed to organize PDF pages."); }
     finally { setOrgLoading(false); }
@@ -647,7 +650,7 @@ export default function PdfConverter() {
           blendMode: undefined,
         });
       }
-      triggerDownload(new Blob([await pdf.save()], { type: "application/pdf" }), wmFile.name.replace(".pdf", "-watermarked.pdf"));
+      const wmBytes = await pdf.save(); triggerDownload(new Blob([wmBytes.buffer as ArrayBuffer], { type: "application/pdf" }), wmFile.name.replace(".pdf", "-watermarked.pdf"));
       setWmDone(true); increment();
     } catch { setWmError("Failed to add watermark."); }
     finally { setWmLoading(false); }
@@ -688,7 +691,7 @@ export default function PdfConverter() {
           size: 11, font, color: rgb(0, 0, 0),
         });
       }
-      triggerDownload(new Blob([await pdfDoc.save()], { type: "application/pdf" }), ffFile.name.replace(".pdf", "-filled.pdf"));
+      const ffBytes = await pdfDoc.save(); triggerDownload(new Blob([ffBytes.buffer as ArrayBuffer], { type: "application/pdf" }), ffFile.name.replace(".pdf", "-filled.pdf"));
       setFfDone(true); increment();
     } catch { setFfError("Failed to save filled PDF."); }
     finally { setFfLoading(false); }
@@ -723,7 +726,7 @@ export default function PdfConverter() {
         }
         page.drawText(label, { x, y, size: pnFontSize, font, color: rgb(0.2, 0.2, 0.2) });
       }
-      triggerDownload(new Blob([await pdf.save()], { type: "application/pdf" }), pnFile.name.replace(".pdf", "-numbered.pdf"));
+      const pnBytes = await pdf.save(); triggerDownload(new Blob([pnBytes.buffer as ArrayBuffer], { type: "application/pdf" }), pnFile.name.replace(".pdf", "-numbered.pdf"));
       setPnDone(true); increment();
     } catch { setPnError("Failed to add page numbers."); }
     finally { setPnLoading(false); }
@@ -778,7 +781,7 @@ export default function PdfConverter() {
           borderWidth: 0,
         });
       }
-      triggerDownload(new Blob([await pdfDoc.save()], { type: "application/pdf" }), rdFile.name.replace(".pdf", "-redacted.pdf"));
+      const rdBytes = await pdfDoc.save(); triggerDownload(new Blob([rdBytes.buffer as ArrayBuffer], { type: "application/pdf" }), rdFile.name.replace(".pdf", "-redacted.pdf"));
       setRdDone(true); increment();
     } catch { setRdError("Failed to redact PDF."); }
     finally { setRdLoading(false); }
@@ -1539,9 +1542,8 @@ export default function PdfConverter() {
                 fontSize: pnFontSize,
                 bottom: pnPosition.startsWith("bottom") ? 6 : undefined,
                 top:    pnPosition.startsWith("top")    ? 6 : undefined,
-                left:   pnPosition.endsWith("left")   ? 12 : undefined,
+                left:   pnPosition.endsWith("center") ? "50%" : pnPosition.endsWith("left") ? 12 : undefined,
                 right:  pnPosition.endsWith("right")  ? 12 : undefined,
-                left:   pnPosition.endsWith("center")  ? "50%" : undefined,
                 transform: pnPosition.endsWith("center") ? "translateX(-50%)" : undefined,
               } as React.CSSProperties}
             >

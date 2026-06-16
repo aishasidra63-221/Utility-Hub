@@ -32,7 +32,8 @@ async function pdfPageToCanvas(file: File, pageNum: number, scale = 2): Promise<
   const vp = page.getViewport({ scale });
   const canvas = document.createElement("canvas");
   canvas.width = vp.width; canvas.height = vp.height;
-  await page.render({ canvasContext: canvas.getContext("2d")!, viewport: vp }).promise;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (page.render as any)({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
   return canvas;
 }
 

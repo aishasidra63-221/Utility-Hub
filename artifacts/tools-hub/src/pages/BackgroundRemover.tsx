@@ -10,6 +10,7 @@ import { useToolCounter } from "@/hooks/useToolCounter";
 // Cached pipeline — downloads model only once per session
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _pipe: any = null;
+let _device: "webgpu" | "wasm" = "wasm";
 
 /**
  * Load an image URL into a HTMLImageElement, returning it once loaded.
@@ -140,25 +141,49 @@ export default function BackgroundRemover() {
     try {
       const { pipeline, env } = await import("@huggingface/transformers");
 
-      // Single-threaded WASM — no SharedArrayBuffer / COOP headers needed
+      // Single-threaded WASM fallback — no SharedArrayBuffer / COOP headers needed
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (env.backends.onnx as any).wasm.numThreads = 1;
 
       if (!_pipe) {
-        setProgress("Downloading AI model (~20 MB, first time only)…");
-        _pipe = await pipeline("background-removal", "Xenova/modnet", {
-          device: "wasm",
+        // Detect WebGPU support
+        const hasWebGPU =
+          typeof navigator !== "undefined" &&
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          progress_callback: (prog: any) => {
-            if ((prog.status === "download" || prog.status === "progress") && prog.total > 0) {
-              setProgress(`Downloading AI model: ${Math.round((prog.loaded / prog.total) * 100)}%`);
-            } else if (prog.status === "initiate") {
-              setProgress("Preparing AI model…");
-            } else if (prog.status === "done") {
-              setProgress("Model ready — processing image…");
-            }
-          },
-        });
+          !!(navigator as any).gpu;
+
+        _device = hasWebGPU ? "webgpu" : "wasm";
+
+        setProgress(`Downloading AI model (~20 MB, first time only)…`);
+
+        const tryLoad = async (device: "webgpu" | "wasm") => {
+          return pipeline("background-removal", "Xenova/modnet", {
+            device,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            progress_callback: (prog: any) => {
+              if ((prog.status === "download" || prog.status === "progress") && prog.total > 0) {
+                setProgress(`Downloading AI model: ${Math.round((prog.loaded / prog.total) * 100)}%`);
+              } else if (prog.status === "initiate") {
+                setProgress("Preparing AI model…");
+              } else if (prog.status === "done") {
+                setProgress("Model ready — processing image…");
+              }
+            },
+          });
+        };
+
+        try {
+          _pipe = await tryLoad(_device);
+        } catch (gpuErr) {
+          if (_device === "webgpu") {
+            console.warn("WebGPU init failed, falling back to WASM:", gpuErr);
+            _device = "wasm";
+            setProgress("GPU not available, using CPU mode…");
+            _pipe = await tryLoad("wasm");
+          } else {
+            throw gpuErr;
+          }
+        }
       }
 
       setProgress("Removing background…");
@@ -257,7 +282,7 @@ export default function BackgroundRemover() {
       <div className="mb-5 flex items-start gap-2.5 bg-primary/8 border border-primary/20 rounded-xl px-4 py-3 text-sm text-primary">
         <Loader2 className="w-4 h-4 mt-0.5 flex-shrink-0 opacity-70" />
         <span>
-          <strong>First use:</strong> The AI model (~20 MB) downloads once to your browser. After that it runs offline — no internet needed.
+          <strong>First use:</strong> The AI model (~20 MB) downloads once to your browser. Runs on your <strong>GPU</strong> if available (Chrome/Edge) for fast results — falls back to CPU otherwise.
         </span>
       </div>
 

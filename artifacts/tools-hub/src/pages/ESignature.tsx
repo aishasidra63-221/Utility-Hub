@@ -166,7 +166,7 @@ export default function ESignature() {
 
       page.drawImage(img, { x, y, width: sigW, height: sigH });
       const saved = await pdf.save();
-      triggerDownload(new Blob([saved], { type: "application/pdf" }), pdfFile.name.replace(".pdf", "-signed.pdf"));
+      triggerDownload(new Blob([saved.buffer as ArrayBuffer], { type: "application/pdf" }), pdfFile.name.replace(".pdf", "-signed.pdf"));
       setDone(true); increment();
     } catch { setError("Failed to embed signature. Please try again."); }
     finally { setLoading(false); }

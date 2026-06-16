@@ -76,7 +76,8 @@ export default function PdfAnnotator() {
       overlayRef.current.height = viewport.height;
     }
     const ctx = canvas.getContext("2d")!;
-    await page.render({ canvasContext: ctx, viewport }).promise;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (page.render as any)({ canvasContext: ctx, viewport }).promise;
     setLoading(false);
     redrawAnnotations(num);
   }, []);
@@ -262,7 +263,7 @@ export default function PdfAnnotator() {
       }
 
       const saved = await pdf.save();
-      triggerDownload(new Blob([saved], { type: "application/pdf" }), file.name.replace(".pdf", "-annotated.pdf"));
+      triggerDownload(new Blob([saved.buffer as ArrayBuffer], { type: "application/pdf" }), file.name.replace(".pdf", "-annotated.pdf"));
       setDone(true); increment();
     } catch { setError("Failed to save annotated PDF. Please try again."); }
     finally { setSaving(false); await renderPage(pageNum); }

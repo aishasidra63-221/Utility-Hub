@@ -53,6 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       mq.addEventListener("change", listener);
       return () => mq.removeEventListener("change", listener);
     }
+    return undefined;
   }, [theme]);
 
   useEffect(() => {
