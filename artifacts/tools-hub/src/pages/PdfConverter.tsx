@@ -6,7 +6,7 @@ import {
   FileText, Upload, Download, X, RefreshCw, Image, Link2,
   Scissors, Layers, RotateCw, AlignLeft, FileType,
   Minimize2, Trash2, Copy, GripVertical, Stamp,
-  Lock, Unlock, ListOrdered,
+  Lock, Unlock, ListOrdered, PenLine, Hash, EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UsageCount } from "@/components/UsageCount";
@@ -18,7 +18,8 @@ type Mode =
   | "compress-pdf" | "merge-pdf"    | "split-pdf"    | "pdf-to-word"
   | "word-to-pdf"  | "pdf-to-image" | "image-to-pdf" | "rotate-pdf"
   | "delete-pages" | "extract-pages"| "watermark-pdf"
-  | "protect-pdf"  | "unlock-pdf"   | "organize-pages";
+  | "protect-pdf"  | "unlock-pdf"   | "organize-pages"
+  | "form-filler"  | "add-page-numbers" | "pdf-redactor";
 
 type CompressLevel = "lossless" | "balanced" | "small";
 
@@ -116,7 +117,10 @@ const TOOLS: { id: Mode; label: string; icon: React.ReactNode; color: string }[]
   { id: "watermark-pdf",   label: "Watermark PDF",   icon: <Stamp className="w-5 h-5" />,       color: "text-purple-500" },
   { id: "protect-pdf",    label: "Protect PDF",     icon: <Lock className="w-5 h-5" />,        color: "text-rose-500" },
   { id: "unlock-pdf",     label: "Unlock PDF",      icon: <Unlock className="w-5 h-5" />,      color: "text-lime-500" },
-  { id: "organize-pages", label: "Organize Pages",  icon: <ListOrdered className="w-5 h-5" />, color: "text-sky-500" },
+  { id: "organize-pages",    label: "Organize Pages",    icon: <ListOrdered className="w-5 h-5" />, color: "text-sky-500" },
+  { id: "form-filler",       label: "Form Filler",        icon: <PenLine className="w-5 h-5" />,     color: "text-fuchsia-500" },
+  { id: "add-page-numbers",  label: "Add Page Nos.",      icon: <Hash className="w-5 h-5" />,        color: "text-amber-600" },
+  { id: "pdf-redactor",      label: "Redactor",           icon: <EyeOff className="w-5 h-5" />,      color: "text-slate-600" },
 ];
 
 const COMPRESS_LEVELS: { id: CompressLevel; label: string; desc: string; scale: number; quality: number }[] = [
@@ -250,6 +254,39 @@ export default function PdfConverter() {
   const [wmDone, setWmDone] = useState(false);
   const [wmError, setWmError] = useState("");
   const wmRef = useRef<HTMLInputElement>(null);
+
+  // ── Form Filler ──
+  const [ffFile, setFfFile] = useState<File | null>(null);
+  const [ffPages, setFfPages] = useState<string[]>([]);
+  const [ffAnnotations, setFfAnnotations] = useState<{id:string;page:number;xPct:number;yPct:number;text:string}[]>([]);
+  const [ffLoading, setFfLoading] = useState(false);
+  const [ffProgress, setFfProgress] = useState(0);
+  const [ffDone, setFfDone] = useState(false);
+  const [ffError, setFfError] = useState("");
+  const ffRef = useRef<HTMLInputElement>(null);
+
+  // ── Add Page Numbers ──
+  const [pnFile, setPnFile] = useState<File | null>(null);
+  const [pnPosition, setPnPosition] = useState<"bottom-center"|"bottom-right"|"bottom-left"|"top-center"|"top-right">("bottom-center");
+  const [pnStartNum, setPnStartNum] = useState(1);
+  const [pnFontSize, setPnFontSize] = useState(11);
+  const [pnLoading, setPnLoading] = useState(false);
+  const [pnDone, setPnDone] = useState(false);
+  const [pnError, setPnError] = useState("");
+  const pnRef = useRef<HTMLInputElement>(null);
+
+  // ── PDF Redactor ──
+  const [rdFile, setRdFile] = useState<File | null>(null);
+  const [rdPages, setRdPages] = useState<string[]>([]);
+  const [rdCurrentPage, setRdCurrentPage] = useState(0);
+  const [rdRects, setRdRects] = useState<{page:number;x1:number;y1:number;x2:number;y2:number}[]>([]);
+  const [rdDrawStart, setRdDrawStart] = useState<{x:number;y:number}|null>(null);
+  const [rdDrawCurrent, setRdDrawCurrent] = useState<{x:number;y:number}|null>(null);
+  const [rdLoading, setRdLoading] = useState(false);
+  const [rdProgress, setRdProgress] = useState(0);
+  const [rdDone, setRdDone] = useState(false);
+  const [rdError, setRdError] = useState("");
+  const rdRef = useRef<HTMLInputElement>(null);
 
   const handleShareLink = async () => {
     await navigator.clipboard.writeText(window.location.href);
@@ -616,6 +653,137 @@ export default function PdfConverter() {
     finally { setWmLoading(false); }
   };
 
+  // ── Form Filler ──────────────────────────────────────────
+  const handleFfFile = async (f: File) => {
+    if (!f.name.toLowerCase().endsWith(".pdf")) return;
+    setFfFile(f); setFfError(""); setFfDone(false); setFfAnnotations([]);
+    setFfLoading(true); setFfProgress(0);
+    try { setFfPages(await pdfToImages(f, setFfProgress)); }
+    catch { setFfError("Failed to render PDF pages."); }
+    finally { setFfLoading(false); }
+  };
+  const ffAddAnnotation = (page: number, xPct: number, yPct: number) => {
+    setFfAnnotations(prev => [...prev, { id: Math.random().toString(36).slice(2), page, xPct, yPct, text: "" }]);
+  };
+  const ffUpdateAnnotation = (id: string, text: string) => {
+    setFfAnnotations(prev => prev.map(a => a.id === id ? { ...a, text } : a));
+  };
+  const ffRemoveAnnotation = (id: string) => {
+    setFfAnnotations(prev => prev.filter(a => a.id !== id));
+  };
+  const ffDownload = async () => {
+    if (!ffFile) return;
+    setFfLoading(true); setFfError(""); setFfDone(false);
+    try {
+      const pdfDoc = await PDFDocument.load(await ffFile.arrayBuffer());
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const pages = pdfDoc.getPages();
+      for (const ann of ffAnnotations) {
+        if (!ann.text.trim() || ann.page >= pages.length) continue;
+        const page = pages[ann.page];
+        const { width, height } = page.getSize();
+        page.drawText(ann.text, {
+          x: Math.max(2, ann.xPct * width),
+          y: Math.max(2, (1 - ann.yPct) * height - 11),
+          size: 11, font, color: rgb(0, 0, 0),
+        });
+      }
+      triggerDownload(new Blob([await pdfDoc.save()], { type: "application/pdf" }), ffFile.name.replace(".pdf", "-filled.pdf"));
+      setFfDone(true); increment();
+    } catch { setFfError("Failed to save filled PDF."); }
+    finally { setFfLoading(false); }
+  };
+
+  // ── Add Page Numbers ──────────────────────────────────────
+  const handlePnFile = (f: File) => {
+    if (!f.name.toLowerCase().endsWith(".pdf")) return;
+    setPnFile(f); setPnError(""); setPnDone(false);
+  };
+  const addPageNumbers = async () => {
+    if (!pnFile) return;
+    setPnLoading(true); setPnError(""); setPnDone(false);
+    try {
+      const pdf = await PDFDocument.load(await pnFile.arrayBuffer());
+      const font = await pdf.embedFont(StandardFonts.Helvetica);
+      const pages = pdf.getPages();
+      const margin = 24;
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const { width, height } = page.getSize();
+        const label = String(pnStartNum + i);
+        const textW = font.widthOfTextAtSize(label, pnFontSize);
+        let x: number, y: number;
+        switch (pnPosition) {
+          case "bottom-center": x = (width - textW) / 2; y = margin; break;
+          case "bottom-right":  x = width - textW - margin; y = margin; break;
+          case "bottom-left":   x = margin; y = margin; break;
+          case "top-center":    x = (width - textW) / 2; y = height - margin - pnFontSize; break;
+          case "top-right":     x = width - textW - margin; y = height - margin - pnFontSize; break;
+          default:              x = (width - textW) / 2; y = margin;
+        }
+        page.drawText(label, { x, y, size: pnFontSize, font, color: rgb(0.2, 0.2, 0.2) });
+      }
+      triggerDownload(new Blob([await pdf.save()], { type: "application/pdf" }), pnFile.name.replace(".pdf", "-numbered.pdf"));
+      setPnDone(true); increment();
+    } catch { setPnError("Failed to add page numbers."); }
+    finally { setPnLoading(false); }
+  };
+
+  // ── PDF Redactor ──────────────────────────────────────────
+  const handleRdFile = async (f: File) => {
+    if (!f.name.toLowerCase().endsWith(".pdf")) return;
+    setRdFile(f); setRdError(""); setRdDone(false); setRdRects([]); setRdCurrentPage(0);
+    setRdLoading(true); setRdProgress(0);
+    try { setRdPages(await pdfToImages(f, setRdProgress)); }
+    catch { setRdError("Failed to render PDF pages."); }
+    finally { setRdLoading(false); }
+  };
+  const rdHandleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setRdDrawStart({ x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height });
+    setRdDrawCurrent(null);
+  };
+  const rdHandleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!rdDrawStart) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setRdDrawCurrent({ x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height });
+  };
+  const rdHandleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!rdDrawStart) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const cx = (e.clientX - rect.left) / rect.width;
+    const cy = (e.clientY - rect.top) / rect.height;
+    const x1 = Math.min(rdDrawStart.x, cx), y1 = Math.min(rdDrawStart.y, cy);
+    const x2 = Math.max(rdDrawStart.x, cx), y2 = Math.max(rdDrawStart.y, cy);
+    if (x2 - x1 > 0.01 && y2 - y1 > 0.005)
+      setRdRects(prev => [...prev, { page: rdCurrentPage, x1, y1, x2, y2 }]);
+    setRdDrawStart(null); setRdDrawCurrent(null);
+  };
+  const rdDownload = async () => {
+    if (!rdFile || !rdPages.length) return;
+    setRdLoading(true); setRdError(""); setRdDone(false);
+    try {
+      const pdfDoc = await PDFDocument.load(await rdFile.arrayBuffer());
+      const pages = pdfDoc.getPages();
+      for (const r of rdRects) {
+        if (r.page >= pages.length) continue;
+        const page = pages[r.page];
+        const { width, height } = page.getSize();
+        page.drawRectangle({
+          x: r.x1 * width,
+          y: (1 - r.y2) * height,
+          width:  (r.x2 - r.x1) * width,
+          height: (r.y2 - r.y1) * height,
+          color: rgb(0, 0, 0),
+          borderWidth: 0,
+        });
+      }
+      triggerDownload(new Blob([await pdfDoc.save()], { type: "application/pdf" }), rdFile.name.replace(".pdf", "-redacted.pdf"));
+      setRdDone(true); increment();
+    } catch { setRdError("Failed to redact PDF."); }
+    finally { setRdLoading(false); }
+  };
+
   const activeTool = TOOLS.find((t) => t.id === mode)!;
 
   return (
@@ -629,7 +797,7 @@ export default function PdfConverter() {
               <UsageCount count={count} label="operation" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">PDF Tools</h1>
-            <p className="text-muted-foreground mt-2">13 essential PDF tools — everything runs in your browser, nothing uploaded.</p>
+            <p className="text-muted-foreground mt-2">17 essential PDF tools — everything runs in your browser, nothing uploaded.</p>
           </div>
           <Button variant="outline" size="sm" onClick={handleShareLink} className="gap-2 text-xs">
             {shareCopied ? <><Upload className="w-3.5 h-3.5 text-emerald-500" />Copied!</> : <><Link2 className="w-3.5 h-3.5" />Share</>}
@@ -1260,6 +1428,211 @@ export default function PdfConverter() {
           )}
         </div>
       )}
+
+      {/* ── Form Filler ── */}
+      {mode === "form-filler" && (
+        <div className="space-y-4">
+          <div className="bg-primary/8 border border-primary/20 text-primary text-xs px-4 py-3 rounded-xl">
+            💡 <strong>How to use:</strong> Upload a PDF → click anywhere on the page to place a text field → type your text → Download filled PDF.
+          </div>
+          {!ffFile ? (
+            <PdfDrop label="Upload PDF to fill" onClick={() => ffRef.current?.click()} onDrop={handleFfFile} testId="dropzone-ff">
+              <input ref={ffRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleFfFile(e.target.files[0])} />
+            </PdfDrop>
+          ) : (
+            <>
+              <FileCard name={ffFile.name} size={ffFile.size} onRemove={() => { setFfFile(null); setFfPages([]); setFfAnnotations([]); setFfDone(false); }} />
+              {ffError && <ErrorBox msg={ffError} />}
+              {ffLoading && <ProgressBar value={ffProgress} label="Rendering pages…" />}
+              {ffDone && <SuccessBox msg="Filled PDF downloaded!" />}
+              {ffPages.length > 0 && (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    <strong className="text-foreground">Click on any spot</strong> on the page below to place a text field.
+                    {ffAnnotations.length > 0 && <> · <span className="text-primary font-medium">{ffAnnotations.length} field{ffAnnotations.length > 1 ? "s" : ""} added</span></>}
+                  </p>
+                  <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1 rounded-xl">
+                    {ffPages.map((src, pageIdx) => (
+                      <div
+                        key={pageIdx}
+                        className="relative border border-border rounded-xl overflow-hidden bg-white shadow-sm cursor-crosshair"
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          ffAddAnnotation(pageIdx, (e.clientX - rect.left) / rect.width, (e.clientY - rect.top) / rect.height);
+                        }}
+                      >
+                        <div className="absolute top-2 left-2 z-10 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full pointer-events-none">Page {pageIdx + 1}</div>
+                        <img src={src} alt={`Page ${pageIdx + 1}`} className="w-full block pointer-events-none" />
+                        {ffAnnotations.filter(a => a.page === pageIdx).map(ann => (
+                          <div
+                            key={ann.id}
+                            className="absolute flex items-center gap-1 z-20"
+                            style={{ left: `${ann.xPct * 100}%`, top: `${ann.yPct * 100}%`, transform: "translate(0,-50%)" }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              autoFocus
+                              type="text"
+                              value={ann.text}
+                              onChange={(e) => ffUpdateAnnotation(ann.id, e.target.value)}
+                              placeholder="Type here…"
+                              className="border border-primary bg-white/95 rounded px-1.5 py-0.5 text-xs font-medium shadow-md min-w-[90px] max-w-[220px] focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                            <button
+                              onClick={() => ffRemoveAnnotation(ann.id)}
+                              className="bg-destructive text-white rounded-full w-4 h-4 flex items-center justify-center text-[11px] leading-none hover:opacity-80 flex-shrink-0"
+                            >×</button>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-3 flex-wrap">
+                    <Button onClick={ffDownload} disabled={ffLoading || ffAnnotations.filter(a => a.text.trim()).length === 0}>
+                      {ffLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Saving…</> : <><Download className="w-4 h-4 mr-2" />Download Filled PDF</>}
+                    </Button>
+                    <Button variant="outline" onClick={() => setFfAnnotations([])}>Clear all fields</Button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Add Page Numbers ── */}
+      {mode === "add-page-numbers" && (
+        <div className="space-y-4">
+          {/* Options */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Position</label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {(["bottom-center","bottom-left","bottom-right","top-center","top-right"] as const).map(pos => (
+                  <button key={pos} onClick={() => setPnPosition(pos)}
+                    className={`py-2 px-2 rounded-lg text-xs font-semibold border transition-all capitalize ${pnPosition === pos ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground hover:border-primary/50"}`}>
+                    {pos.replace("-", " ")}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">Start number</label>
+                <input type="number" min={0} max={999} value={pnStartNum} onChange={(e) => setPnStartNum(Number(e.target.value))}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">Font size ({pnFontSize}pt)</label>
+                <input type="range" min={8} max={18} step={1} value={pnFontSize} onChange={(e) => setPnFontSize(Number(e.target.value))}
+                  className="w-full accent-primary" />
+              </div>
+            </div>
+          </div>
+          {/* Preview badge */}
+          <div className="rounded-xl border border-border bg-muted/20 h-16 flex items-center justify-center relative overflow-hidden">
+            <p className="text-[10px] text-muted-foreground absolute top-2 left-3">Preview</p>
+            <span className="text-muted-foreground/60 text-xs">— page content —</span>
+            <span
+              className="absolute font-medium text-foreground/70"
+              style={{
+                fontSize: pnFontSize,
+                bottom: pnPosition.startsWith("bottom") ? 6 : undefined,
+                top:    pnPosition.startsWith("top")    ? 6 : undefined,
+                left:   pnPosition.endsWith("left")   ? 12 : undefined,
+                right:  pnPosition.endsWith("right")  ? 12 : undefined,
+                left:   pnPosition.endsWith("center")  ? "50%" : undefined,
+                transform: pnPosition.endsWith("center") ? "translateX(-50%)" : undefined,
+              } as React.CSSProperties}
+            >
+              {pnStartNum}
+            </span>
+          </div>
+          {!pnFile ? (
+            <PdfDrop label="Upload PDF to number" onClick={() => pnRef.current?.click()} onDrop={handlePnFile} testId="dropzone-pn">
+              <input ref={pnRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handlePnFile(e.target.files[0])} />
+            </PdfDrop>
+          ) : (
+            <>
+              <FileCard name={pnFile.name} size={pnFile.size} onRemove={() => { setPnFile(null); setPnDone(false); }} />
+              {pnError && <ErrorBox msg={pnError} />}
+              {pnDone && <SuccessBox msg="Page numbers added and PDF downloaded!" />}
+              <Button onClick={addPageNumbers} disabled={pnLoading}>
+                {pnLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Adding numbers…</> : <><Hash className="w-4 h-4 mr-2" />Add Page Numbers & Download</>}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── PDF Redactor ── */}
+      {mode === "pdf-redactor" && (
+        <div className="space-y-4">
+          <div className="bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs px-4 py-3 rounded-xl">
+            ⚠️ <strong>How to use:</strong> Upload PDF → navigate pages → <strong>click and drag</strong> to draw a black box over sensitive content → Download. Redaction is permanent in the saved PDF.
+          </div>
+          {!rdFile ? (
+            <PdfDrop label="Upload PDF to redact" onClick={() => rdRef.current?.click()} onDrop={handleRdFile} testId="dropzone-rd">
+              <input ref={rdRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => e.target.files?.[0] && handleRdFile(e.target.files[0])} />
+            </PdfDrop>
+          ) : (
+            <>
+              <FileCard name={rdFile.name} size={rdFile.size} onRemove={() => { setRdFile(null); setRdPages([]); setRdRects([]); setRdDone(false); setRdCurrentPage(0); }} />
+              {rdError && <ErrorBox msg={rdError} />}
+              {rdLoading && <ProgressBar value={rdProgress} label="Rendering pages…" />}
+              {rdDone && <SuccessBox msg="Redacted PDF downloaded!" />}
+              {rdPages.length > 0 && (
+                <>
+                  {/* Page navigation */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setRdCurrentPage(p => Math.max(0, p - 1))} disabled={rdCurrentPage === 0}>‹ Prev</Button>
+                      <span className="text-sm text-muted-foreground">Page <strong className="text-foreground">{rdCurrentPage + 1}</strong> of {rdPages.length}</span>
+                      <Button variant="outline" size="sm" onClick={() => setRdCurrentPage(p => Math.min(rdPages.length - 1, p + 1))} disabled={rdCurrentPage === rdPages.length - 1}>Next ›</Button>
+                    </div>
+                    {rdRects.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">{rdRects.length} redaction{rdRects.length > 1 ? "s" : ""}</span>
+                        <Button variant="ghost" size="sm" className="text-xs text-destructive hover:text-destructive h-7"
+                          onClick={() => setRdRects(prev => prev.filter(r => r.page !== rdCurrentPage))}>
+                          Clear page
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  {/* Redaction canvas */}
+                  <div
+                    className="relative border border-border rounded-xl overflow-hidden bg-white shadow-sm select-none touch-none"
+                    style={{ cursor: "crosshair" }}
+                    onMouseDown={rdHandleMouseDown}
+                    onMouseMove={rdHandleMouseMove}
+                    onMouseUp={rdHandleMouseUp}
+                    onMouseLeave={() => { setRdDrawStart(null); setRdDrawCurrent(null); }}
+                  >
+                    <img src={rdPages[rdCurrentPage]} alt={`Page ${rdCurrentPage + 1}`} className="w-full block pointer-events-none" draggable={false} />
+                    {rdRects.filter(r => r.page === rdCurrentPage).map((r, i) => (
+                      <div key={i} className="absolute bg-black"
+                        style={{ left: `${r.x1*100}%`, top: `${r.y1*100}%`, width: `${(r.x2-r.x1)*100}%`, height: `${(r.y2-r.y1)*100}%` }} />
+                    ))}
+                    {rdDrawStart && rdDrawCurrent && (
+                      <div className="absolute bg-black/60 border-2 border-black pointer-events-none"
+                        style={{
+                          left: `${Math.min(rdDrawStart.x, rdDrawCurrent.x)*100}%`,
+                          top:  `${Math.min(rdDrawStart.y, rdDrawCurrent.y)*100}%`,
+                          width:  `${Math.abs(rdDrawCurrent.x - rdDrawStart.x)*100}%`,
+                          height: `${Math.abs(rdDrawCurrent.y - rdDrawStart.y)*100}%`,
+                        }} />
+                    )}
+                  </div>
+                  <Button onClick={rdDownload} disabled={rdLoading || rdRects.length === 0}>
+                    {rdLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Applying redactions…</> : <><EyeOff className="w-4 h-4 mr-2" />Download Redacted PDF ({rdRects.length} area{rdRects.length !== 1 ? "s" : ""})</>}
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1279,7 +1652,10 @@ function getToolDesc(mode: Mode): string {
     "watermark-pdf":  "Stamp diagonal text on every page — set color, size & opacity",
     "protect-pdf":    "Set a password on your PDF to restrict access",
     "unlock-pdf":     "Remove password from a locked PDF — enter current password to unlock",
-    "organize-pages": "Drag page tiles to rearrange the order, then download the reordered PDF",
+    "organize-pages":   "Drag page tiles to rearrange the order, then download the reordered PDF",
+    "form-filler":      "Click anywhere on the PDF page to place a text field, type your text, then download",
+    "add-page-numbers": "Choose position and style, then stamp page numbers on every page",
+    "pdf-redactor":     "Draw black rectangles over sensitive text — permanently hidden in the downloaded PDF",
   };
   return map[mode];
 }
