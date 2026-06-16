@@ -54,12 +54,12 @@ const tools = [
 // ─── Hamburger icon (3 lines, animated to X) ─────────────────────────────────
 function BurgerIcon({ open }: { open: boolean }) {
   return (
-    <span className="flex flex-col justify-center items-start w-5 h-5 gap-[5px]">
+    <span className="flex flex-col justify-center items-end w-5 h-5 gap-[5px]">
       <span
-        className="block h-[1.5px] bg-current rounded-full transition-all duration-300 origin-left"
+        className="block h-[1.5px] bg-current rounded-full transition-all duration-300 origin-right"
         style={{
           width: open ? "18px" : "18px",
-          transform: open ? "translateY(6.5px) rotate(45deg)" : "none",
+          transform: open ? "translateY(6.5px) rotate(-45deg)" : "none",
         }}
       />
       <span
@@ -70,10 +70,10 @@ function BurgerIcon({ open }: { open: boolean }) {
         }}
       />
       <span
-        className="block h-[1.5px] bg-current rounded-full transition-all duration-300 origin-left"
+        className="block h-[1.5px] bg-current rounded-full transition-all duration-300 origin-right"
         style={{
           width: open ? "18px" : "18px",
-          transform: open ? "translateY(-6.5px) rotate(-45deg)" : "none",
+          transform: open ? "translateY(-6.5px) rotate(45deg)" : "none",
         }}
       />
     </span>
