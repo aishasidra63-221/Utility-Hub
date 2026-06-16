@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { AlignLeft, Copy, Check, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useShareURL } from "@/hooks/useShareURL";
@@ -141,7 +140,6 @@ export default function TextCleaner() {
               Paste messy text, pick your transforms, copy the cleaned result.
             </p>
           </div>
-          <ShareButton onCopy={copyShareLink} copied={linkCopied} />
         </div>
       </div>
 

@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo, useRef } from "react";
 import { Braces, ChevronRight, ChevronDown, Upload, Copy, Check, Trash2, AlertCircle, Search, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -155,7 +154,6 @@ export default function JsonExplorer() {
   const [tab, setTab] = useState<"tree" | "table" | "format">("tree");
   const [search, setSearch] = useState("");
   const [copied, setCopied] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [arraySel, setArraySel] = useState<string>("root");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -230,7 +228,6 @@ export default function JsonExplorer() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">JSON Explorer</h1>
           <p className="text-muted-foreground mt-2">Paste or upload any JSON — collapsible tree view, key stats, array table. Zero uploads, 100% private.</p>
         </div>
-        <ShareButton onCopy={async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} copied={linkCopied} label="Share this tool" />
       </div>
 
       <div className="grid lg:grid-cols-[1fr_300px] gap-5 items-start">

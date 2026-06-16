@@ -3,7 +3,6 @@ import { Download, Target, RefreshCw, X, Loader2 } from "lucide-react";
 import imageCompression from "browser-image-compression";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { SpeedBadge } from "@/components/SpeedBadge";
 import { useSEO } from "@/hooks/useSEO";
@@ -39,7 +38,6 @@ export default function TargetSizeCompressor() {
   const [targetKB, setTargetKB] = useState(200);
   const [customKB, setCustomKB] = useState("");
   const [dragOver, setDragOver] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   let _id = useRef(0);
 
@@ -94,12 +92,6 @@ export default function TargetSizeCompressor() {
     a.click();
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   return (
     <div className="max-w-3xl mx-auto px-4 pt-5 pb-10">
       <div className="mb-5">
@@ -115,7 +107,6 @@ export default function TargetSizeCompressor() {
               Set a target file size — 200KB, 500KB, or any custom size. The tool automatically finds the right quality.
             </p>
           </div>
-          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

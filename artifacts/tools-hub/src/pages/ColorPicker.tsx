@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Pipette, Copy, Check, Upload, RefreshCw } from "lucide-react";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -70,7 +69,6 @@ export default function ColorPicker() {
   const [picked, setPicked] = useState<PickedColor | null>(null);
   const [history, setHistory] = useState<PickedColor[]>([]);
   const [dragOver, setDragOver] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [zoom, setZoom] = useState<{ x: number; y: number; color: string } | null>(null);
   const [eyedropperSupported] = useState(() => "EyeDropper" in window);
@@ -164,12 +162,6 @@ export default function ColorPicker() {
     increment();
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   const colorFormats = picked ? [
     { key: "hex", label: "HEX", value: picked.hex.toUpperCase() },
     { key: "rgb", label: "RGB", value: `rgb(${picked.r}, ${picked.g}, ${picked.b})` },
@@ -195,7 +187,6 @@ export default function ColorPicker() {
               Click anywhere on an image to pick its exact color. Get HEX, RGB, and HSL values instantly.
             </p>
           </div>
-          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Download, Droplets, Loader2, RefreshCw, MousePointer, Wand2 } from "lucide-react";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -290,11 +289,6 @@ export default function WatermarkRemover() {
     a.href = result; a.download = fileName || "clean.png"; a.click();
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   // ─────────────────────────────── RENDER ───────────────────────────────
   return (
     <div className="max-w-3xl mx-auto px-4 pt-5 pb-10">
@@ -311,7 +305,6 @@ export default function WatermarkRemover() {
               Draw over any watermark and AI fills it in seamlessly. Or let auto-detect find white/bright marks. 100% browser — nothing uploaded.
             </p>
           </div>
-          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

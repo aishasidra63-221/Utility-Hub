@@ -5,7 +5,6 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -154,7 +153,6 @@ export default function UnitConverter() {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <UsageCount count={0} label="conversion" />
-          <ShareButton onCopy={async () => { await navigator.clipboard.writeText(window.location.href); }} copied={copied} label="Share" />
         </div>
       </div>
 

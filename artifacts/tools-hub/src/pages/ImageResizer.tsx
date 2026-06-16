@@ -3,7 +3,6 @@ import { Upload, Download, X, RefreshCw, Lock, Unlock, Maximize2, ZapIcon, Alert
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -102,7 +101,6 @@ export default function ImageResizer() {
   const [quality, setQuality] = useState(90);
   const [localQ,  setLocalQ]  = useState(90);
   const [dragOver, setDragOver] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [activePreset, setActivePreset] = useState<string | null>("HD");
   const inputRef = useRef<HTMLInputElement>(null);
   const incrementRef = useRef(increment);
@@ -223,7 +221,6 @@ export default function ImageResizer() {
       return [];
     });
   };
-  const handleShare = async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); };
 
   const allDone    = entries.length > 0 && entries.every((e) => !e.loading);
   const anyResult  = entries.some((e) => e.result);
@@ -244,7 +241,6 @@ export default function ImageResizer() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Image Resizer</h1>
             <p className="text-muted-foreground mt-2">Resize to any dimension — custom or preset. 100% in your browser.</p>
           </div>
-          <ShareButton onCopy={handleShare} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

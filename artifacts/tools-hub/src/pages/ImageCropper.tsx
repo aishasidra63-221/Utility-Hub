@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, Download, X, ImageIcon, Move } from "lucide-react";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -127,7 +126,6 @@ export default function ImageCropper() {
   const [cropDisplay, setCropDisplay] = useState<Box>({ x:0,y:0,w:0,h:0 });
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
   const [dragOver,   setDragOver]   = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
 
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -297,15 +295,6 @@ export default function ImageCropper() {
               Upload, drag to select your area, download. JPG, PNG, WebP — 100% in your browser.
             </p>
           </div>
-          <ShareButton
-            onCopy={async () => {
-              await navigator.clipboard.writeText(window.location.href);
-              setLinkCopied(true);
-              setTimeout(() => setLinkCopied(false), 2500);
-            }}
-            copied={linkCopied}
-            label="Share this tool"
-          />
         </div>
       </div>
 

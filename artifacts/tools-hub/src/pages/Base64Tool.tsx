@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Lock, Copy, Check, Trash2, Upload, Download, ArrowLeftRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -66,7 +65,6 @@ export default function Base64Tool() {
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [fileName, setFileName] = useState("");
   const [fileSize, setFileSize] = useState(0);
   const [fileMime, setFileMime] = useState("");
@@ -153,7 +151,6 @@ export default function Base64Tool() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Base64 Encoder / Decoder</h1>
           <p className="text-muted-foreground mt-2">Encode text or any file to Base64, or decode it back. Works entirely in your browser — nothing is uploaded.</p>
         </div>
-        <ShareButton onCopy={async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} copied={linkCopied} label="Share this tool" />
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-5">

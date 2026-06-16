@@ -2,7 +2,6 @@ import { useState, useRef, useCallback } from "react";
 import { Download, ShieldCheck, RefreshCw, X, Check } from "lucide-react";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -73,7 +72,6 @@ export default function ExifStripper() {
 
   const [entries, setEntries] = useState<StrippedEntry[]>([]);
   const [dragOver, setDragOver] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const processFile = useCallback(async (id: number, file: File) => {
@@ -115,12 +113,6 @@ export default function ExifStripper() {
     a.click();
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   return (
     <div className="max-w-3xl mx-auto px-4 pt-5 pb-10">
       <div className="mb-5">
@@ -136,7 +128,6 @@ export default function ExifStripper() {
               Photos secretly store GPS location, camera model, date, and more. Strip it all before sharing — instantly, privately.
             </p>
           </div>
-          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

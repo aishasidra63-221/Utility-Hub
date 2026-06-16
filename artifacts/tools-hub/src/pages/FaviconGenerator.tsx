@@ -3,7 +3,6 @@ import { Download, Globe, X, RefreshCw } from "lucide-react";
 import JSZip from "jszip";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -38,7 +37,6 @@ export default function FaviconGenerator() {
   const [previews, setPreviews] = useState<Record<number, string>>({});
   const [dragOver, setDragOver] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const loadFile = useCallback((file: File) => {
@@ -94,12 +92,6 @@ export default function FaviconGenerator() {
     a.click();
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   return (
     <div className="max-w-3xl mx-auto px-4 pt-5 pb-10">
       {/* Header */}
@@ -116,7 +108,6 @@ export default function FaviconGenerator() {
               Upload any image and get all favicon sizes from 16×16 to 512×512. Download as a ZIP — ready for your website.
             </p>
           </div>
-          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

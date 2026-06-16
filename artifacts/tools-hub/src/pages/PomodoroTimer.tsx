@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Timer, Play, Pause, RotateCcw, Coffee, Brain, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -44,7 +43,6 @@ export default function PomodoroTimer() {
   const [timeLeft, setTimeLeft] = useState(MODES.work.duration);
   const [running, setRunning] = useState(false);
   const [sessions, setSessions] = useState(0);
-  const [linkCopied, setLinkCopied] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -82,12 +80,6 @@ export default function PomodoroTimer() {
     if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   const cfg = MODES[mode];
   const total = cfg.duration;
   const progress = timeLeft / total;
@@ -110,7 +102,6 @@ export default function PomodoroTimer() {
             Focus for 25 minutes, then take a short break. Repeat to stay productive.
           </p>
         </div>
-        <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center gap-6">

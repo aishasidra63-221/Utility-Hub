@@ -3,7 +3,6 @@ import { ArrowLeftRight, Upload, Download, X, RefreshCw, Zap, Check } from "luci
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -90,7 +89,6 @@ export default function ImageConverter() {
   });
   const [quality, setQuality] = useState(90);
   const [dragOver, setDragOver] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [allDownloaded, setAllDownloaded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -243,12 +241,6 @@ export default function ImageConverter() {
     });
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   const allDone = entries.length > 0 && entries.every((e) => !e.loading);
   const converted = entries.filter((e) => e.convertedUrl && !e.error);
 
@@ -267,7 +259,6 @@ export default function ImageConverter() {
               Convert JPG, PNG, and WebP in bulk — instantly in your browser. Nothing uploaded.
             </p>
           </div>
-          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import QRCode from "qrcode";
 import { MessageCircle, Copy, Check, Download, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useShareURL } from "@/hooks/useShareURL";
@@ -105,7 +104,6 @@ export default function WhatsappLink() {
               Create a direct chat link with an optional message. Generates a QR code automatically.
             </p>
           </div>
-          <ShareButton onCopy={copyShareLink} copied={linkCopied} />
         </div>
       </div>
 

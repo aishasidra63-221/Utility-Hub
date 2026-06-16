@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { Activity, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -53,7 +52,6 @@ export default function BmiCalculator() {
   const [age, setAge]         = useState("");
   const [sex, setSex]         = useState<"male" | "female" | "">("");
   const [result, setResult]   = useState<BmiResult | null>(null);
-  const [linkCopied, setLinkCopied] = useState(false);
 
   function calculate() {
     let hM = 0;
@@ -117,7 +115,6 @@ export default function BmiCalculator() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">BMI Calculator</h1>
           <p className="text-muted-foreground mt-2">Calculate your Body Mass Index with metric or imperial units. Instant, private, no data stored.</p>
         </div>
-        <ShareButton onCopy={async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} copied={linkCopied} label="Share this tool" />
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-6 space-y-5">

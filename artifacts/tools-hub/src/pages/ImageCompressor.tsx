@@ -7,7 +7,6 @@ import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -63,7 +62,6 @@ export default function ImageCompressor() {
   const [quality, setQuality] = useState(() => getSettings().imageQuality);
   const [localQuality, setLocalQuality] = useState(() => getSettings().imageQuality);
   const [dragOver, setDragOver] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [zipProgress, setZipProgress] = useState<ZipProgress | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const incrementRef = useRef(increment);
@@ -232,12 +230,6 @@ export default function ImageCompressor() {
     setZipProgress(null);
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   const allDone = entries.length > 0 && entries.every((e) => !e.loading);
   const anyCompressed = entries.some((e) => e.compressed);
 
@@ -256,7 +248,6 @@ export default function ImageCompressor() {
               Drop images and they compress instantly. JPG, PNG, WebP — 100% in your browser.
             </p>
           </div>
-          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

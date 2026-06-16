@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Upload, Download, X, Smartphone, CheckCircle2, Loader2, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -29,7 +28,6 @@ export default function HeicConverter() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [zipping, setZipping] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
 
   const addFiles = useCallback((incoming: File[]) => {
     const valid = incoming.filter((f) =>
@@ -120,10 +118,6 @@ export default function HeicConverter() {
             Convert iPhone HEIC photos to JPG. Batch conversion, 100% in your browser.
           </p>
         </div>
-        <ShareButton
-          onCopy={async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }}
-          copied={linkCopied} label="Share"
-        />
       </div>
 
       {/* Drop zone */}

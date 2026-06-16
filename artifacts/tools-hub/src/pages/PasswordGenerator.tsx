@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from "react";
 import { Copy, Check, RefreshCw, Key, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -72,7 +71,6 @@ export default function PasswordGenerator() {
   const [opts,       setOpts]       = useState({ upper: true, lower: true, numbers: true, symbols: true });
   const [password,   setPassword]   = useState("");
   const [copied,     setCopied]     = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
 
   // Generate without incrementing (auto on settings change)
   const generate = useCallback(() => {
@@ -128,15 +126,6 @@ export default function PasswordGenerator() {
             Strong, random passwords instantly. 100% in your browser — nothing leaves your device.
           </p>
         </div>
-        <ShareButton
-          onCopy={async () => {
-            await navigator.clipboard.writeText(window.location.href);
-            setLinkCopied(true);
-            setTimeout(() => setLinkCopied(false), 2500);
-          }}
-          copied={linkCopied}
-          label="Share"
-        />
       </div>
 
       {/* Password display — full width */}

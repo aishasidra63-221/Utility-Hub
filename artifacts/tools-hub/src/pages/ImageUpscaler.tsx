@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useLayoutEffect } from "react";
 import { Download, ZoomIn, Loader2, RefreshCw } from "lucide-react";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -153,7 +152,6 @@ export default function ImageUpscaler() {
   const [sliderPos, setSliderPos] = useState(50);
   const [srcDims, setSrcDims]   = useState<{ w: number; h: number } | null>(null);
   const [dstDims, setDstDims]   = useState<{ w: number; h: number } | null>(null);
-  const [linkCopied, setLinkCopied] = useState(false);
 
   const inputRef     = useRef<HTMLInputElement>(null);
   const imgRef       = useRef<HTMLImageElement | null>(null);
@@ -272,11 +270,6 @@ export default function ImageUpscaler() {
     setContainerH(h);
   }, [srcDims, result]);
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   // ─────────────────────────────── RENDER ───────────────────────────────
   return (
     <div className="max-w-3xl mx-auto px-4 pt-5 pb-10">
@@ -293,7 +286,6 @@ export default function ImageUpscaler() {
               Upscale any image 2× or 4× in your browser. Lanczos algorithm + AI sharpening — nothing uploaded.
             </p>
           </div>
-          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

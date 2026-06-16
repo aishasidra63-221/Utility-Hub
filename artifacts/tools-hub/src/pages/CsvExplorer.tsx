@@ -5,7 +5,6 @@ import {
   ArrowUpDown, Hash, Type, Calendar, AlertCircle, CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -151,7 +150,6 @@ export default function CsvExplorer() {
   const [page, setPage] = useState(0);
   const [chartCol, setChartCol] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const stats = useMemo(() => (headers.length ? computeStats(headers, rows) : []), [headers, rows]);
@@ -242,11 +240,6 @@ export default function CsvExplorer() {
               Upload any CSV and instantly explore it — table view, column stats, and charts. Zero uploads, 100% private.
             </p>
           </div>
-          <ShareButton
-            onCopy={async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }}
-            copied={linkCopied}
-            label="Share this tool"
-          />
         </div>
       </div>
 

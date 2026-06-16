@@ -1,7 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import { BookOpen, Copy, Check, Trash2, Clock, Mic, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -94,7 +93,6 @@ export default function WordCounter() {
   const { count, increment } = useToolCounter("word-counter");
   const [text, setText] = useState("");
   const [copied, setCopied] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const stats = useMemo(() => computeStats(text), [text]);
@@ -117,12 +115,6 @@ export default function WordCounter() {
     textareaRef.current?.focus();
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   return (
     <div className="max-w-4xl mx-auto px-4 pt-5 pb-10">
       <div className="mb-5">
@@ -138,7 +130,6 @@ export default function WordCounter() {
               Count words, characters, sentences and reading time instantly. Fast, private and browser-based.
             </p>
           </div>
-          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

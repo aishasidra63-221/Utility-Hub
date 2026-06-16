@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Film, Download, Loader2, RefreshCw, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -52,7 +51,6 @@ export default function VideoToGif() {
   const [resultSize, setResultSize] = useState("");
   const [error, setError] = useState("");
   const [dragOver, setDragOver] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -165,12 +163,6 @@ export default function VideoToGif() {
     setEndTime(5);
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   const clipDuration = Math.max(0, endTime - startTime);
 
   return (
@@ -187,7 +179,6 @@ export default function VideoToGif() {
             Convert any video clip to an animated GIF. Trim, set FPS and size — all in your browser.
           </p>
         </div>
-        <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
       </div>
 
       {!videoUrl ? (

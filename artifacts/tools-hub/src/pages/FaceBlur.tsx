@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Download, EyeOff, Loader2, RefreshCw, MousePointer, Wand2 } from "lucide-react";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -320,11 +319,6 @@ export default function FaceBlur() {
     a.href = result; a.download = fileName || "face_blurred.jpg"; a.click();
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   // ─────────────────────────────── RENDER ───────────────────────────────
   return (
     <div className="max-w-3xl mx-auto px-4 pt-5 pb-10">
@@ -341,7 +335,6 @@ export default function FaceBlur() {
               Auto-detect and blur every face in any photo. Or draw your own areas. Browser only — nothing uploaded.
             </p>
           </div>
-          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

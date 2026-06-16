@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Upload, Copy, Check, Palette, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -77,7 +76,6 @@ export default function ColorPalette() {
   const [dragOver,  setDragOver]  = useState(false);
   const [copied,    setCopied]    = useState<string | null>(null);
   const [allCopied, setAllCopied] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
 
   const processFile = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) return;
@@ -150,10 +148,6 @@ export default function ColorPalette() {
             Upload any image — get its dominant colors as hex codes instantly.
           </p>
         </div>
-        <ShareButton
-          onCopy={async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }}
-          copied={linkCopied} label="Share"
-        />
       </div>
 
       {/* Drop zone */}

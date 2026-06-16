@@ -2,7 +2,6 @@ import { useState, useRef, useCallback } from "react";
 import { Download, Eraser, Loader2, RefreshCw } from "lucide-react";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -23,7 +22,6 @@ export default function BackgroundRemover() {
   const [error,    setError]    = useState("");
   const [fileName, setFileName] = useState("");
   const [dragOver, setDragOver] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const processFile = useCallback(async (file: File) => {
@@ -104,12 +102,6 @@ export default function BackgroundRemover() {
     a.click();
   };
 
-  const handleShareLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2500);
-  };
-
   return (
     <div className="max-w-3xl mx-auto px-4 pt-5 pb-10">
       {/* Header */}
@@ -129,7 +121,6 @@ export default function BackgroundRemover() {
               entirely in your browser — nothing is uploaded.
             </p>
           </div>
-          <ShareButton onCopy={handleShareLink} copied={linkCopied} label="Share this tool" />
         </div>
       </div>
 

@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import QRCode from "qrcode";
 import { QrCode, Download, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useShareURL } from "@/hooks/useShareURL";
@@ -89,7 +88,6 @@ export default function QrGenerator() {
               Turn any URL or text into a scannable QR code instantly. Download as PNG.
             </p>
           </div>
-          <ShareButton onCopy={copyShareLink} copied={linkCopied} />
         </div>
       </div>
 

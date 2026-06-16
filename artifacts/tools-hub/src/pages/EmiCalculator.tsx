@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { Calculator, RefreshCw, TrendingDown, IndianRupee } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
@@ -39,7 +38,6 @@ export default function EmiCalculator() {
   const [tenure, setTenure]       = useState("");
   const [tenureType, setTenureType] = useState<"months" | "years">("months");
   const [currency, setCurrency]   = useState("INR");
-  const [linkCopied, setLinkCopied] = useState(false);
   const [showFull, setShowFull]   = useState(false);
 
   const symbol = CURRENCY_SYMBOLS[currency] ?? currency;
@@ -102,7 +100,6 @@ export default function EmiCalculator() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">EMI Calculator</h1>
           <p className="text-muted-foreground mt-2">Calculate monthly EMI, total interest, and full amortization schedule for any loan. Instant & private.</p>
         </div>
-        <ShareButton onCopy={async () => { await navigator.clipboard.writeText(window.location.href); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }} copied={linkCopied} label="Share this tool" />
       </div>
 
       <div className="grid lg:grid-cols-[1fr_auto] gap-5 items-start">
