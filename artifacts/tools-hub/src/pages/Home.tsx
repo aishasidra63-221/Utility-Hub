@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, memo, useRef } from "react";
 import { Link } from "wouter";
+import { useLang } from "@/contexts/LangContext";
 import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
@@ -452,10 +453,10 @@ const ALL_TOOLS = [
 ];
 
 const FEATURES = [
-  { icon: ShieldCheck, label: "100% Private", sub: "Nothing leaves your browser" },
-  { icon: Zap,         label: "Instant Results", sub: "No waiting, no queues" },
-  { icon: Globe,       label: "Free Forever", sub: "No paywalls, no signup" },
-  { icon: Smartphone,  label: "Works Everywhere", sub: "Desktop & mobile" },
+  { icon: ShieldCheck, labelKey: "feat.private.label", subKey: "feat.private.sub" },
+  { icon: Zap,         labelKey: "feat.instant.label", subKey: "feat.instant.sub" },
+  { icon: Globe,       labelKey: "feat.free.label",    subKey: "feat.free.sub" },
+  { icon: Smartphone,  labelKey: "feat.everywhere.label", subKey: "feat.everywhere.sub" },
 ];
 
 const STAR_PARTICLES = [
@@ -513,8 +514,12 @@ const ToolCard = memo(function ToolCard({
   onToggleStar: (id: string) => void;
 }) {
   const Icon = tool.icon;
+  const { t } = useLang();
   const [burst, setBurst] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const title = t(`tool.${tool.id}.title`) || tool.title;
+  const description = t(`tool.${tool.id}.desc`) || tool.description;
+  const badge = t(`tool.${tool.id}.badge`) || tool.badge;
 
   const handleStar = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -558,23 +563,23 @@ const ToolCard = memo(function ToolCard({
             </span>
           )}
           <span className="text-xs font-medium text-muted-foreground bg-muted/80 px-2.5 py-0.5 rounded-full border border-border">
-            {tool.badge}
+            {badge}
           </span>
         </div>
       </div>
 
       <div className="relative flex-1 z-10">
         <h2 className={`text-base font-semibold text-foreground mb-1.5 transition-colors duration-200 ${tool.accentColor}`}>
-          {tool.title}
+          {title}
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          {tool.description}
+          {description}
         </p>
       </div>
 
       <div className="relative flex items-center justify-between mt-auto z-10">
         <div className="flex items-center gap-1 text-xs font-semibold text-primary">
-          Open tool
+          {t("home.open_tool")}
           <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1.5" />
         </div>
         <button
@@ -608,6 +613,7 @@ export default function Home() {
       "Free online tools: compress images, convert PDFs, generate QR codes, clean text, and create WhatsApp links. No signup, no ads, instant results.",
   });
 
+  const { t } = useLang();
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [activeCategory, setActiveCategory] = useState<Category>("all");
   const [starredIds, setStarredIds] = useState<Set<string>>(() => {
@@ -647,12 +653,12 @@ export default function Home() {
   }, [activeCategory, sortedTools, starredIds]);
 
   const CATEGORY_TABS: { id: Category; label: string; icon: React.ElementType }[] = [
-    { id: "all", label: "All", icon: Layers },
-    { id: "favourites", label: "Favourites", icon: Star },
-    { id: "image", label: "Image Tools", icon: Image },
-    { id: "pdf", label: "PDF Tools", icon: FileText },
-    { id: "generator", label: "Generator Tools", icon: QrCode },
-    { id: "utility", label: "Utility Tools", icon: Wrench },
+    { id: "all",        label: t("cat.all"),       icon: Layers },
+    { id: "favourites", label: t("cat.favourites"), icon: Star },
+    { id: "image",      label: t("cat.image"),      icon: Image },
+    { id: "pdf",        label: t("cat.pdf"),        icon: FileText },
+    { id: "generator",  label: t("cat.generator"),  icon: QrCode },
+    { id: "utility",    label: t("cat.utility"),    icon: Wrench },
   ];
 
   return (
@@ -666,25 +672,22 @@ export default function Home() {
               <span className="pulse-dot absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
             </span>
-            No login. No ads. Instant results.
+            {t("home.badge")}
           </div>
 
           <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-foreground mb-3 leading-[1.08]">
-            Free Tools That Just{" "}
-            <span className="gradient-text">Work.</span>
+            {t("home.headline_pre")}{" "}
+            <span className="gradient-text">{t("home.headline_hl")}</span>
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed mb-5">
-            26 powerful utilities that run entirely in your browser.
-            Upload, process, download — done in seconds.
+            {t("home.sub")}
           </p>
 
           {totalUses > 0 && (
             <div className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/60 border border-border px-3 py-1.5 rounded-full">
               <Activity className="w-3.5 h-3.5 text-primary" />
-              You've used these tools{" "}
-              <span className="font-bold text-foreground">{totalUses}</span>{" "}
-              time{totalUses !== 1 ? "s" : ""}
+              {t("home.uses").replace("{n}", String(totalUses)).replace("{s}", totalUses !== 1 ? "s" : "")}
             </div>
           )}
         </div>
@@ -716,12 +719,12 @@ export default function Home() {
         {activeCategory === "favourites" && starredIds.size === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Star className="w-10 h-10 text-muted-foreground/30 mb-3" />
-            <p className="text-muted-foreground font-medium">No favourites yet</p>
-            <p className="text-sm text-muted-foreground/60 mt-1">Click the ⭐ on any tool card to save it here</p>
+            <p className="text-muted-foreground font-medium">{t("home.no_favourites")}</p>
+            <p className="text-sm text-muted-foreground/60 mt-1">{t("home.no_favourites_sub")}</p>
           </div>
         ) : filteredTools.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-muted-foreground">No tools in this category</p>
+            <p className="text-muted-foreground">{t("home.no_tools")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -796,16 +799,16 @@ export default function Home() {
 
         {/* ── Feature Strip ── */}
         <div className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {FEATURES.map(({ icon: Icon, label, sub }) => (
+          {FEATURES.map(({ icon: Icon, labelKey, subKey }) => (
             <div
-              key={label}
+              key={labelKey}
               className="flex flex-col items-center text-center py-5 px-4 rounded-2xl bg-card border border-border hover:border-primary/30 transition-colors duration-200"
             >
               <div className="p-2.5 rounded-xl bg-primary/10 mb-3">
                 <Icon className="w-4 h-4 text-primary" />
               </div>
-              <p className="text-sm font-semibold text-foreground">{label}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
+              <p className="text-sm font-semibold text-foreground">{t(labelKey)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t(subKey)}</p>
             </div>
           ))}
         </div>

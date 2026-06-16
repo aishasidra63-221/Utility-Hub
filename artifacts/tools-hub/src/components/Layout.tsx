@@ -7,9 +7,11 @@ import {
 
 import { useTheme } from "@/hooks/useSettings";
 import { ToolsHubIcon } from "@/components/ToolsHubLogo";
+import { useLang } from "@/contexts/LangContext";
+import type { LangCode } from "@/lib/i18n";
 
 // ─── Language list ───────────────────────────────────────────────────────────
-const LANGUAGES = [
+const LANGUAGES: { code: LangCode; label: string; flag: string }[] = [
   { code: "en", label: "English",    flag: "🇬🇧" },
   { code: "hi", label: "हिन्दी",     flag: "🇮🇳" },
   { code: "es", label: "Español",   flag: "🇪🇸" },
@@ -23,8 +25,6 @@ const LANGUAGES = [
   { code: "de", label: "Deutsch",   flag: "🇩🇪" },
   { code: "id", label: "Indonesia", flag: "🇮🇩" },
 ];
-
-const LANG_KEY = "toolhub_lang";
 
 const tools = [
   { href: "/image-compressor",   label: "Image Compressor" },
@@ -85,9 +85,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [scrolled, setScrolled]     = useState(false);
   const [langOpen, setLangOpen]     = useState(false);
-  const [lang, setLang]             = useState(
-    () => localStorage.getItem(LANG_KEY) ?? "en"
-  );
+  const { lang, setLang, t }        = useLang();
   const [location] = useLocation();
   const drawerRef  = useRef<HTMLDivElement>(null);
 
@@ -129,7 +127,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }, [drawerOpen]);
 
   const currentLang = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
-
   const isDark = theme === "dark";
 
   const toggleTheme = () => setTheme(isDark ? "light" : "dark");
@@ -237,7 +234,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <div>
               <p className="text-sm font-extrabold tracking-tight text-foreground leading-none">ToolsHub</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Free tools, zero friction</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{t("nav.tagline")}</p>
             </div>
           </div>
           <button
@@ -250,7 +247,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Theme toggle in drawer */}
         <div className="px-4 pt-4 pb-2">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Appearance</p>
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">{t("nav.appearance")}</p>
           <div className="flex rounded-xl bg-muted p-1 gap-1">
             {(["light", "dark"] as const).map((t) => (
               <button
@@ -272,7 +269,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Language selector */}
         <div className="px-4 pt-3 pb-2">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Language</p>
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">{t("nav.language")}</p>
           <button
             onClick={() => setLangOpen((o) => !o)}
             className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-muted hover:bg-accent transition-colors text-sm"
@@ -298,7 +295,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   key={l.code}
                   onClick={() => {
                     setLang(l.code);
-                    localStorage.setItem(LANG_KEY, l.code);
                     setLangOpen(false);
                   }}
                   className="w-full flex items-center justify-between px-3.5 py-2.5 text-sm hover:bg-accent transition-colors"
@@ -319,13 +315,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Navigation links */}
         <nav className="px-4 py-2 flex flex-col gap-0.5">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1 mt-1">More</p>
+          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1 mt-1">{t("nav.more")}</p>
 
           {[
-            { href: "/settings", label: "Settings",  icon: <Settings className="w-4 h-4" />,  desc: "Preferences & defaults" },
-            { href: "/future",   label: "Future",     icon: <Rocket className="w-4 h-4" />,    desc: "What's coming next" },
-            { href: "/security", label: "Security",   icon: <Shield className="w-4 h-4" />,    desc: "How we protect you" },
-            { href: "/about",    label: "About Us",   icon: <Info className="w-4 h-4" />,      desc: "Our story & mission" },
+            { href: "/settings", label: t("nav.settings"), icon: <Settings className="w-4 h-4" />, desc: t("nav.settings_desc") },
+            { href: "/future",   label: t("nav.future"),   icon: <Rocket className="w-4 h-4" />,   desc: t("nav.future_desc") },
+            { href: "/security", label: t("nav.security"), icon: <Shield className="w-4 h-4" />,   desc: t("nav.security_desc") },
+            { href: "/about",    label: t("nav.about"),    icon: <Info className="w-4 h-4" />,     desc: t("nav.about_desc") },
           ].map((item) => (
             <Link
               key={item.href}
@@ -354,7 +350,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Drawer footer */}
         <div className="px-5 py-4 border-t border-border">
           <p className="text-[11px] text-muted-foreground text-center">
-            © {new Date().getFullYear()} ToolsHub · 100% Browser-based
+            © {new Date().getFullYear()} ToolsHub · {t("nav.footer_copy")}
           </p>
         </div>
       </div>
@@ -368,7 +364,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group"
             >
               <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-              Back
+              {t("nav.back")}
             </Link>
           </div>
         )}
@@ -384,7 +380,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <ToolsHubIcon className="w-3.5 h-3.5 text-primary" />
               </div>
               <span className="text-sm font-extrabold tracking-tight text-foreground">ToolsHub</span>
-              <span className="text-xs text-muted-foreground">— Free online tools, zero friction</span>
+              <span className="text-xs text-muted-foreground">— {t("nav.tagline")}</span>
             </div>
             <nav className="flex flex-wrap gap-x-5 gap-y-1.5" aria-label="Footer tools">
               {tools.map((tool) => (
@@ -392,10 +388,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   {tool.label}
                 </Link>
               ))}
-              <Link href="/settings"  className="text-xs text-muted-foreground hover:text-primary transition-colors">Settings</Link>
-              <Link href="/future"    className="text-xs text-muted-foreground hover:text-primary transition-colors">Future</Link>
-              <Link href="/security"  className="text-xs text-muted-foreground hover:text-primary transition-colors">Security</Link>
-              <Link href="/about"     className="text-xs text-muted-foreground hover:text-primary transition-colors">About</Link>
+              <Link href="/settings"  className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.settings")}</Link>
+              <Link href="/future"    className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.future")}</Link>
+              <Link href="/security"  className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.security")}</Link>
+              <Link href="/about"     className="text-xs text-muted-foreground hover:text-primary transition-colors">{t("nav.about")}</Link>
             </nav>
           </div>
 
@@ -406,9 +402,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               © {new Date().getFullYear()} ToolsHub. All rights reserved.
             </p>
             <nav className="flex items-center gap-5 order-1 sm:order-2" aria-label="Legal">
-              <Link href="/faq"            className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">FAQ</Link>
-              <Link href="/privacy-policy" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">Privacy Policy</Link>
-              <Link href="/terms"          className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">Terms &amp; Conditions</Link>
+              <Link href="/faq"            className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">{t("nav.faq")}</Link>
+              <Link href="/privacy-policy" className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">{t("nav.privacy")}</Link>
+              <Link href="/terms"          className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">{t("nav.terms")}</Link>
             </nav>
           </div>
         </div>
