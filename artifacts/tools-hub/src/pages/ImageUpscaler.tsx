@@ -90,31 +90,37 @@ async function upscaleAsync(
     await new Promise<void>((res) => setTimeout(res, 0)); // yield to UI
   }
 
-  // Unsharp masking pass (sharpening)
+  // Unsharp masking pass (sharpening) — chunked to keep UI responsive
   onProgress(88);
   await new Promise<void>((r) => setTimeout(r, 0));
   const sharp  = new Uint8ClampedArray(dstBuffer.length);
   const amount = 0.55;
-  for (let y = 0; y < dstH; y++) {
-    for (let x = 0; x < dstW; x++) {
-      const i = (y * dstW + x) * 4;
-      for (let c = 0; c < 3; c++) {
-        let blur = 0, cnt = 0;
-        for (let ky = -1; ky <= 1; ky++) {
-          for (let kx = -1; kx <= 1; kx++) {
-            const ny = Math.max(0, Math.min(dstH - 1, y + ky));
-            const nx = Math.max(0, Math.min(dstW - 1, x + kx));
-            blur += dstBuffer[(ny * dstW + nx) * 4 + c];
-            cnt++;
+  const SHARP_CHUNK = 60;
+  for (let rowStart = 0; rowStart < dstH; rowStart += SHARP_CHUNK) {
+    const rowEnd = Math.min(rowStart + SHARP_CHUNK, dstH);
+    for (let y = rowStart; y < rowEnd; y++) {
+      for (let x = 0; x < dstW; x++) {
+        const i = (y * dstW + x) * 4;
+        for (let c = 0; c < 3; c++) {
+          let blur = 0, cnt = 0;
+          for (let ky = -1; ky <= 1; ky++) {
+            for (let kx = -1; kx <= 1; kx++) {
+              const ny = Math.max(0, Math.min(dstH - 1, y + ky));
+              const nx = Math.max(0, Math.min(dstW - 1, x + kx));
+              blur += dstBuffer[(ny * dstW + nx) * 4 + c];
+              cnt++;
+            }
           }
+          blur /= cnt;
+          sharp[i + c] = Math.max(0, Math.min(255,
+            Math.round(dstBuffer[i + c] + amount * (dstBuffer[i + c] - blur))
+          ));
         }
-        blur /= cnt;
-        sharp[i + c] = Math.max(0, Math.min(255,
-          Math.round(dstBuffer[i + c] + amount * (dstBuffer[i + c] - blur))
-        ));
+        sharp[i + 3] = dstBuffer[i + 3];
       }
-      sharp[i + 3] = dstBuffer[i + 3];
     }
+    onProgress(88 + Math.round((rowEnd / dstH) * 9)); // 88–97%
+    await new Promise<void>((r) => setTimeout(r, 0)); // yield to UI
   }
   onProgress(97);
   await new Promise<void>((r) => setTimeout(r, 0));

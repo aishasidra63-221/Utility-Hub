@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Upload, Download, X, RefreshCw, Lock, Unlock, Maximize2, ZapIcon } from "lucide-react";
+import { Upload, Download, X, RefreshCw, Lock, Unlock, Maximize2, ZapIcon, AlertCircle } from "lucide-react";
 import { ImageDropZone } from "@/components/ImageDropZone";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -147,7 +147,9 @@ export default function ImageResizer() {
           setActivePreset(null);
         }
         isFirst = false;
-      } catch { /* ignore */ }
+      } catch {
+        setEntries((prev) => prev.map((e) => e.id === entry.id ? { ...e, error: "Could not read image dimensions" } : e));
+      }
     }
   }, [entries.length]);
 
@@ -182,7 +184,24 @@ export default function ImageResizer() {
     a.click();
   };
 
-  const downloadAll = () => entries.forEach(downloadOne);
+  const downloadAll = async () => {
+    const done = entries.filter((e) => e.result);
+    if (done.length === 0) return;
+    if (done.length === 1) { downloadOne(done[0]); return; }
+    const { default: JSZip } = await import("jszip");
+    const zip = new JSZip();
+    for (const entry of done) {
+      const ab = await entry.result!.blob.arrayBuffer();
+      const name = `${entry.file.name.replace(/\.[^.]+$/, "")}-${width}x${height}.${getExt(entry.file, format)}`;
+      zip.file(name, ab);
+    }
+    const blob = await zip.generateAsync({ type: "blob" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "resized-images.zip";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+  };
 
   const remove = (id: number) => {
     setEntries((prev) => {

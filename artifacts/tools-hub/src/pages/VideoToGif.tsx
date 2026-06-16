@@ -92,7 +92,12 @@ export default function VideoToGif() {
       const clipDuration = Math.min(endTime, duration) - startTime;
       if (clipDuration <= 0) { setError("Invalid clip range."); return; }
 
-      const frameCount = Math.min(Math.ceil(clipDuration * fps), 150);
+      const rawFrameCount = Math.ceil(clipDuration * fps);
+      const frameCount = Math.min(rawFrameCount, 150);
+      if (rawFrameCount > 150) {
+        setProgress("Note: Capped at 150 frames for performance. Capturing…");
+        await new Promise<void>((r) => setTimeout(r, 600));
+      }
       const aspect = vid.videoWidth / vid.videoHeight;
       const w = outputWidth;
       const h = Math.round(w / aspect);

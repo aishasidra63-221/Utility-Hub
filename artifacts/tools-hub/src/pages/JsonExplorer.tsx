@@ -182,8 +182,8 @@ export default function JsonExplorer() {
     if (arraySel === "root") return getArrayTable(parsed);
     try {
       const parts = arraySel.split(".");
-      let cur = parsed;
-      for (const p of parts) { cur = (cur as JsonObject)[p]; }
+      let cur: JsonValue = parsed;
+      for (const p of parts) { cur = (cur as JsonObject)[p] as JsonValue; }
       return getArrayTable(cur);
     } catch { return null; }
   }, [parsed, arraySel]);

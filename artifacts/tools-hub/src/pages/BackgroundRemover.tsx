@@ -49,10 +49,9 @@ export default function BackgroundRemover() {
 
       const resultBlob = await removeBackground(file, {
         debug: false,
-        model: "medium",
+        model: "isnet",
         output: {
           format: "image/png",
-          type: "foreground",
           quality: 1,
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
