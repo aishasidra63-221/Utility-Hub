@@ -119,7 +119,7 @@ export default function ResumeBuilder() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
+    <div className="max-w-7xl mx-auto px-4 pt-5 pb-10">
       {/* ── Page header ── */}
       <div className="text-center mb-8">
         <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mb-3">

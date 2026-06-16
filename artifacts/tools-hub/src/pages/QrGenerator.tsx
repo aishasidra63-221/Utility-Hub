@@ -75,8 +75,8 @@ export default function QrGenerator() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
-      <div className="mb-8">
+    <div className="max-w-3xl mx-auto px-4 pt-5 pb-10">
+      <div className="mb-5">
         <div className="flex flex-col items-center text-center gap-3">
           <div>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">

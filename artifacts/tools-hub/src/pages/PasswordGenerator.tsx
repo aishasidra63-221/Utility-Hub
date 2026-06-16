@@ -114,7 +114,7 @@ export default function PasswordGenerator() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10">
+    <div className="max-w-5xl mx-auto px-6 pt-5 pb-10">
       {/* Header */}
       <div className="mb-10 flex flex-col items-center text-center flex-wrap gap-4">
         <div>

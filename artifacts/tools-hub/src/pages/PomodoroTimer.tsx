@@ -97,7 +97,7 @@ export default function PomodoroTimer() {
   const isDone = timeLeft === 0;
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-10">
+    <div className="max-w-lg mx-auto px-4 pt-5 pb-10">
       <div className="mb-8 flex flex-col items-center text-center gap-3">
         <div>
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-2">

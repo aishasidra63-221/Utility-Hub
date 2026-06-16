@@ -106,7 +106,7 @@ export default function HeicConverter() {
   const convertingCount = files.filter((f) => f.status === "converting").length;
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-10">
+    <div className="max-w-3xl mx-auto px-6 pt-5 pb-10">
       {/* Header */}
       <div className="mb-8 flex flex-col items-center text-center flex-wrap gap-3">
         <div>
