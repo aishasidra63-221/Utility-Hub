@@ -5,7 +5,7 @@ import {
   ArrowRight, Activity, Star, ArrowLeftRight, Maximize2,
   ShieldCheck, Zap, Globe, Smartphone, Crop, Key, Palette, Ruler,
   Check, X, Trophy, PenLine, Highlighter, ScanText, Layers, Wrench, FileUser,
-  Eraser, BookOpen, Film, Timer, Pipette, ZoomIn, Droplets, EyeOff,
+  Eraser, BookOpen, Film, Timer, Pipette, ZoomIn, Droplets, EyeOff, FileSpreadsheet,
 } from "lucide-react";
 
 import { useSEO } from "@/hooks/useSEO";
@@ -377,6 +377,20 @@ const ALL_TOOLS = [
     iconBg: "bg-gradient-to-br from-slate-500 to-gray-600 shadow-lg shadow-slate-500/30",
     accentColor: "group-hover:text-slate-500",
     borderGradient: "from-slate-500 to-gray-400",
+  },
+  {
+    href: "/csv-explorer",
+    id: "csv-explorer",
+    icon: FileSpreadsheet,
+    title: "CSV Explorer",
+    description: "Upload any CSV and explore it instantly — sortable table, column stats (mean, median, nulls), and bar charts. Zero uploads.",
+    badge: "Privacy-first",
+    category: "utility" as Category,
+    gradient: "from-emerald-500/15 to-teal-500/5",
+    iconColor: "text-white",
+    iconBg: "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30",
+    accentColor: "group-hover:text-emerald-500",
+    borderGradient: "from-emerald-500 to-teal-400",
   },
 ];
 
