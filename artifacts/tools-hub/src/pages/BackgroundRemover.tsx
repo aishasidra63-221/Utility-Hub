@@ -7,10 +7,6 @@ import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
 import { useToolCounter } from "@/hooks/useToolCounter";
 
-// Cached pipeline — downloads model only once per session
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _pipe: any = null;
-
 export default function BackgroundRemover() {
   useSEO({
     title: "Free Background Remover — Remove Image Background Instantly | ToolsHub",
@@ -42,81 +38,44 @@ export default function BackgroundRemover() {
     const originalUrl = URL.createObjectURL(file);
     setOriginal(originalUrl);
     setLoading(true);
-    setProgress("Initializing AI…");
+    setProgress("Initializing…");
 
     try {
-      const { pipeline, env } = await import("@huggingface/transformers");
+      // @imgly/background-removal is a dedicated library for this task.
+      // It manages its own WASM/model loading and falls back gracefully.
+      const { removeBackground } = await import("@imgly/background-removal");
 
-      // Always single-threaded WASM — avoids unreliable WebGPU adapter errors.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const onnxWasm = (env.backends.onnx as any).wasm;
-      onnxWasm.numThreads = 1;
-      if (!onnxWasm.wasmPaths) {
-        onnxWasm.wasmPaths =
-          "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/";
-      }
+      setProgress("Downloading AI model (~20 MB, first time only)…");
 
-      if (!_pipe) {
-        setProgress("Downloading AI model (~20 MB, first time only)…");
-
-        _pipe = await pipeline("background-removal", "Xenova/modnet", {
-          device: "wasm",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          progress_callback: (prog: any) => {
-            if (
-              (prog.status === "download" || prog.status === "progress") &&
-              prog.total > 0
-            ) {
-              setProgress(
-                `Downloading AI model: ${Math.round((prog.loaded / prog.total) * 100)}%`
-              );
-            } else if (prog.status === "initiate") {
-              setProgress("Preparing AI model…");
-            } else if (prog.status === "done") {
-              setProgress("Model ready — processing image…");
-            }
-          },
-        });
-      }
-
-      setProgress("Removing background…");
-      const imageUrl = URL.createObjectURL(file);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const raw = await (_pipe as any)(imageUrl);
-      URL.revokeObjectURL(imageUrl);
-
-      // The background-removal pipeline returns a RawImage (RGBA) with the
-      // background made transparent at the original image's resolution.
-      // Use it directly — no custom compositing needed.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let resultBlob: Blob | null = null;
-
-      if (raw && typeof raw.toBlob === "function") {
-        resultBlob = await raw.toBlob("image/png");
-      } else if (Array.isArray(raw) && raw.length > 0) {
-        const first = raw[0];
-        if (typeof first?.toBlob === "function") {
-          resultBlob = await first.toBlob("image/png");
-        } else if (first?.mask && typeof first.mask.toBlob === "function") {
-          resultBlob = await first.mask.toBlob("image/png");
-        }
-      }
-
-      if (!resultBlob) {
-        throw new Error(
-          "Unexpected pipeline output — could not extract result image."
-        );
-      }
+      const resultBlob = await removeBackground(file, {
+        debug: false,
+        model: "medium",
+        output: {
+          format: "image/png",
+          type: "foreground",
+          quality: 1,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        progress: (_key: string, current: number, total: number) => {
+          if (total > 0) {
+            const pct = Math.round((current / total) * 100);
+            setProgress(
+              pct < 100
+                ? `Downloading AI model: ${pct}%`
+                : "Removing background…"
+            );
+          }
+        },
+      });
 
       setResult(URL.createObjectURL(resultBlob));
       increment();
     } catch (e: unknown) {
       console.error("Background removal error:", e);
-      _pipe = null;
       const msg = e instanceof Error ? e.message : "";
       setError(
         "Could not remove background. " +
-          (msg ? `(${msg.slice(0, 140)})` : "Please try a different image.")
+          (msg ? `(${msg.slice(0, 180)})` : "Please try a different image.")
       );
     } finally {
       setLoading(false);
@@ -261,9 +220,7 @@ export default function BackgroundRemover() {
                     alt="result"
                     className="max-h-[260px] max-w-full rounded-lg object-contain"
                   />
-                ) : (
-                  <p className="text-sm text-muted-foreground">Processing…</p>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
