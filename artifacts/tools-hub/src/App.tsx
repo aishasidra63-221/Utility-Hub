@@ -36,6 +36,9 @@ const ImageUpscaler        = lazy(() => import("@/pages/ImageUpscaler"));
 const PhotoColorizer       = lazy(() => import("@/pages/PhotoColorizer"));
 const WatermarkRemover     = lazy(() => import("@/pages/WatermarkRemover"));
 const FaceBlur             = lazy(() => import("@/pages/FaceBlur"));
+const Future               = lazy(() => import("@/pages/Future"));
+const Security             = lazy(() => import("@/pages/Security"));
+const AboutUs              = lazy(() => import("@/pages/AboutUs"));
 const NotFound             = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
@@ -158,6 +161,9 @@ function Router() {
             <Route path="/watermark-remover"     component={WatermarkRemover} />
             <Route path="/face-blur"             component={FaceBlur} />
             <Route path="/settings"          component={Settings} />
+            <Route path="/future"            component={Future} />
+            <Route path="/security"          component={Security} />
+            <Route path="/about"             component={AboutUs} />
             <Route path="/privacy-policy"    component={PrivacyPolicy} />
             <Route path="/terms"             component={TermsConditions} />
             <Route path="/faq"               component={FAQ} />
