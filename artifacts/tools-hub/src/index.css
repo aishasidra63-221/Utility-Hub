@@ -495,6 +495,12 @@
     touch-action: manipulation;
   }
 
+  /* Instant theme switch — disable all transitions briefly */
+  .no-transitions *, .no-transitions *::before, .no-transitions *::after {
+    transition: none !important;
+    animation-duration: 0.01ms !important;
+  }
+
   /* Hide scrollbar while keeping scroll functionality (used in nav) */
   .scrollbar-none {
     scrollbar-width: none;

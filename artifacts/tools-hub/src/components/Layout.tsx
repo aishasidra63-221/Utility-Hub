@@ -91,10 +91,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const drawerRef  = useRef<HTMLDivElement>(null);
 
-  // ── Theme apply ──
+  // ── Theme apply (instant — no flash) ──
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    return undefined;
+    const el = document.documentElement;
+    el.classList.add("no-transitions");
+    el.classList.toggle("dark", theme === "dark");
+    void el.offsetHeight; // force reflow so transitions are suppressed this frame
+    el.classList.remove("no-transitions");
   }, [theme]);
 
   // ── Scroll shadow ──
