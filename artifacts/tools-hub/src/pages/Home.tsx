@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, memo, useRef } from "react";
 import { Link } from "wouter";
+import { useRecentTools, clearRecentTools } from "@/hooks/useRecentTools";
 import { useLang } from "@/contexts/LangContext";
 import {
   Image, FileText, QrCode, AlignLeft, MessageCircle,
@@ -646,6 +647,15 @@ export default function Home() {
 
   const topToolId = sortedTools.find((t) => (counts[t.id] ?? 0) > 0)?.id ?? null;
 
+  const recentHrefs = useRecentTools();
+  const recentTools = useMemo(
+    () =>
+      recentHrefs
+        .map((h) => ALL_TOOLS.find((t) => t.href === h))
+        .filter((t): t is (typeof ALL_TOOLS)[number] => t !== undefined),
+    [recentHrefs]
+  );
+
   const filteredTools = useMemo(() => {
     if (activeCategory === "all") return sortedTools;
     if (activeCategory === "favourites") return sortedTools.filter((t) => starredIds.has(t.id));
@@ -694,6 +704,41 @@ export default function Home() {
       </section>
 
       <div className="max-w-6xl mx-auto px-4 pb-16">
+        {/* ── Recently Used ── */}
+        {recentTools.length > 0 && (
+          <div className="mb-5 mt-2">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Recently Used</span>
+              <button
+                onClick={clearRecentTools}
+                className="text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="flex gap-2.5 overflow-x-auto scrollbar-none pb-1">
+              {recentTools.map((tool) => {
+                const Icon = tool.icon;
+                return (
+                  <Link
+                    key={tool.href}
+                    href={tool.href}
+                    className="group flex-shrink-0 flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-border bg-card hover:border-primary/40 hover:bg-accent transition-all duration-150 min-w-[140px]"
+                  >
+                    <div className={`p-1.5 rounded-lg ${tool.iconBg}`}>
+                      <Icon className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-foreground truncate leading-tight">{tool.title}</p>
+                      <p className="text-[10px] mt-0.5 font-medium text-primary">Open →</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ── Category Tabs ── */}
         <div className="flex flex-wrap gap-2 mb-6 mt-2">
           {CATEGORY_TABS.map(({ id, label, icon: Icon }) => {

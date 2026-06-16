@@ -6,46 +6,48 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/Layout";
 import { LangProvider } from "@/contexts/LangContext";
 
-const Home          = lazy(() => import("@/pages/Home"));
-const ImageCompressor = lazy(() => import("@/pages/ImageCompressor"));
-const ImageConverter  = lazy(() => import("@/pages/ImageConverter"));
-const PdfConverter    = lazy(() => import("@/pages/PdfConverter"));
-const QrGenerator     = lazy(() => import("@/pages/QrGenerator"));
-const TextCleaner     = lazy(() => import("@/pages/TextCleaner"));
-const WhatsappLink    = lazy(() => import("@/pages/WhatsappLink"));
-const ImageResizer    = lazy(() => import("@/pages/ImageResizer"));
-const ImageCropper        = lazy(() => import("@/pages/ImageCropper"));
-const PasswordGenerator   = lazy(() => import("@/pages/PasswordGenerator"));
-const UnitConverter       = lazy(() => import("@/pages/UnitConverter"));
-const ColorPalette        = lazy(() => import("@/pages/ColorPalette"));
-const HeicConverter       = lazy(() => import("@/pages/HeicConverter"));
-const ESignature      = lazy(() => import("@/pages/ESignature"));
-const OcrTool         = lazy(() => import("@/pages/OcrTool"));
-const PdfAnnotator    = lazy(() => import("@/pages/PdfAnnotator"));
-const Settings        = lazy(() => import("@/pages/Settings"));
-const PrivacyPolicy   = lazy(() => import("@/pages/PrivacyPolicy"));
-const TermsConditions = lazy(() => import("@/pages/TermsConditions"));
-const FAQ             = lazy(() => import("@/pages/FAQ"));
-const ResumeBuilder        = lazy(() => import("@/pages/ResumeBuilder"));
-const BackgroundRemover    = lazy(() => import("@/pages/BackgroundRemover"));
-const WordCounter          = lazy(() => import("@/pages/WordCounter"));
-const VideoToGif           = lazy(() => import("@/pages/VideoToGif"));
-const PomodoroTimer        = lazy(() => import("@/pages/PomodoroTimer"));
-const ExifStripper         = lazy(() => import("@/pages/ExifStripper"));
-const ColorPicker          = lazy(() => import("@/pages/ColorPicker"));
-const ImageUpscaler        = lazy(() => import("@/pages/ImageUpscaler"));
-const PhotoColorizer       = lazy(() => import("@/pages/PhotoColorizer"));
-const WatermarkRemover     = lazy(() => import("@/pages/WatermarkRemover"));
-const FaceBlur             = lazy(() => import("@/pages/FaceBlur"));
-const CsvExplorer          = lazy(() => import("@/pages/CsvExplorer"));
-const BmiCalculator        = lazy(() => import("@/pages/BmiCalculator"));
-const EmiCalculator        = lazy(() => import("@/pages/EmiCalculator"));
-const JsonExplorer         = lazy(() => import("@/pages/JsonExplorer"));
-const Base64Tool           = lazy(() => import("@/pages/Base64Tool"));
-const Future               = lazy(() => import("@/pages/Future"));
-const Security             = lazy(() => import("@/pages/Security"));
-const AboutUs              = lazy(() => import("@/pages/AboutUs"));
-const NotFound             = lazy(() => import("@/pages/not-found"));
+const Home             = lazy(() => import("@/pages/Home"));
+const ImageCompressor  = lazy(() => import("@/pages/ImageCompressor"));
+const ImageConverter   = lazy(() => import("@/pages/ImageConverter"));
+const PdfConverter     = lazy(() => import("@/pages/PdfConverter"));
+const QrGenerator      = lazy(() => import("@/pages/QrGenerator"));
+const TextCleaner      = lazy(() => import("@/pages/TextCleaner"));
+const WhatsappLink     = lazy(() => import("@/pages/WhatsappLink"));
+const ImageResizer     = lazy(() => import("@/pages/ImageResizer"));
+const ImageCropper     = lazy(() => import("@/pages/ImageCropper"));
+const PasswordGenerator  = lazy(() => import("@/pages/PasswordGenerator"));
+const UnitConverter    = lazy(() => import("@/pages/UnitConverter"));
+const ColorPalette     = lazy(() => import("@/pages/ColorPalette"));
+const HeicConverter    = lazy(() => import("@/pages/HeicConverter"));
+const ESignature       = lazy(() => import("@/pages/ESignature"));
+const OcrTool          = lazy(() => import("@/pages/OcrTool"));
+const PdfAnnotator     = lazy(() => import("@/pages/PdfAnnotator"));
+const Settings         = lazy(() => import("@/pages/Settings"));
+const PrivacyPolicy    = lazy(() => import("@/pages/PrivacyPolicy"));
+const TermsConditions  = lazy(() => import("@/pages/TermsConditions"));
+const FAQ              = lazy(() => import("@/pages/FAQ"));
+const ResumeBuilder    = lazy(() => import("@/pages/ResumeBuilder"));
+const BackgroundRemover  = lazy(() => import("@/pages/BackgroundRemover"));
+const WordCounter      = lazy(() => import("@/pages/WordCounter"));
+const VideoToGif       = lazy(() => import("@/pages/VideoToGif"));
+const PomodoroTimer    = lazy(() => import("@/pages/PomodoroTimer"));
+const ExifStripper     = lazy(() => import("@/pages/ExifStripper"));
+const ColorPicker      = lazy(() => import("@/pages/ColorPicker"));
+const ImageUpscaler    = lazy(() => import("@/pages/ImageUpscaler"));
+const PhotoColorizer   = lazy(() => import("@/pages/PhotoColorizer"));
+const WatermarkRemover = lazy(() => import("@/pages/WatermarkRemover"));
+const FaceBlur         = lazy(() => import("@/pages/FaceBlur"));
+const CsvExplorer      = lazy(() => import("@/pages/CsvExplorer"));
+const BmiCalculator    = lazy(() => import("@/pages/BmiCalculator"));
+const EmiCalculator    = lazy(() => import("@/pages/EmiCalculator"));
+const JsonExplorer     = lazy(() => import("@/pages/JsonExplorer"));
+const Base64Tool       = lazy(() => import("@/pages/Base64Tool"));
+const Future           = lazy(() => import("@/pages/Future"));
+const Security         = lazy(() => import("@/pages/Security"));
+const AboutUs          = lazy(() => import("@/pages/AboutUs"));
+const Contact          = lazy(() => import("@/pages/Contact"));
+const ConversionPage   = lazy(() => import("@/pages/ConversionPage"));
+const NotFound         = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, retry: 1 } },
@@ -139,46 +141,75 @@ function Router() {
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           <Switch>
-            <Route path="/"                  component={Home} />
-            <Route path="/image-compressor"  component={ImageCompressor} />
-            <Route path="/image-converter"   component={ImageConverter} />
-            <Route path="/pdf-converter"     component={PdfConverter} />
-            <Route path="/qr-generator"      component={QrGenerator} />
-            <Route path="/text-cleaner"      component={TextCleaner} />
-            <Route path="/whatsapp-link"     component={WhatsappLink} />
-            <Route path="/image-resizer"     component={ImageResizer} />
-            <Route path="/image-cropper"        component={ImageCropper} />
-            <Route path="/password-generator"  component={PasswordGenerator} />
-            <Route path="/unit-converter"       component={UnitConverter} />
-            <Route path="/color-palette"       component={ColorPalette} />
-            <Route path="/heic-converter"      component={HeicConverter} />
-            <Route path="/e-signature"         component={ESignature} />
-            <Route path="/ocr-tool"            component={OcrTool} />
-            <Route path="/pdf-annotator"       component={PdfAnnotator} />
-            <Route path="/resume-builder"          component={ResumeBuilder} />
-            <Route path="/background-remover"    component={BackgroundRemover} />
-            <Route path="/word-counter"          component={WordCounter} />
-            <Route path="/video-to-gif"          component={VideoToGif} />
-            <Route path="/pomodoro-timer"        component={PomodoroTimer} />
-            <Route path="/exif-stripper"         component={ExifStripper} />
-            <Route path="/color-picker"          component={ColorPicker} />
-            <Route path="/image-upscaler"        component={ImageUpscaler} />
-            <Route path="/photo-colorizer"       component={PhotoColorizer} />
-            <Route path="/watermark-remover"     component={WatermarkRemover} />
-            <Route path="/face-blur"             component={FaceBlur} />
-            <Route path="/csv-explorer"          component={CsvExplorer} />
-            <Route path="/bmi-calculator"        component={BmiCalculator} />
-            <Route path="/emi-calculator"        component={EmiCalculator} />
-            <Route path="/json-explorer"         component={JsonExplorer} />
-            <Route path="/base64"                component={Base64Tool} />
-            <Route path="/settings"          component={Settings} />
-            <Route path="/future"            component={Future} />
-            <Route path="/security"          component={Security} />
-            <Route path="/about"             component={AboutUs} />
-            <Route path="/privacy-policy"    component={PrivacyPolicy} />
-            <Route path="/terms"             component={TermsConditions} />
-            <Route path="/faq"               component={FAQ} />
-            <Route                           component={NotFound} />
+            {/* ── Core Tool Pages ── */}
+            <Route path="/"                   component={Home} />
+            <Route path="/image-compressor"   component={ImageCompressor} />
+            <Route path="/image-converter"    component={ImageConverter} />
+            <Route path="/pdf-converter"      component={PdfConverter} />
+            <Route path="/qr-generator"       component={QrGenerator} />
+            <Route path="/text-cleaner"       component={TextCleaner} />
+            <Route path="/whatsapp-link"      component={WhatsappLink} />
+            <Route path="/image-resizer"      component={ImageResizer} />
+            <Route path="/image-cropper"      component={ImageCropper} />
+            <Route path="/password-generator" component={PasswordGenerator} />
+            <Route path="/unit-converter"     component={UnitConverter} />
+            <Route path="/color-palette"      component={ColorPalette} />
+            <Route path="/heic-converter"     component={HeicConverter} />
+            <Route path="/e-signature"        component={ESignature} />
+            <Route path="/ocr-tool"           component={OcrTool} />
+            <Route path="/pdf-annotator"      component={PdfAnnotator} />
+            <Route path="/resume-builder"     component={ResumeBuilder} />
+            <Route path="/background-remover" component={BackgroundRemover} />
+            <Route path="/word-counter"       component={WordCounter} />
+            <Route path="/video-to-gif"       component={VideoToGif} />
+            <Route path="/pomodoro-timer"     component={PomodoroTimer} />
+            <Route path="/exif-stripper"      component={ExifStripper} />
+            <Route path="/color-picker"       component={ColorPicker} />
+            <Route path="/image-upscaler"     component={ImageUpscaler} />
+            <Route path="/photo-colorizer"    component={PhotoColorizer} />
+            <Route path="/watermark-remover"  component={WatermarkRemover} />
+            <Route path="/face-blur"          component={FaceBlur} />
+            <Route path="/csv-explorer"       component={CsvExplorer} />
+            <Route path="/bmi-calculator"     component={BmiCalculator} />
+            <Route path="/emi-calculator"     component={EmiCalculator} />
+            <Route path="/json-explorer"      component={JsonExplorer} />
+            <Route path="/base64"             component={Base64Tool} />
+
+            {/* ── Info / Trust Pages ── */}
+            <Route path="/settings"       component={Settings} />
+            <Route path="/future"         component={Future} />
+            <Route path="/security"       component={Security} />
+            <Route path="/about"          component={AboutUs} />
+            <Route path="/contact"        component={Contact} />
+            <Route path="/privacy-policy" component={PrivacyPolicy} />
+            <Route path="/terms"          component={TermsConditions} />
+            <Route path="/faq"            component={FAQ} />
+
+            {/* ── Programmatic SEO: Image Conversions ── */}
+            <Route path="/jpg-to-png"   component={ConversionPage} />
+            <Route path="/png-to-jpg"   component={ConversionPage} />
+            <Route path="/webp-to-png"  component={ConversionPage} />
+            <Route path="/png-to-webp"  component={ConversionPage} />
+            <Route path="/webp-to-jpg"  component={ConversionPage} />
+            <Route path="/jpg-to-webp"  component={ConversionPage} />
+            <Route path="/heic-to-jpg"  component={ConversionPage} />
+            <Route path="/heic-to-png"  component={ConversionPage} />
+            <Route path="/heic-to-webp" component={ConversionPage} />
+            <Route path="/jpeg-to-png"  component={ConversionPage} />
+            <Route path="/bmp-to-jpg"   component={ConversionPage} />
+            <Route path="/gif-to-jpg"   component={ConversionPage} />
+            <Route path="/gif-to-png"   component={ConversionPage} />
+            <Route path="/tiff-to-jpg"  component={ConversionPage} />
+
+            {/* ── Programmatic SEO: PDF Conversions ── */}
+            <Route path="/pdf-to-jpg"   component={ConversionPage} />
+            <Route path="/pdf-to-png"   component={ConversionPage} />
+            <Route path="/pdf-to-webp"  component={ConversionPage} />
+            <Route path="/jpg-to-pdf"   component={ConversionPage} />
+            <Route path="/png-to-pdf"   component={ConversionPage} />
+            <Route path="/image-to-pdf" component={ConversionPage} />
+
+            <Route component={NotFound} />
           </Switch>
         </Suspense>
       </ErrorBoundary>
