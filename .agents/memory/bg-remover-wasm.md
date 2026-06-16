@@ -1,45 +1,51 @@
 ---
 name: Background Remover — implementation
-description: Final working approach for in-browser BG removal after repeated @imgly/background-removal failures
+description: Final working approach for in-browser BG removal after repeated @imgly/background-removal failures and alpha corruption issues
 ---
 
 ## Final Working Solution
 
-Replaced `@imgly/background-removal` with `@huggingface/transformers` (already in package.json).
+Uses `@huggingface/transformers` (already in package.json) with `Xenova/modnet`.
+
+**Critical:** Never use the RGB values from the pipeline output blob directly. Premultiplied-alpha canvas reads corrupt colours (pixels with alpha=0 have RGB zeroed out). Always extract ONLY the alpha channel from the pipeline blob and apply it onto the original image's RGB.
+
+**Auto-inversion detection:** If `avgAlpha > 200` across all mask pixels, the mask is inverted (background=opaque, subject=transparent). Flip with `255 - rawAlpha`.
 
 ```tsx
-const { pipeline, env } = await import("@huggingface/transformers");
-
 // Single-threaded WASM — no SharedArrayBuffer / COOP/COEP needed
 (env.backends.onnx as any).wasm.numThreads = 1;
 
 const pipe = await pipeline("background-removal", "Xenova/modnet", {
   device: "wasm",
-  progress_callback: (prog: any) => { /* download progress */ },
+  progress_callback: ...
 });
 
-const output = await pipe(imageUrl);  // returns RawImage with alpha applied
-const blob = await output.toBlob("image/png");
+const raw = await pipe(imageUrl);
+const rawBlob = await raw.toBlob("image/png");
+
+// THEN: applyMaskAlphaToOriginal(originalUrl, rawBlob)
+// - draws originalImg → origData (correct RGB)
+// - draws maskedImg on separate canvas → maskedData (alpha only)
+// - if avgAlpha > 200: invert (isInverted = true)
+// - copies (possibly inverted) alpha channel onto origData
+// - exports from fresh canvas
 ```
 
-Cache `pipe` in a module-level variable (`let _pipe = null`) so the model (~20MB) downloads only once per session.
-Reset `_pipe = null` in the catch block so a failed init re-tries on next use.
+Cache `pipe` in a module-level `let _pipe = null`. Reset on error.
 
 ## Why @imgly/background-removal failed (do not retry)
 
-- Always uses `ort-wasm-simd-threaded.wasm` internally — even with numThreads=1 patches
-- Threaded WASM requires SharedArrayBuffer → requires `crossOriginIsolated = true`
-- Replit dev preview runs in a proxy iframe — `crossOriginIsolated` is always false there
-- `Object.defineProperty` patches (both named-export and default-export variants) were not reliably intercepting the library's internal ort setup
-- Result: inference hangs silently at "Processing image: 0%" forever
+- Always uses `ort-wasm-simd-threaded.wasm` — requires SharedArrayBuffer → requires `crossOriginIsolated = true`
+- Replit dev preview is proxied iframe — `crossOriginIsolated` always false
+- Result: hangs silently at "Processing image: 0%"
 
-## Why @huggingface/transformers works
+## Why direct `raw.toBlob()` fails on its own
 
-- Exposes `env.backends.onnx.wasm.numThreads = 1` directly (no monkey-patching needed)
-- `background-removal` pipeline built-in with `Xenova/modnet` default (~20MB)
-- Pipeline returns `RawImage` with alpha already applied — call `.toBlob("image/png")` directly
-- No CDN WASM dependencies — library bundles its own WASM
+- `@huggingface/transformers` v4.x background-removal pipeline sometimes returns inverted masks
+- Drawing a transparent PNG onto canvas and reading back pixels: premultiplied-alpha zeroes out RGB for transparent pixels
+- Compositing result: background appears black instead of transparent, or entire image disappears
 
-## Model choice
-- `Xenova/modnet` — ~20MB, MODNet architecture, portrait/subject matting, confirmed working
-- `briaai/RMBG-1.4` — ~175MB fp32, general purpose, not yet tried with this setup
+## Model
+
+- `Xenova/modnet` — ~20MB, MODNet architecture, confirmed working
+- `briaai/RMBG-1.4` — ~175MB fp32, general purpose, not yet tested in this env

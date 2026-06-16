@@ -12,101 +12,96 @@ import { useToolCounter } from "@/hooks/useToolCounter";
 let _pipe: any = null;
 
 /**
- * Check if a PNG blob has any non-transparent pixels.
- * Returns { hasContent, invertedBlob } where invertedBlob is
- * the blob with alpha inverted if no content was found.
+ * Load an image URL into a HTMLImageElement, returning it once loaded.
  */
-async function validateAndFixAlpha(blob: Blob): Promise<Blob> {
+function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const url = URL.createObjectURL(blob);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const canvas = document.createElement("canvas");
-      canvas.width  = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0);
-      const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-      // Count pixels that have alpha > 10 (anything visible)
-      let visiblePixels = 0;
-      for (let i = 3; i < data.length; i += 4) {
-        if (data[i] > 10) visiblePixels++;
-      }
-
-      const totalPixels = canvas.width * canvas.height;
-      const visibleRatio = visiblePixels / totalPixels;
-
-      if (visibleRatio > 0.01) {
-        // Output looks fine — return as-is
-        resolve(blob);
-        return;
-      }
-
-      // Nothing visible — mask is likely inverted. Flip all alpha values.
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      for (let i = 3; i < imageData.data.length; i += 4) {
-        imageData.data[i] = 255 - imageData.data[i];
-      }
-      ctx.putImageData(imageData, 0, 0);
-      canvas.toBlob((fixed) => {
-        if (fixed) resolve(fixed);
-        else reject(new Error("Failed to fix alpha channel"));
-      }, "image/png");
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Failed to load result")); };
-    img.src = url;
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Failed to load image: " + src));
+    img.src = src;
   });
 }
 
 /**
- * Apply a greyscale mask image to an original image as its alpha channel.
- * Used as a fallback when the pipeline gives us raw segmentation masks.
+ * Extract pixel data from an image into a canvas context.
  */
-async function applyMaskToImage(
+function imageToPixels(img: HTMLImageElement): ImageData {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(img, 0, 0);
+  return ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+/**
+ * Take the original image and a pipeline output blob (the masked/RGBA result).
+ * Extracts ONLY the alpha channel from the pipeline blob, applies it to the
+ * original image's RGB values. This avoids premultiplied-alpha corruption of
+ * colours that occurs when you read pipeline-output pixels through a canvas.
+ *
+ * Auto-detects inverted masks (where background=opaque, subject=transparent)
+ * and corrects them.
+ */
+async function applyMaskAlphaToOriginal(
   originalUrl: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  maskImage: any,
+  maskedBlob: Blob
 ): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const orig = new Image();
-    orig.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width  = orig.naturalWidth;
-      canvas.height = orig.naturalHeight;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(orig, 0, 0);
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const maskedUrl = URL.createObjectURL(maskedBlob);
+  try {
+    const [origImg, maskedImg] = await Promise.all([
+      loadImage(originalUrl),
+      loadImage(maskedUrl),
+    ]);
 
-      // maskImage may be a RawImage — get its grayscale data
-      const maskCanvas = document.createElement("canvas");
-      const mw = maskImage.width ?? canvas.width;
-      const mh = maskImage.height ?? canvas.height;
-      maskCanvas.width  = mw;
-      maskCanvas.height = mh;
-      const mCtx = maskCanvas.getContext("2d")!;
+    const W = origImg.naturalWidth;
+    const H = origImg.naturalHeight;
 
-      // Draw mask onto canvas to get pixel data
-      // RawImage can be converted to ImageData directly
-      if (maskImage.data instanceof Uint8ClampedArray || maskImage.data instanceof Uint8Array) {
-        const channels = maskImage.channels ?? 1;
-        for (let i = 0; i < mw * mh; i++) {
-          const val = maskImage.data[i * channels]; // first channel = grey
-          // Scale to original image dimensions
-          const destX = Math.round((i % mw) * (canvas.width  / mw));
-          const destY = Math.round(Math.floor(i / mw) * (canvas.height / mh));
-          const destI = (destY * canvas.width + destX) * 4;
-          if (destI + 3 < imgData.data.length) imgData.data[destI + 3] = val;
-        }
-      }
+    // Read original RGB
+    const origData = imageToPixels(origImg);
 
-      ctx.putImageData(imgData, 0, 0);
-      canvas.toBlob((b) => { if (b) resolve(b); else reject(new Error("toBlob failed")); }, "image/png");
-    };
-    orig.onerror = reject;
-    orig.src = originalUrl;
-  });
+    // Read masked output to get its alpha channel
+    const maskedCanvas = document.createElement("canvas");
+    maskedCanvas.width = W;
+    maskedCanvas.height = H;
+    const maskedCtx = maskedCanvas.getContext("2d")!;
+    maskedCtx.drawImage(maskedImg, 0, 0, W, H);
+    const maskedData = maskedCtx.getImageData(0, 0, W, H);
+
+    // Determine if the mask is inverted:
+    // A correct mask has subject=high alpha (255) and background=low alpha (0).
+    // Most images have more background than subject, so avg alpha is normally LOW.
+    // If avg alpha is HIGH (> 128), the mask is likely inverted.
+    let totalAlpha = 0;
+    for (let i = 3; i < maskedData.data.length; i += 4) {
+      totalAlpha += maskedData.data[i];
+    }
+    const avgAlpha = totalAlpha / (W * H);
+    const isInverted = avgAlpha > 200;
+
+    // Apply (possibly corrected) alpha from mask onto original RGB
+    for (let i = 3; i < origData.data.length; i += 4) {
+      const rawAlpha = maskedData.data[i];
+      origData.data[i] = isInverted ? 255 - rawAlpha : rawAlpha;
+    }
+
+    // Write result to a fresh canvas and export
+    const outCanvas = document.createElement("canvas");
+    outCanvas.width = W;
+    outCanvas.height = H;
+    const outCtx = outCanvas.getContext("2d")!;
+    outCtx.putImageData(origData, 0, 0);
+
+    return await new Promise<Blob>((resolve, reject) => {
+      outCanvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error("toBlob failed"))),
+        "image/png"
+      );
+    });
+  } finally {
+    URL.revokeObjectURL(maskedUrl);
+  }
 }
 
 export default function BackgroundRemover() {
@@ -172,34 +167,33 @@ export default function BackgroundRemover() {
       const raw = await (_pipe as any)(imageUrl);
       URL.revokeObjectURL(imageUrl);
 
-      // ── Handle v3 (RawImage) and v4 (array / segmentation) output ──
+      // Normalise pipeline output to a single Blob
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let resultBlob: Blob | null = null;
+      let rawBlob: Blob | null = null;
 
       if (raw && typeof raw.toBlob === "function") {
-        // Direct RawImage (transformers v3 / some v4 builds)
-        resultBlob = await raw.toBlob("image/png");
+        // Direct RawImage (transformers v3 / v4 background-removal)
+        rawBlob = await raw.toBlob("image/png");
       } else if (Array.isArray(raw) && raw.length > 0) {
         const first = raw[0];
         if (typeof first?.toBlob === "function") {
-          // Array<RawImage>
-          resultBlob = await first.toBlob("image/png");
-        } else if (first?.mask) {
-          // Segmentation-style: [{ label, score, mask: RawImage }]
-          setProgress("Applying mask…");
-          resultBlob = await applyMaskToImage(originalUrl, first.mask);
+          rawBlob = await first.toBlob("image/png");
+        } else if (first?.mask && typeof first.mask.toBlob === "function") {
+          rawBlob = await first.mask.toBlob("image/png");
         }
       }
 
-      if (!resultBlob) {
+      if (!rawBlob) {
         throw new Error("Unexpected pipeline output — could not extract result image.");
       }
 
-      setProgress("Validating result…");
-      // Detect & fix inverted alpha (whole image transparent)
-      const fixedBlob = await validateAndFixAlpha(resultBlob);
+      setProgress("Compositing result…");
+      // Always re-composite: extract alpha-only from model output, apply to
+      // original RGB. This avoids colour corruption from premultiplied-alpha
+      // reads and also auto-corrects inverted masks.
+      const finalBlob = await applyMaskAlphaToOriginal(originalUrl, rawBlob);
 
-      setResult(URL.createObjectURL(fixedBlob));
+      setResult(URL.createObjectURL(finalBlob));
       increment();
     } catch (e: any) {
       console.error("Background removal error:", e);
