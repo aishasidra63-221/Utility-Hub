@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- ═══════════════════════ HOMEPAGE ═══════════════════════ -->
+  <url>
+    <loc>https://toolshub.app/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- ═══════════════════════ IMAGE TOOLS ═══════════════════════ -->
+  <url><loc>https://toolshub.app/image-compressor</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://toolshub.app/image-converter</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://toolshub.app/image-resizer</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/image-cropper</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/background-remover</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://toolshub.app/image-upscaler</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/photo-colorizer</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/watermark-remover</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://toolshub.app/face-blur</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://toolshub.app/heic-converter</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://toolshub.app/color-palette</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://toolshub.app/color-picker</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://toolshub.app/exif-stripper</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+
+  <!-- ═══════════════════════ PDF TOOLS ═══════════════════════ -->
+  <url><loc>https://toolshub.app/pdf-converter</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://toolshub.app/e-signature</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/pdf-annotator</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/ocr-tool</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+
+  <!-- ═══════════════════════ GENERATOR TOOLS ═══════════════════════ -->
+  <url><loc>https://toolshub.app/password-generator</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/qr-generator</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://toolshub.app/whatsapp-link</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/video-to-gif</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://toolshub.app/pomodoro-timer</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+
+  <!-- ═══════════════════════ UTILITY TOOLS ═══════════════════════ -->
+  <url><loc>https://toolshub.app/unit-converter</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/text-cleaner</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://toolshub.app/word-counter</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/resume-builder</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/csv-explorer</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://toolshub.app/json-explorer</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://toolshub.app/bmi-calculator</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://toolshub.app/emi-calculator</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://toolshub.app/base64</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+
+  <!-- ═══════════════════════ PROGRAMMATIC SEO — IMAGE CONVERSIONS ═══════════════════════ -->
+  <url><loc>https://toolshub.app/jpg-to-png</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://toolshub.app/png-to-jpg</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://toolshub.app/webp-to-png</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/png-to-webp</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/webp-to-jpg</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/jpg-to-webp</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/heic-to-jpg</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://toolshub.app/heic-to-png</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/heic-to-webp</loc><changefreq>monthly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://toolshub.app/bmp-to-jpg</loc><changefreq>monthly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://toolshub.app/gif-to-jpg</loc><changefreq>monthly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://toolshub.app/gif-to-png</loc><changefreq>monthly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://toolshub.app/jpeg-to-png</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/tiff-to-jpg</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+
+  <!-- ═══════════════════════ PROGRAMMATIC SEO — PDF CONVERSIONS ═══════════════════════ -->
+  <url><loc>https://toolshub.app/pdf-to-jpg</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://toolshub.app/pdf-to-png</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/pdf-to-webp</loc><changefreq>monthly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://toolshub.app/jpg-to-pdf</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://toolshub.app/png-to-pdf</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/image-to-pdf</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+
+  <!-- ═══════════════════════ PDF TOOL ALIASES ═══════════════════════ -->
+  <url><loc>https://toolshub.app/compress-pdf</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://toolshub.app/merge-pdf</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+  <url><loc>https://toolshub.app/split-pdf</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/watermark-pdf</loc><changefreq>monthly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://toolshub.app/annotate-pdf</loc><changefreq>monthly</changefreq><priority>0.75</priority></url>
+  <url><loc>https://toolshub.app/compress-image</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/ocr-text-extractor</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://toolshub.app/qr-code-generator</loc><changefreq>monthly</changefreq><priority>0.85</priority></url>
+
+  <!-- ═══════════════════════ TRUST / INFO PAGES ═══════════════════════ -->
+  <url><loc>https://toolshub.app/about</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://toolshub.app/contact</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://toolshub.app/security</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://toolshub.app/privacy-policy</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://toolshub.app/terms</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://toolshub.app/faq</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+
+</urlset>
