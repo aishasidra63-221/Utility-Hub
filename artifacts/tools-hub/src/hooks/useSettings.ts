@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 const SETTINGS_KEY = "toolhub_settings";
 
 export interface AppSettings {
-  theme: "light" | "dark" | "system";
+  theme: "light" | "dark";
   imageQuality: number;
   pdfCompressLevel: "lossless" | "balanced" | "small";
   imageOutputFormat: "jpg" | "png" | "webp";
@@ -12,7 +12,7 @@ export interface AppSettings {
 }
 
 export const SETTINGS_DEFAULTS: AppSettings = {
-  theme: "system",
+  theme: "light",
   imageQuality: 80,
   pdfCompressLevel: "balanced",
   imageOutputFormat: "jpg",

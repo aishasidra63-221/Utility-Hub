@@ -4,6 +4,7 @@ import {
   Settings, Moon, Sun, Globe, Shield, Rocket, Info, X,
   ChevronRight, Check,
 } from "lucide-react";
+
 import { useTheme } from "@/hooks/useSettings";
 import { ToolsHubIcon } from "@/components/ToolsHubLogo";
 
@@ -263,7 +264,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="px-4 pt-4 pb-2">
           <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Appearance</p>
           <div className="flex rounded-xl bg-muted p-1 gap-1">
-            {(["light", "dark", "system"] as const).map((t) => (
+            {(["light", "dark"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTheme(t)}
@@ -275,7 +276,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               >
                 {t === "light" && <Sun className="w-3 h-3" />}
                 {t === "dark"  && <Moon className="w-3 h-3" />}
-                {t === "system" && <span className="w-3 h-3 text-[10px] flex items-center justify-center">A</span>}
                 <span className="capitalize">{t}</span>
               </button>
             ))}
