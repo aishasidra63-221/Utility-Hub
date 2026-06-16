@@ -26,7 +26,7 @@ const en: Dict = {
   "home.badge": "No login. No ads. Instant results.",
   "home.headline_pre": "All Tools That Just",
   "home.headline_hl": "Work.",
-  "home.sub": "26 powerful utilities that run entirely in your browser. Upload, process, download — done in seconds.",
+  "home.sub": "31 tools for images, PDFs, generators and more — all run privately in your browser, no uploads needed",
   "home.uses": "You've used these tools {n} time{s}",
   "home.open_tool": "Open tool",
   "home.no_favourites": "No favourites yet",
