@@ -24,7 +24,7 @@ const en: Dict = {
   "nav.footer_copy": "100% Browser-based",
 
   "home.badge": "No login. No ads. Instant results.",
-  "home.headline_pre": "Free Tools That Just",
+  "home.headline_pre": "All Tools That Just",
   "home.headline_hl": "Work.",
   "home.sub": "26 powerful utilities that run entirely in your browser. Upload, process, download — done in seconds.",
   "home.uses": "You've used these tools {n} time{s}",
