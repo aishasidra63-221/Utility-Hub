@@ -238,13 +238,13 @@ export default function VideoToGif() {
                     <label className="text-xs text-muted-foreground mb-1 block">Start (s)</label>
                     <input type="range" min={0} max={duration - 0.5} step={0.1} value={startTime}
                       onChange={(e) => { const v = parseFloat(e.target.value); setStartTime(v); if (endTime - v < 0.5) setEndTime(Math.min(v + 0.5, duration)); }}
-                      className="w-full accent-violet-500" />
+                      className="smooth-slider smooth-slider-violet" />
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">End (s, max {MAX_DURATION}s)</label>
                     <input type="range" min={startTime + 0.5} max={Math.min(duration, startTime + MAX_DURATION)} step={0.1} value={endTime}
                       onChange={(e) => setEndTime(parseFloat(e.target.value))}
-                      className="w-full accent-violet-500" />
+                      className="smooth-slider smooth-slider-violet" />
                   </div>
                 </div>
               </div>

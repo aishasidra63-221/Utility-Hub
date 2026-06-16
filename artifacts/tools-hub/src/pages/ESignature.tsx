@@ -218,7 +218,7 @@ export default function ESignature() {
           {tab === "draw" && (
             <>
               <span className="text-xs text-muted-foreground font-medium ml-2">Thickness:</span>
-              <input type="range" min={1} max={8} value={strokeW} onChange={(e) => setStrokeW(Number(e.target.value))} className="w-20 accent-primary" />
+              <input type="range" min={1} max={8} value={strokeW} onChange={(e) => setStrokeW(Number(e.target.value))} className="smooth-slider w-20" />
             </>
           )}
         </div>
@@ -293,7 +293,7 @@ export default function ESignature() {
         {/* Size */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">Signature size — <span className="text-primary">{scale}% of page width</span></label>
-          <input type="range" min={10} max={60} value={scale} onChange={(e) => setScale(Number(e.target.value))} className="w-full accent-primary" />
+          <input type="range" min={10} max={60} value={scale} onChange={(e) => setScale(Number(e.target.value))} className="smooth-slider" />
         </div>
 
         {/* Page */}

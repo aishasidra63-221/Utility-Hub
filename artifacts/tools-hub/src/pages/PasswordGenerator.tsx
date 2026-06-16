@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Copy, Check, RefreshCw, Key, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { ShareButton } from "@/components/ShareButton";
 import { UsageCount } from "@/components/UsageCount";
 import { useSEO } from "@/hooks/useSEO";
@@ -190,13 +191,13 @@ export default function PasswordGenerator() {
             <span className="text-3xl font-bold font-mono text-primary">{length}</span>
           </div>
 
-          <input
-            type="range"
+          <Slider
             min={6}
             max={64}
-            value={length}
-            onChange={(e) => setLength(Number(e.target.value))}
-            className="w-full accent-primary cursor-pointer h-2"
+            step={1}
+            value={[length]}
+            onValueChange={([v]) => setLength(v)}
+            className="w-full"
           />
 
           <div className="flex justify-between">

@@ -374,7 +374,7 @@ export default function FaceBlur() {
               </p>
               <input type="range" min={4} max={40} value={blurIntensity}
                 onChange={(e) => setBlurIntensity(Number(e.target.value))}
-                className="w-full accent-primary" />
+                className="smooth-slider" />
               <div className="flex justify-between text-xs text-muted-foreground mt-0.5">
                 <span>Subtle</span><span>Strong</span>
               </div>
@@ -512,7 +512,7 @@ export default function FaceBlur() {
                 </p>
                 <input type="range" min={4} max={40} value={blurIntensity}
                   onChange={(e) => setBlurIntensity(Number(e.target.value))}
-                  className="w-full accent-primary" />
+                  className="smooth-slider" />
                 <div className="flex justify-between text-xs text-muted-foreground mt-0.5">
                   <span>Subtle</span><span>Strong</span>
                 </div>

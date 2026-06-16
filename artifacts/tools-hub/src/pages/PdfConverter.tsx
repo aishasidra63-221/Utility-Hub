@@ -1440,7 +1440,7 @@ export default function PdfConverter() {
               min={5} max={80} step={5}
               value={wmOpacity}
               onChange={(e) => setWmOpacity(Number(e.target.value))}
-              className="w-full accent-primary"
+              className="smooth-slider"
             />
             <div className="flex justify-between text-[10px] text-muted-foreground">
               <span>Subtle</span><span>Visible</span>
@@ -1578,7 +1578,7 @@ export default function PdfConverter() {
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">Font size ({pnFontSize}pt)</label>
                 <input type="range" min={8} max={18} step={1} value={pnFontSize} onChange={(e) => setPnFontSize(Number(e.target.value))}
-                  className="w-full accent-primary" />
+                  className="smooth-slider" />
               </div>
             </div>
           </div>

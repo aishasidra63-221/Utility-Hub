@@ -331,7 +331,7 @@ export default function PdfAnnotator() {
             {tool !== "highlight" && (
               <>
                 <div className="w-px h-6 bg-border mx-1" />
-                <input type="range" min={1} max={10} value={strokeW} onChange={(e) => setStrokeW(Number(e.target.value))} className="w-16 accent-primary" title="Stroke width" />
+                <input type="range" min={1} max={10} value={strokeW} onChange={(e) => setStrokeW(Number(e.target.value))} className="smooth-slider w-16" title="Stroke width" />
               </>
             )}
 
