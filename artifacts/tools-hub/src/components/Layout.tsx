@@ -157,27 +157,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
 
-          {/* Hamburger */}
-          <button
-            onClick={() => setDrawerOpen((o) => !o)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex-shrink-0"
-            aria-label="Open menu"
-          >
-            <BurgerIcon open={drawerOpen} />
-          </button>
-
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors flex-shrink-0"
-            aria-label="Toggle theme"
-          >
-            {isDark
-              ? <Sun className="w-4 h-4" />
-              : <Moon className="w-4 h-4" />
-            }
-          </button>
-
           {/* Logo */}
           <Link
             href="/"
@@ -212,6 +191,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
           </nav>
+
+          {/* Right side: Theme toggle + Hamburger */}
+          <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              aria-label="Toggle theme"
+            >
+              {isDark
+                ? <Sun className="w-4 h-4" />
+                : <Moon className="w-4 h-4" />
+              }
+            </button>
+
+            {/* Hamburger */}
+            <button
+              onClick={() => setDrawerOpen((o) => !o)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              aria-label="Open menu"
+            >
+              <BurgerIcon open={drawerOpen} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -229,8 +232,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* ── DRAWER PANEL ── */}
       <div
         ref={drawerRef}
-        className="fixed top-0 left-0 bottom-0 z-[70] w-[300px] max-w-[85vw] bg-background border-r border-border shadow-2xl flex flex-col transition-transform duration-300 ease-out"
-        style={{ transform: drawerOpen ? "translateX(0)" : "translateX(-100%)" }}
+        className="fixed top-0 right-0 bottom-0 z-[70] w-[300px] max-w-[85vw] bg-background border-l border-border shadow-2xl flex flex-col transition-transform duration-300 ease-out"
+        style={{ transform: drawerOpen ? "translateX(0)" : "translateX(100%)" }}
         aria-modal="true"
         role="dialog"
         aria-label="Main menu"
