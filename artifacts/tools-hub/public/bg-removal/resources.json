@@ -620,15 +620,15 @@
   "/onnxruntime-web/ort-wasm-simd-threaded.wasm": {
     "chunks": [
       {
-        "hash": "/bg-removal/ort-wasm-simd.wasm",
-        "name": "/bg-removal/ort-wasm-simd.wasm",
+        "hash": "/bg-removal/ort-wasm-simd-threaded.wasm",
+        "name": "/bg-removal/ort-wasm-simd-threaded.wasm",
         "offsets": [
           0,
-          10551547
+          10647985
         ]
       }
     ],
-    "size": 10551547,
+    "size": 10647985,
     "mime": "application/wasm"
   },
   "/onnxruntime-web/ort-wasm-simd-threaded.mjs": {

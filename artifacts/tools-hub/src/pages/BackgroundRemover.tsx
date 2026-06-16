@@ -43,6 +43,33 @@ export default function BackgroundRemover() {
       // It manages its own WASM/model loading and falls back gracefully.
       const { removeBackground } = await import("@imgly/background-removal");
 
+      // ort 1.17.3 expects wasmPaths keyed by filename (e.g. "ort-wasm-simd-threaded.wasm"),
+      // but the imgly library (built for ort 1.21-dev) sets { mjs, wasm }.
+      // Intercept the setter and remap to the format ort 1.17.3 actually reads.
+      const ort = await import("onnxruntime-web");
+      const wasmEnv = ort.env.wasm as Record<string, unknown>;
+      let _wasmPathsValue: unknown = wasmEnv.wasmPaths;
+      Object.defineProperty(wasmEnv, "wasmPaths", {
+        configurable: true,
+        enumerable: true,
+        get() { return _wasmPathsValue; },
+        set(value: unknown) {
+          if (value && typeof value === "object" && !Array.isArray(value)) {
+            const v = value as Record<string, string>;
+            if ("wasm" in v) {
+              _wasmPathsValue = {
+                "ort-wasm-simd-threaded.wasm": v.wasm,
+                "ort-wasm-simd.wasm":          v.wasm,
+                "ort-wasm-threaded.wasm":       v.wasm,
+                "ort-wasm.wasm":               v.wasm,
+              };
+              return;
+            }
+          }
+          _wasmPathsValue = value;
+        },
+      });
+
       setProgress("Downloading AI model (~20 MB, first time only)…");
 
       const resultBlob = await removeBackground(file, {
