@@ -163,6 +163,7 @@ export default function PdfConverter() {
   const [splitLoading, setSplitLoading] = useState(false);
   const [splitProgress, setSplitProgress] = useState(0);
   const [splitDone, setSplitDone] = useState(false);
+  const [splitBlob, setSplitBlob] = useState<Blob | null>(null);
   const [splitError, setSplitError] = useState("");
   const splitRef = useRef<HTMLInputElement>(null);
 
@@ -171,6 +172,7 @@ export default function PdfConverter() {
   const [p2wLoading, setP2wLoading] = useState(false);
   const [p2wProgress, setP2wProgress] = useState(0);
   const [p2wText, setP2wText] = useState("");
+  const [p2wBlob, setP2wBlob] = useState<Blob | null>(null);
   const [p2wCopied, setP2wCopied] = useState(false);
   const [p2wError, setP2wError] = useState("");
   const p2wRef = useRef<HTMLInputElement>(null);
@@ -300,24 +302,27 @@ export default function PdfConverter() {
   // ── Compress ─────────────────────────────────────────────
   const handleCompFile = (f: File) => {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
-    setCompFile(f); setCompResult(null); setCompError(""); setCompProgress(0);
+    setCompFile(f); setCompResult(null); setCompError(""); setCompProgress(0); setCompBlob(null);
+    compressPdf(f);
   };
-  const compressPdf = async () => {
-    if (!compFile) return;
+  const compressPdf = async (fileOverride?: File) => {
+    const file = fileOverride ?? compFile;
+    if (!file) return;
     setCompLoading(true); setCompError(""); setCompProgress(0); setCompBlob(null); setCompResult(null);
     try {
       const level = COMPRESS_LEVELS.find((l) => l.id === compLevel)!;
       let output: Uint8Array;
       if (compLevel === "lossless") {
-        const pdf = await PDFDocument.load(await compFile.arrayBuffer(), { updateMetadata: false });
+        const pdf = await PDFDocument.load(await file.arrayBuffer(), { updateMetadata: false });
         output = await pdf.save({ useObjectStreams: true });
         setCompProgress(100);
       } else {
-        output = await renderPdfPages(compFile, level.scale, level.quality, setCompProgress);
+        output = await renderPdfPages(file, level.scale, level.quality, setCompProgress);
       }
       const blob = new Blob([output instanceof Uint8Array ? output.buffer as ArrayBuffer : output], { type: "application/pdf" });
       setCompBlob(blob);
-      setCompResult({ orig: compFile.size, neo: output.byteLength });
+      setCompResult({ orig: file.size, neo: output.byteLength });
+      if (getSettings().autoDownload) triggerDownload(blob, file.name.replace(".pdf", "-compressed.pdf"));
       increment();
     } catch { setCompError("Failed to compress PDF."); }
     finally { setCompLoading(false); }
@@ -361,13 +366,15 @@ export default function PdfConverter() {
   // ── Split ─────────────────────────────────────────────────
   const handleSplitFile = (f: File) => {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
-    setSplitFile(f); setSplitError(""); setSplitDone(false);
+    setSplitFile(f); setSplitError(""); setSplitDone(false); setSplitBlob(null);
+    splitPdf(f);
   };
-  const splitPdf = async () => {
-    if (!splitFile) return;
-    setSplitLoading(true); setSplitProgress(0); setSplitError(""); setSplitDone(false);
+  const splitPdf = async (fileOverride?: File) => {
+    const file = fileOverride ?? splitFile;
+    if (!file) return;
+    setSplitLoading(true); setSplitProgress(0); setSplitError(""); setSplitDone(false); setSplitBlob(null);
     try {
-      const src = await PDFDocument.load(await splitFile.arrayBuffer());
+      const src = await PDFDocument.load(await file.arrayBuffer());
       const total = src.getPageCount();
       const zip = new JSZip();
       for (let i = 0; i < total; i++) {
@@ -377,8 +384,11 @@ export default function PdfConverter() {
         zip.file(`page-${i + 1}.pdf`, await p.save());
         setSplitProgress(Math.round(((i + 1) / total) * 100));
       }
-      triggerDownload(await zip.generateAsync({ type: "blob" }), splitFile.name.replace(".pdf", "-split.zip"));
-      setSplitDone(true); increment();
+      const blob = await zip.generateAsync({ type: "blob" });
+      setSplitBlob(blob);
+      setSplitDone(true);
+      if (getSettings().autoDownload) triggerDownload(blob, file.name.replace(".pdf", "-split.zip"));
+      increment();
     } catch { setSplitError("Failed to split PDF."); }
     finally { setSplitLoading(false); }
   };
@@ -386,14 +396,16 @@ export default function PdfConverter() {
   // ── PDF to Word ───────────────────────────────────────────
   const handleP2wFile = (f: File) => {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
-    setP2wFile(f); setP2wText(""); setP2wError("");
+    setP2wFile(f); setP2wText(""); setP2wBlob(null); setP2wError("");
+    pdfToWord(f);
   };
-  const pdfToWord = async () => {
-    if (!p2wFile) return;
-    setP2wLoading(true); setP2wProgress(0); setP2wError("");
+  const pdfToWord = async (fileOverride?: File) => {
+    const file = fileOverride ?? p2wFile;
+    if (!file) return;
+    setP2wLoading(true); setP2wProgress(0); setP2wError(""); setP2wBlob(null);
     try {
       const pdfjsLib = await getPdfjsLib();
-      const pdf = await pdfjsLib.getDocument({ data: await p2wFile.arrayBuffer() }).promise;
+      const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
       const total = pdf.numPages;
       const lines: string[] = [];
       for (let i = 1; i <= total; i++) {
@@ -407,7 +419,9 @@ export default function PdfConverter() {
       }
       const fullText = lines.join("\n\n");
       setP2wText(fullText);
-      triggerDownload(new Blob([fullText], { type: "text/plain" }), p2wFile.name.replace(".pdf", ".txt"));
+      const blob = new Blob([fullText], { type: "text/plain" });
+      setP2wBlob(blob);
+      if (getSettings().autoDownload) triggerDownload(blob, file.name.replace(".pdf", ".txt"));
       increment();
     } catch { setP2wError("Failed to extract text."); }
     finally { setP2wLoading(false); }
@@ -443,12 +457,18 @@ export default function PdfConverter() {
   const handleP2iFile = (f: File) => {
     if (!f.name.toLowerCase().endsWith(".pdf")) return;
     setP2iFile(f); setP2iImages([]); setP2iError("");
+    convertPdfToImages(f);
   };
-  const convertPdfToImages = async () => {
-    if (!p2iFile) return;
+  const convertPdfToImages = async (fileOverride?: File) => {
+    const file = fileOverride ?? p2iFile;
+    if (!file) return;
     setP2iLoading(true); setP2iProgress(0); setP2iError("");
     try {
-      setP2iImages(await pdfToImages(p2iFile, setP2iProgress));
+      const imgs = await pdfToImages(file, setP2iProgress);
+      setP2iImages(imgs);
+      if (getSettings().autoDownload) {
+        imgs.forEach((src, i) => { const a = document.createElement("a"); a.href = src; a.download = `page-${i + 1}.jpg`; a.click(); });
+      }
       increment();
     } catch { setP2iError("Failed to convert PDF."); }
     finally { setP2iLoading(false); }
@@ -883,7 +903,7 @@ export default function PdfConverter() {
                 </div>
               )}
               {!compResult ? (
-                <Button onClick={compressPdf} disabled={compLoading}>
+                <Button onClick={() => compressPdf()} disabled={compLoading}>
                   {compLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Compressing...</> : <><Minimize2 className="w-4 h-4 mr-2" />Compress PDF</>}
                 </Button>
               ) : (
@@ -891,7 +911,7 @@ export default function PdfConverter() {
                   <Button onClick={downloadCompressed} className="flex-1">
                     <Download className="w-4 h-4 mr-2" />Download Compressed PDF
                   </Button>
-                  <Button variant="outline" onClick={compressPdf} disabled={compLoading}>
+                  <Button variant="outline" onClick={() => compressPdf()} disabled={compLoading}>
                     <RefreshCw className="w-4 h-4 mr-2" />Re-compress
                   </Button>
                 </div>
@@ -950,13 +970,19 @@ export default function PdfConverter() {
             </PdfDrop>
           ) : (
             <>
-              <FileCard name={splitFile.name} size={splitFile.size} onRemove={() => { setSplitFile(null); setSplitDone(false); }} />
+              <FileCard name={splitFile.name} size={splitFile.size} onRemove={() => { setSplitFile(null); setSplitDone(false); setSplitBlob(null); }} />
               {splitError && <ErrorBox msg={splitError} />}
               {splitLoading && <ProgressBar value={splitProgress} label="Splitting pages..." />}
-              {splitDone && <SuccessBox msg="Each page saved as separate PDF — downloaded as ZIP!" />}
-              <Button onClick={splitPdf} disabled={splitLoading}>
-                {splitLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Splitting... {splitProgress}%</> : <><Scissors className="w-4 h-4 mr-2" />Split into Pages</>}
-              </Button>
+              {splitDone && splitBlob && (
+                <div className="flex gap-3 flex-wrap">
+                  <Button onClick={() => splitFile && triggerDownload(splitBlob!, splitFile.name.replace(".pdf", "-split.zip"))}>
+                    <Download className="w-4 h-4 mr-2" />Download ZIP
+                  </Button>
+                  <Button variant="outline" onClick={() => { setSplitFile(null); setSplitDone(false); setSplitBlob(null); }}>
+                    Split Another
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -974,16 +1000,23 @@ export default function PdfConverter() {
             </PdfDrop>
           ) : (
             <>
-              <FileCard name={p2wFile.name} size={p2wFile.size} onRemove={() => { setP2wFile(null); setP2wText(""); }} />
+              <FileCard name={p2wFile.name} size={p2wFile.size} onRemove={() => { setP2wFile(null); setP2wText(""); setP2wBlob(null); }} />
               {p2wError && <ErrorBox msg={p2wError} />}
               {p2wLoading && <ProgressBar value={p2wProgress} label="Extracting text..." />}
-              <Button onClick={pdfToWord} disabled={p2wLoading}>
-                {p2wLoading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Extracting... {p2wProgress}%</> : <><Download className="w-4 h-4 mr-2" />Extract & Download .txt</>}
-              </Button>
+              {p2wBlob && p2wFile && !p2wLoading && (
+                <div className="flex gap-3 flex-wrap">
+                  <Button onClick={() => triggerDownload(p2wBlob!, p2wFile.name.replace(".pdf", ".txt"))}>
+                    <Download className="w-4 h-4 mr-2" />Download .txt
+                  </Button>
+                  <Button variant="outline" onClick={() => { setP2wFile(null); setP2wText(""); setP2wBlob(null); }}>
+                    Convert Another
+                  </Button>
+                </div>
+              )}
               {p2wText && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">{p2wText.length.toLocaleString()} characters</p>
+                    <p className="text-xs text-muted-foreground">{p2wText.length.toLocaleString()} characters extracted</p>
                     <Button size="sm" variant="outline" onClick={async () => { await navigator.clipboard.writeText(p2wText); setP2wCopied(true); setTimeout(() => setP2wCopied(false), 2000); }}>
                       {p2wCopied ? "Copied!" : "Copy text"}
                     </Button>
@@ -1030,16 +1063,16 @@ export default function PdfConverter() {
               <FileCard name={p2iFile.name} size={p2iFile.size} onRemove={() => { setP2iFile(null); setP2iImages([]); }} />
               {p2iError && <ErrorBox msg={p2iError} />}
               {p2iLoading && <ProgressBar value={p2iProgress} label="Converting pages..." />}
-              <div className="flex gap-3 flex-wrap">
-                <Button onClick={convertPdfToImages} disabled={p2iLoading}>
-                  {p2iLoading ? "Converting..." : "Convert to Images"}
-                </Button>
-                {p2iImages.length > 0 && (
-                  <Button variant="outline" onClick={() => p2iImages.forEach((src, i) => { const a = document.createElement("a"); a.href = src; a.download = `page-${i + 1}.jpg`; a.click(); })}>
-                    <Download className="w-4 h-4 mr-2" />Download All
+              {p2iImages.length > 0 && !p2iLoading && (
+                <div className="flex gap-3 flex-wrap">
+                  <Button onClick={() => p2iImages.forEach((src, i) => { const a = document.createElement("a"); a.href = src; a.download = `page-${i + 1}.jpg`; a.click(); })}>
+                    <Download className="w-4 h-4 mr-2" />Download All ({p2iImages.length} images)
                   </Button>
-                )}
-              </div>
+                  <Button variant="outline" onClick={() => { setP2iFile(null); setP2iImages([]); }}>
+                    Convert Another
+                  </Button>
+                </div>
+              )}
               {p2iImages.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                   {p2iImages.map((src, i) => (

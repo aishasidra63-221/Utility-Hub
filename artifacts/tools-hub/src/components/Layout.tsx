@@ -93,18 +93,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   // ── Theme apply ──
   useEffect(() => {
-    const isDark =
-      theme === "dark" ||
-      (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    document.documentElement.classList.toggle("dark", isDark);
-
-    if (theme === "system") {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      const listener = (e: MediaQueryListEvent) =>
-        document.documentElement.classList.toggle("dark", e.matches);
-      mq.addEventListener("change", listener);
-      return () => mq.removeEventListener("change", listener);
-    }
+    document.documentElement.classList.toggle("dark", theme === "dark");
     return undefined;
   }, [theme]);
 
@@ -138,10 +127,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const currentLang = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
 
-  const isDark =
-    theme === "dark" ||
-    (theme === "system" && typeof window !== "undefined" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const isDark = theme === "dark";
 
   const toggleTheme = () => setTheme(isDark ? "light" : "dark");
 
