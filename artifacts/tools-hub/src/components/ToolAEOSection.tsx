@@ -30,19 +30,32 @@ export function ToolAEOSection({ tool }: Props) {
     };
     injectSchema("schema-faq-tool", faqSchema);
 
-    const webAppSchema = {
+    const softwareAppSchema = {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
+      "@type": "SoftwareApplication",
       name: tool.title,
       url: `${origin}${tool.href}`,
       description: tool.tagline,
-      applicationCategory: "UtilityApplication",
-      operatingSystem: "Any",
-      browserRequirements: "Requires JavaScript",
-      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      applicationCategory: "WebApplication",
+      applicationSubCategory: "UtilityApplication",
+      operatingSystem: "Any (browser-based)",
+      browserRequirements: "Requires a modern browser with JavaScript enabled",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+        availability: "https://schema.org/InStock",
+      },
       featureList: tool.features.join(", "),
+      screenshot: `${origin}/opengraph.jpg`,
+      softwareHelp: { "@type": "CreativeWork", url: `${origin}/blog` },
+      provider: {
+        "@type": "Organization",
+        name: "ToolsHub",
+        url: origin,
+      },
     };
-    injectSchema("schema-webapp-tool", webAppSchema);
+    injectSchema("schema-webapp-tool", softwareAppSchema);
 
     return () => {
       removeSchema("schema-faq-tool");

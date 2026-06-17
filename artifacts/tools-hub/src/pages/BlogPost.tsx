@@ -175,6 +175,8 @@ export default function BlogPost() {
     );
   }
 
+  const coverImageUrl = BLOG_COVER_IMAGES[post.slug] ?? "https://toolshub.app/opengraph.jpg";
+
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -182,14 +184,40 @@ export default function BlogPost() {
     description: post.metaDescription,
     datePublished: post.publishDate,
     dateModified: post.publishDate,
-    author: { "@type": "Organization", name: "ToolsHub" },
+    image: { "@type": "ImageObject", url: coverImageUrl, width: 1200, height: 630 },
+    author: { "@type": "Organization", name: "ToolsHub", url: "https://toolshub.app" },
     publisher: {
       "@type": "Organization",
       name: "ToolsHub",
+      url: "https://toolshub.app",
       logo: { "@type": "ImageObject", url: "https://toolshub.app/opengraph.jpg" },
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": `https://toolshub.app/blog/${post.slug}` },
   };
+
+  const allSections = [...post.sections, ...(BLOG_EXTENSIONS[post.slug] ?? [])];
+  const howToSteps = allSections
+    .filter((s) => s.numberedList && s.numberedList.length > 0)
+    .flatMap((s) =>
+      s.numberedList!.map((step, i) => ({
+        "@type": "HowToStep",
+        position: i + 1,
+        name: step.includes(":") ? step.split(":")[0].trim() : step.substring(0, 60),
+        text: step,
+      }))
+    );
+
+  const howToSchema = howToSteps.length >= 3
+    ? {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        name: post.title,
+        description: post.excerpt,
+        image: { "@type": "ImageObject", url: coverImageUrl },
+        step: howToSteps,
+        tool: { "@type": "HowToTool", name: "ToolsHub — free browser-based tool" },
+      }
+    : null;
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -216,7 +244,8 @@ export default function BlogPost() {
     description: post.metaDescription,
     canonical: `https://toolshub.app/blog/${post.slug}`,
     ogType: "article",
-    schemas: [articleSchema, faqSchema, breadcrumbSchema],
+    ogImage: coverImageUrl,
+    schemas: [articleSchema, faqSchema, breadcrumbSchema, ...(howToSchema ? [howToSchema] : [])],
   });
 
   const relatedPosts = post.relatedSlugs
