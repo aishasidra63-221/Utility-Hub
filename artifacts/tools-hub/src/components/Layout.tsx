@@ -214,9 +214,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         className="fixed inset-0 z-[60] transition-all duration-300"
         style={{
           pointerEvents: drawerOpen ? "auto" : "none",
-          background: drawerOpen ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0)",
-          backdropFilter: drawerOpen ? "blur(6px)" : "blur(0px)",
-          WebkitBackdropFilter: drawerOpen ? "blur(6px)" : "blur(0px)",
+          background: drawerOpen ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0)",
+          backdropFilter: drawerOpen ? "blur(12px)" : "blur(0px)",
+          WebkitBackdropFilter: drawerOpen ? "blur(12px)" : "blur(0px)",
           opacity: drawerOpen ? 1 : 0,
         }}
         aria-hidden={!drawerOpen}
