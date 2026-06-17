@@ -89,7 +89,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [scrolled, setScrolled]     = useState(false);
   const [langOpen, setLangOpen]     = useState(false);
   const { lang, setLang, t }        = useLang();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const drawerRef  = useRef<HTMLDivElement>(null);
 
   // ── Theme apply (instant — no flash) ──
@@ -366,7 +366,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {location !== "/" && (
           <div className="max-w-6xl mx-auto px-4 pt-4">
             <button
-              onClick={() => window.history.length > 1 ? window.history.back() : (window.location.href = "/")}
+              onClick={() => navigate("/")}
               aria-label="Go back"
               className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-sm shadow-primary/30 hover:opacity-85 active:scale-95 transition-all"
             >
