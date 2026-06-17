@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>ToolsHub Blog — Free Browser Tools Guides</title>
+    <link>https://toolshub.app/blog</link>
+    <description>Step-by-step guides for image tools, PDF tools, generators, and utilities that run entirely in your browser. No upload, no signup.</description>
+    <language>en-us</language>
+    <copyright>© 2025 ToolsHub</copyright>
+    <managingEditor>hello@toolshub.app (ToolsHub)</managingEditor>
+    <webMaster>hello@toolshub.app (ToolsHub)</webMaster>
+    <lastBuildDate>Sat, 01 Mar 2025 00:00:00 GMT</lastBuildDate>
+    <atom:link href="https://toolshub.app/rss.xml" rel="self" type="application/rss+xml"/>
+    <image>
+      <url>https://toolshub.app/opengraph.jpg</url>
+      <title>ToolsHub Blog</title>
+      <link>https://toolshub.app/blog</link>
+    </image>
+
+    <item>
+      <title>Base64 Encoder and Decoder — Free Online Tool for Developers</title>
+      <link>https://toolshub.app/blog/base64-encode-decode-online</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/base64-encode-decode-online</guid>
+      <pubDate>Fri, 28 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Encode text or files to Base64 and decode Base64 strings back to the original. Free, browser-based. Essential for developers working with data URIs, APIs, and JWT tokens.</description>
+      <category>Utility Tools</category>
+    </item>
+
+    <item>
+      <title>EMI Calculator — Calculate Loan Monthly Payments Free</title>
+      <link>https://toolshub.app/blog/emi-calculator-loan-repayment</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/emi-calculator-loan-repayment</guid>
+      <pubDate>Thu, 27 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Calculate EMI (Equated Monthly Installment) for home loans, car loans, and personal loans. See total interest payable and full amortization schedule. Free, browser-based.</description>
+      <category>Utility Tools</category>
+    </item>
+
+    <item>
+      <title>BMI Calculator — Calculate Your Body Mass Index Free Online</title>
+      <link>https://toolshub.app/blog/bmi-calculator-body-mass-index</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/bmi-calculator-body-mass-index</guid>
+      <pubDate>Wed, 26 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Calculate your Body Mass Index (BMI) instantly. Supports metric and imperial units. Free, browser-based BMI calculator with category ranges and health context.</description>
+      <category>Utility Tools</category>
+    </item>
+
+    <item>
+      <title>How to View and Explore JSON Data Online for Free</title>
+      <link>https://toolshub.app/blog/explore-json-data-online</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/explore-json-data-online</guid>
+      <pubDate>Tue, 25 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Format, validate, and explore JSON data in a visual tree browser. Free, browser-based, no upload. Copy paths, collapse nodes, search keys — perfect for API responses and config files.</description>
+      <category>Utility Tools</category>
+    </item>
+
+    <item>
+      <title>How to View and Explore CSV Files Online for Free</title>
+      <link>https://toolshub.app/blog/explore-csv-data-online-free</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/explore-csv-data-online-free</guid>
+      <pubDate>Mon, 24 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Open, view, search, filter, and sort CSV files in your browser. Free CSV viewer with table view — no upload, no Excel required, works on any device.</description>
+      <category>Utility Tools</category>
+    </item>
+
+    <item>
+      <title>How to Build a Professional Resume Online for Free — No Word Required</title>
+      <link>https://toolshub.app/blog/build-resume-online-free</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/build-resume-online-free</guid>
+      <pubDate>Sun, 23 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Create and download a professional resume as a PDF in your browser. Free resume builder with multiple templates, no account, no watermark, no upload.</description>
+      <category>Generator Tools</category>
+    </item>
+
+    <item>
+      <title>Free Online Word Counter — Words, Characters, Paragraphs, Reading Time</title>
+      <link>https://toolshub.app/blog/word-counter-online-free</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/word-counter-online-free</guid>
+      <pubDate>Sat, 22 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Count words, characters, sentences, paragraphs, and reading time instantly. Free, browser-based word counter. Great for essays, articles, and social media copy.</description>
+      <category>Utility Tools</category>
+    </item>
+
+    <item>
+      <title>How to Clean and Format Text Online for Free</title>
+      <link>https://toolshub.app/blog/clean-format-text-online</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/clean-format-text-online</guid>
+      <pubDate>Fri, 21 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Remove extra spaces, fix line breaks, strip HTML, convert case, and clean text instantly in your browser. Free text cleaner tool — no upload, no account.</description>
+      <category>Utility Tools</category>
+    </item>
+
+    <item>
+      <title>Free Online Unit Converter — Length, Weight, Temperature &amp; 20+ More</title>
+      <link>https://toolshub.app/blog/unit-converter-online-free</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/unit-converter-online-free</guid>
+      <pubDate>Thu, 20 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Convert units of measurement online for free — length, weight, temperature, area, volume, speed, data, and more. Instant, browser-based, no account needed.</description>
+      <category>Utility Tools</category>
+    </item>
+
+    <item>
+      <title>How to Use the Pomodoro Technique — Free Browser Timer</title>
+      <link>https://toolshub.app/blog/pomodoro-technique-timer-online</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/pomodoro-technique-timer-online</guid>
+      <pubDate>Fri, 14 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Use the Pomodoro Technique to boost focus and productivity with a free browser-based timer. Customizable work and break intervals. No app installation required.</description>
+      <category>Utility Tools</category>
+    </item>
+
+    <item>
+      <title>How to Convert a Video to GIF Online for Free</title>
+      <link>https://toolshub.app/blog/convert-video-to-gif-free</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/convert-video-to-gif-free</guid>
+      <pubDate>Thu, 13 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Convert MP4, WebM, and other videos to animated GIFs in your browser. Free, no upload, adjustable framerate and dimensions. Perfect for social media, documentation, and demos.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Create a WhatsApp Click-to-Chat Link for Free</title>
+      <link>https://toolshub.app/blog/create-whatsapp-link-generator</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/create-whatsapp-link-generator</guid>
+      <pubDate>Wed, 12 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Generate a WhatsApp click-to-chat link with a pre-filled message. Free, instant, browser-based. Ideal for businesses, freelancers, and customer service teams.</description>
+      <category>Generator Tools</category>
+    </item>
+
+    <item>
+      <title>How to Create a QR Code for Free — URLs, Text, WiFi, Contact Cards</title>
+      <link>https://toolshub.app/blog/create-qr-codes-free</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/create-qr-codes-free</guid>
+      <pubDate>Tue, 11 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Generate QR codes for URLs, text, WiFi networks, and contact cards instantly. Free, browser-based, downloadable as PNG or SVG. No account, no upload.</description>
+      <category>Generator Tools</category>
+    </item>
+
+    <item>
+      <title>How to Generate a Strong Password — Free, Cryptographically Secure</title>
+      <link>https://toolshub.app/blog/generate-strong-passwords-online</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/generate-strong-passwords-online</guid>
+      <pubDate>Mon, 10 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Generate strong, random passwords with the browser's cryptographic API. Free, no upload, nothing ever sent to a server. Customizable length and character sets.</description>
+      <category>Generator Tools</category>
+    </item>
+
+    <item>
+      <title>How to Extract Text from Images with OCR — Free, 8 Languages, No Upload</title>
+      <link>https://toolshub.app/blog/extract-text-from-images-ocr</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/extract-text-from-images-ocr</guid>
+      <pubDate>Tue, 04 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Extract text from images, screenshots, and scanned documents using OCR. Free, browser-based, supports 8 languages including English and Hindi. No upload required.</description>
+      <category>PDF Tools</category>
+    </item>
+
+    <item>
+      <title>How to Annotate PDF Documents Online for Free</title>
+      <link>https://toolshub.app/blog/annotate-pdf-free-online</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/annotate-pdf-free-online</guid>
+      <pubDate>Mon, 03 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Highlight, draw, annotate, and add notes to PDFs in your browser. Free, no upload, no Adobe Acrobat needed. Download your annotated PDF with all marks embedded.</description>
+      <category>PDF Tools</category>
+    </item>
+
+    <item>
+      <title>How to Sign a PDF Online for Free — No Upload, No DocuSign Subscription</title>
+      <link>https://toolshub.app/blog/sign-pdf-free-online</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/sign-pdf-free-online</guid>
+      <pubDate>Sun, 02 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Sign PDF documents online for free. Draw, type, or upload your signature and embed it in any PDF. Browser-based, no upload, no account — works on contracts, forms, and agreements.</description>
+      <category>PDF Tools</category>
+    </item>
+
+    <item>
+      <title>13 PDF Tools in Your Browser — Compress, Merge, Split, and More</title>
+      <link>https://toolshub.app/blog/pdf-tools-compress-merge-split</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/pdf-tools-compress-merge-split</guid>
+      <pubDate>Sat, 01 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Use 13 free PDF tools — compress, merge, split, protect, watermark, annotate, and convert PDFs — entirely in your browser. No upload, no signup, completely private.</description>
+      <category>PDF Tools</category>
+    </item>
+
+    <item>
+      <title>How to Pick Colors from Images — Free Online Color Picker Tool</title>
+      <link>https://toolshub.app/blog/how-to-pick-colors-from-images</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/how-to-pick-colors-from-images</guid>
+      <pubDate>Mon, 27 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Pick exact color values from any point in an image. Get HEX, RGB, and HSL codes instantly. Free browser-based color picker — no upload, no account.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Remove EXIF Metadata from Photos Before Sharing</title>
+      <link>https://toolshub.app/blog/remove-exif-metadata-from-photos</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/remove-exif-metadata-from-photos</guid>
+      <pubDate>Sun, 26 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Strip EXIF metadata from photos to protect your privacy. Remove GPS location, camera model, date, and personal data. Free, browser-based, no upload.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Blur Faces in Photos for Privacy — Free, Browser-Based</title>
+      <link>https://toolshub.app/blog/blur-faces-in-photos-privacy</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/blur-faces-in-photos-privacy</guid>
+      <pubDate>Sat, 25 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Automatically detect and blur faces in photos to protect privacy. Free, browser-based, no upload. Uses AI face detection — perfect for publishing photos of crowds, events, and public spaces.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Remove Watermarks from Your Own Images — Free Online Tool</title>
+      <link>https://toolshub.app/blog/remove-watermark-from-image</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/remove-watermark-from-image</guid>
+      <pubDate>Fri, 24 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Remove watermarks from images you own using AI inpainting technology. Free, browser-based, no upload. Works on text watermarks, logos, and semi-transparent overlays.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Colorize Black and White Photos Online — Free AI Colorization</title>
+      <link>https://toolshub.app/blog/colorize-black-and-white-photos</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/colorize-black-and-white-photos</guid>
+      <pubDate>Thu, 23 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Add color to old black and white photos using AI. Free, browser-based, no upload. Restore family portraits, vintage images, and historical photographs with realistic colors.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Upscale Images with AI for Free — Without Losing Quality</title>
+      <link>https://toolshub.app/blog/upscale-images-ai-free</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/upscale-images-ai-free</guid>
+      <pubDate>Wed, 22 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Upscale low-resolution images 2× or 4× using AI. Free, browser-based, no upload. Sharpen old photos, enlarge product images, and enhance details — all privately.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Remove the Background from an Image — Free, AI-Powered, No Upload</title>
+      <link>https://toolshub.app/blog/remove-background-from-image-free</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/remove-background-from-image-free</guid>
+      <pubDate>Tue, 21 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Remove image backgrounds in seconds using AI. Free, runs entirely in your browser, no upload, no signup. Works on photos, product images, portraits, and logos.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Convert HEIC to JPG for Free — iPhone Photo Guide</title>
+      <link>https://toolshub.app/blog/convert-heic-to-jpg-guide</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/convert-heic-to-jpg-guide</guid>
+      <pubDate>Mon, 20 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Convert iPhone HEIC photos to JPG, PNG, or WebP in seconds. Free, browser-based, no upload. Works on Mac, Windows, and mobile. Complete guide with FAQ.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Extract a Color Palette from Any Image — Free, Instant</title>
+      <link>https://toolshub.app/blog/extract-color-palette-from-image</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/extract-color-palette-from-image</guid>
+      <pubDate>Sun, 19 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Extract the dominant colors from any image as HEX, RGB, and HSL codes. Free, browser-based, no upload. Perfect for designers, developers, and brand teams.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Crop Images Online for Free — Any Ratio, No Upload</title>
+      <link>https://toolshub.app/blog/how-to-crop-images-free</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/how-to-crop-images-free</guid>
+      <pubDate>Sat, 18 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Crop images to any ratio — 1:1, 4:3, 16:9, or custom — directly in your browser. Free, no upload, no account. Drag-and-drop interface with instant download.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Resize Images Online for Free — Dimensions, Presets &amp; Aspect Ratio</title>
+      <link>https://toolshub.app/blog/resize-images-online-free</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/resize-images-online-free</guid>
+      <pubDate>Fri, 17 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Resize images to exact pixel dimensions — HD, Full HD, Instagram, Twitter — or any custom size. Free, browser-based, no upload. Step-by-step guide with social media presets.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>Convert Images Between JPG, PNG, and WebP — Free &amp; Instant</title>
+      <link>https://toolshub.app/blog/convert-images-between-formats</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/convert-images-between-formats</guid>
+      <pubDate>Thu, 16 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Convert images between JPG, PNG, and WebP formats in bulk, directly in your browser. No upload, no server, no signup. Includes step-by-step guide and format comparison.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Compress Images Without Losing Quality — Free, No Upload</title>
+      <link>https://toolshub.app/blog/how-to-compress-images</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/how-to-compress-images</guid>
+      <pubDate>Wed, 15 Jan 2025 00:00:00 GMT</pubDate>
+      <description>Learn how to compress JPG, PNG, and WebP images for free directly in your browser. No upload required. Step-by-step guide with tips to reduce file size while keeping quality.</description>
+      <category>Image Tools</category>
+    </item>
+
+  </channel>
+</rss>

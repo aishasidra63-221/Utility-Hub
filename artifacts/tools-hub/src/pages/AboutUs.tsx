@@ -103,11 +103,33 @@ const techStack = [
   { label: "Hugging Face",      desc: "Open AI models" },
 ];
 
+const ORG_SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "ToolsHub",
+  url: "https://toolshub.app",
+  logo: "https://toolshub.app/favicon.svg",
+  description: "Free browser-based utility tools — image processing, PDF manipulation, generators and more. No login, no ads, no server uploads.",
+  sameAs: [],
+  foundingDate: "2025",
+  knowsAbout: [
+    "Image compression", "PDF tools", "Browser-based processing",
+    "WebAssembly", "Privacy-first software", "Online utilities",
+  ],
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    description: "All tools are free to use with no limits.",
+  },
+};
+
 export default function AboutUs() {
   useSEO({
     title: "About ToolsHub — Free Browser-Based Tools for Everyone",
     description:
       "Learn about the ToolsHub mission: 26+ free, private, browser-based utilities with no login, no ads, and no server uploads.",
+    schemas: [ORG_SCHEMA],
   });
 
   return (

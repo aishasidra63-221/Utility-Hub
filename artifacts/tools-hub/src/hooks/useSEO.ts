@@ -20,14 +20,56 @@ function setMeta(name: string, content: string, attr = "name") {
   el.content = content;
 }
 
-function setLink(rel: string, href: string) {
-  let el = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+function setLink(rel: string, href: string, extra?: Record<string, string>) {
+  const selector = extra
+    ? `link[rel="${rel}"]${Object.entries(extra).map(([k]) => `[${k}]`).join("")}`
+    : `link[rel="${rel}"]`;
+  let el = document.querySelector<HTMLLinkElement>(selector);
   if (!el) {
     el = document.createElement("link");
     el.rel = rel;
+    if (extra) Object.entries(extra).forEach(([k, v]) => el!.setAttribute(k, v));
     document.head.appendChild(el);
   }
   el.href = href;
+}
+
+const HREFLANG_CODES = [
+  { lang: "en",    hreflang: "en" },
+  { lang: "hi",    hreflang: "hi" },
+  { lang: "es",    hreflang: "es" },
+  { lang: "fr",    hreflang: "fr" },
+  { lang: "ar",    hreflang: "ar" },
+  { lang: "pt",    hreflang: "pt-BR" },
+  { lang: "bn",    hreflang: "bn" },
+  { lang: "ru",    hreflang: "ru" },
+  { lang: "ja",    hreflang: "ja" },
+  { lang: "zh",    hreflang: "zh-CN" },
+  { lang: "de",    hreflang: "de" },
+  { lang: "id",    hreflang: "id" },
+];
+
+function injectHreflang(canonicalUrl: string) {
+  const existing = document.querySelectorAll<HTMLLinkElement>('link[rel="alternate"][hreflang]');
+  existing.forEach((el) => el.remove());
+
+  HREFLANG_CODES.forEach(({ hreflang }) => {
+    const el = document.createElement("link");
+    el.rel = "alternate";
+    el.setAttribute("hreflang", hreflang);
+    el.href = canonicalUrl;
+    document.head.appendChild(el);
+  });
+
+  const xDefault = document.createElement("link");
+  xDefault.rel = "alternate";
+  xDefault.setAttribute("hreflang", "x-default");
+  xDefault.href = canonicalUrl;
+  document.head.appendChild(xDefault);
+}
+
+function removeHreflang() {
+  document.querySelectorAll<HTMLLinkElement>('link[rel="alternate"][hreflang]').forEach((el) => el.remove());
 }
 
 function injectSchema(id: string, data: object) {
@@ -78,6 +120,8 @@ export function useSEO({
 
     setLink("canonical", url);
 
+    injectHreflang(url);
+
     const websiteSchema = {
       "@context": "https://schema.org",
       "@type": "WebSite",
@@ -110,6 +154,7 @@ export function useSEO({
       document.title = prevTitle || "ToolsHub — Free Online Tools";
       removeSchema("schema-breadcrumb");
       schemas.forEach((_s, i) => removeSchema(`schema-custom-${i}`));
+      removeHreflang();
     };
   }, [title, description, canonical, ogImage, ogType, schemas, keywords]);
 }
