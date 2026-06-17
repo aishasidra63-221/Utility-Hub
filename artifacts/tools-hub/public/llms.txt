@@ -1,0 +1,82 @@
+# ToolsHub
+
+> Free browser-based utility tools — image processing, PDF manipulation, generators, and more. All tools run entirely client-side using WebAssembly and AI models. No login, no ads, no server uploads. Your files never leave your device.
+
+## What ToolsHub is
+
+ToolsHub is a collection of 36+ privacy-focused browser utilities. Every tool processes files locally in the user's browser using WebAssembly, the Canvas API, and ONNX AI models — nothing is uploaded to any server.
+
+- **Free, forever.** No freemium, no credits, no subscription.
+- **Private by design.** Files stay on the user's device.
+- **No account required.** Open a tool and start using it.
+- **Works offline.** Once the page loads, most tools work without internet.
+
+## Tool Categories
+
+### Image Tools
+- [Image Compressor](https://toolshub.app/image-compressor) — Compress JPG, PNG, WebP images in the browser. Adjustable quality, instant preview, batch supported.
+- [Image Converter](https://toolshub.app/image-converter) — Convert between JPG, PNG, WebP in bulk. Download all as ZIP.
+- [Image Resizer](https://toolshub.app/image-resizer) — Resize to exact dimensions or social media presets. Aspect ratio lock.
+- [Image Cropper](https://toolshub.app/image-cropper) — Crop to any ratio (1:1, 4:3, 16:9, custom).
+- [Background Remover](https://toolshub.app/background-remover) — AI-powered background removal using ONNX models. Runs entirely in-browser.
+- [HEIC to JPG Converter](https://toolshub.app/heic-converter) — Convert iPhone HEIC photos to JPG, PNG, or WebP.
+- [EXIF Stripper](https://toolshub.app/exif-stripper) — Remove GPS location and all metadata from photos before sharing.
+- [Color Palette Generator](https://toolshub.app/color-palette) — Extract dominant colors from any image as HEX, RGB, HSL.
+- [Color Picker](https://toolshub.app/color-picker) — Pick any color from an uploaded image. Eyedropper tool.
+- [Video to GIF](https://toolshub.app/video-to-gif) — Convert MP4/WebM video clips to animated GIF.
+
+### PDF Tools
+- [PDF Tools](https://toolshub.app/pdf-converter) — 13 PDF utilities: compress, merge, split, protect, watermark, convert.
+- [E-Signature](https://toolshub.app/e-signature) — Sign PDFs in-browser. Draw, type, or upload signature. No upload.
+- [PDF Annotator](https://toolshub.app/pdf-annotator) — Highlight, draw, and annotate PDFs. Download with marks embedded.
+- [OCR Tool](https://toolshub.app/ocr-tool) — Extract text from images using Tesseract.js. 8 languages including English and Hindi.
+
+### Generator Tools
+- [Password Generator](https://toolshub.app/password-generator) — Cryptographically secure passwords using the browser's Web Crypto API.
+- [QR Code Generator](https://toolshub.app/qr-generator) — QR codes for URLs, text, WiFi, and contact cards. PNG/SVG download.
+- [WhatsApp Link Generator](https://toolshub.app/whatsapp-link) — Create WhatsApp click-to-chat links with pre-filled messages.
+- [Resume Builder](https://toolshub.app/resume-builder) — Build and download a PDF resume. Multiple templates, no account.
+
+### Utility Tools
+- [Unit Converter](https://toolshub.app/unit-converter) — Convert 20+ unit categories: length, weight, temperature, area, speed, data.
+- [Word Counter](https://toolshub.app/word-counter) — Count words, characters, sentences, paragraphs, and reading time.
+- [Text Cleaner](https://toolshub.app/text-cleaner) — Remove extra spaces, fix line breaks, strip HTML, convert case.
+- [Pomodoro Timer](https://toolshub.app/pomodoro-timer) — Browser-based Pomodoro timer. Customizable work/break intervals.
+- [BMI Calculator](https://toolshub.app/bmi-calculator) — Body Mass Index calculator. Metric and imperial. Category ranges.
+- [EMI Calculator](https://toolshub.app/emi-calculator) — Loan EMI calculator with full amortization schedule.
+- [Base64 Tool](https://toolshub.app/base64) — Encode/decode text and files to Base64. Data URI generation. JWT payload decoder.
+
+## Blog
+
+ToolsHub publishes long-form guides for every tool at [toolshub.app/blog](https://toolshub.app/blog). 36 posts covering image optimization, PDF workflows, privacy, productivity, and developer tools.
+
+Selected posts:
+- [How to Compress Images Without Losing Quality](https://toolshub.app/blog/how-to-compress-images)
+- [How to Remove the Background from an Image](https://toolshub.app/blog/remove-background-from-image-free)
+- [How to Remove EXIF Metadata from Photos](https://toolshub.app/blog/remove-exif-metadata-from-photos)
+- [How to Sign a PDF Online for Free](https://toolshub.app/blog/sign-pdf-free-online)
+- [How to Extract Text from Images with OCR](https://toolshub.app/blog/extract-text-from-images-ocr)
+- [Social Media Image Size Guide 2025](https://toolshub.app/blog/social-media-image-size-guide-2025)
+- [How to Protect Your Privacy When Selling Online](https://toolshub.app/blog/how-to-protect-privacy-selling-online)
+- [Core Web Vitals Image Optimization Guide](https://toolshub.app/blog/optimize-images-for-web-core-web-vitals)
+
+Full blog index: [toolshub.app/blog](https://toolshub.app/blog)
+RSS feed: [toolshub.app/rss.xml](https://toolshub.app/rss.xml)
+
+## Technical Stack
+
+- Frontend: React 19, Vite, Tailwind CSS
+- Heavy processing: WebAssembly, ONNX Runtime Web, Tesseract.js
+- AI models: @imgly/background-removal, Hugging Face Transformers
+- PDF: pdf-lib, PDF.js
+- No backend for tool processing — all client-side
+
+## Privacy and Trust
+
+- [Security page](https://toolshub.app/security) — Technical explanation of how browser-based processing works.
+- [Privacy Policy](https://toolshub.app/privacy-policy)
+- [About ToolsHub](https://toolshub.app/about)
+
+## Sitemap
+
+Full sitemap: [toolshub.app/sitemap.xml](https://toolshub.app/sitemap.xml)
