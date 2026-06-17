@@ -2403,6 +2403,340 @@ export const BLOG_POSTS: BlogPost[] = [
       { q: "Does Base64 work for all file types?", a: "Yes. Base64 treats all data as binary bytes, regardless of whether it's an image, PDF, video, or executable." },
     ],
   },
+  // ─────────────────────────────────────────────────────────────
+  // NEW POSTS — MARCH 2025
+  // ─────────────────────────────────────────────────────────────
+  {
+    slug: "optimize-images-for-web-core-web-vitals",
+    title: "How to Optimize Images for the Web — Core Web Vitals Guide",
+    metaDescription: "Slow images hurt SEO rankings and drive visitors away. Learn exactly how to compress, resize, and format images for fast page loads — free, no upload, browser-based.",
+    excerpt: "Images are typically the largest assets on any web page. Getting them right is one of the highest-ROI tasks in web performance — and it takes minutes, not days.",
+    category: "image",
+    toolHref: "/image-compressor",
+    relatedSlugs: ["how-to-compress-images", "resize-images-online-free", "convert-images-between-formats"],
+    publishDate: "2025-03-05",
+    readMinutes: 6,
+    sections: [
+      {
+        paragraphs: [
+          "Google's Core Web Vitals measure real user experience — and images are usually the biggest culprit when pages score poorly. The Largest Contentful Paint (LCP) metric, which measures how fast the main content loads, is almost always dominated by a hero image. If that image is a 4 MB JPEG loaded at full resolution, your LCP score will reflect it — and so will your search rankings.",
+          "The good news: image optimization doesn't require Photoshop, a CDN, or a developer. A few deliberate decisions about format, compression level, and dimensions will cut most pages' image payload by 70–80% with no visible quality difference.",
+        ],
+      },
+      {
+        heading: "Step 1 — Choose the right format",
+        paragraphs: [
+          "Format choice alone can halve your file size. Use WebP for all images on the web — it's 25–35% smaller than JPEG at the same visual quality, and all modern browsers support it. Keep JPEG for photos that need to be shared outside the web (email, print, social), because WebP compatibility outside browsers is still inconsistent. Use PNG only when you need a transparent background; for everything else, it's unnecessarily large.",
+          "Converting your existing JPG or PNG library to WebP takes seconds with a batch converter. ToolsHub Image Converter does this entirely in your browser — drop in multiple files and download a ZIP of WebP versions.",
+        ],
+      },
+      {
+        heading: "Step 2 — Compress to the right quality level",
+        paragraphs: [
+          "Most images on the web are over-compressed in the wrong direction: either bloated originals uploaded without compression, or aggressively compressed thumbnails that look terrible on retina screens. The sweet spot for JPEG and WebP is 75–85% quality — visually indistinguishable from the original at normal viewing sizes, but 50–70% smaller.",
+          "Use ToolsHub Image Compressor to preview the output at different quality settings before downloading. Slide to 80%, zoom in, and compare — if you can't see a difference, you've found your target. For product photos where fine detail matters (textures, fabric, print), go no lower than 85%.",
+        ],
+        list: [
+          "Hero images: 80–85% quality, WebP, max 1600px wide",
+          "Blog post images: 78–82% quality, WebP, max 1200px wide",
+          "Thumbnails and cards: 70–78% quality, WebP, max 600px wide",
+          "Icons and logos with transparency: PNG or SVG (not JPEG/WebP)",
+        ],
+      },
+      {
+        heading: "Step 3 — Serve images at display size, not source size",
+        paragraphs: [
+          "One of the most common and wasteful mistakes: uploading a 3000×2000px photo to display it in a 400px card. The browser downloads the full 3000px image and then scales it down — wasting bandwidth and delaying load time.",
+          "Before uploading, resize the image to the largest dimension it will actually appear at. A full-width desktop hero might be 1440px wide; a sidebar thumbnail might be 280px. ToolsHub Image Resizer lets you set exact pixel dimensions and download the resized result — no upload, instant, free.",
+        ],
+      },
+      {
+        heading: "What these changes mean in practice",
+        paragraphs: [
+          "An unoptimized product page might load 8 MB of images. After converting to WebP, compressing to 80%, and resizing to display dimensions, that same page typically loads 1.2–1.8 MB — a 75–85% reduction. On a 4G mobile connection, that's the difference between a 6-second load and a 1-second load.",
+          "Google's PageSpeed Insights will score this improvement directly in LCP and Total Blocking Time metrics. Sites that cross the 'Good' threshold (LCP under 2.5 seconds) consistently outperform competitors in organic search — the correlation between page speed and ranking position is one of the most reproducible findings in SEO.",
+        ],
+      },
+      {
+        heading: "A checklist before you publish any image",
+        list: [
+          "Is it WebP? (Or at least JPEG — never PNG for photos)",
+          "Is it under 200 KB for a full-width image? Under 80 KB for a thumbnail?",
+          "Is the width within 200px of the largest display size?",
+          "Does it have a descriptive alt attribute (for accessibility and image SEO)?",
+          "Is it lazy-loaded if it appears below the fold? (add loading='lazy' in HTML)",
+        ],
+      },
+    ],
+    faq: [
+      { q: "Does image compression hurt my Google rankings?", a: "No — the opposite. Google explicitly uses page speed as a ranking signal. Optimized images improve your Core Web Vitals scores, which directly affect ranking. The key is to stay above visible quality thresholds (80%+ quality for JPEG/WebP is safe)." },
+      { q: "Should I use WebP or AVIF?", a: "WebP is the safe choice today — 95%+ browser support including all modern mobile browsers. AVIF compresses 20–30% better than WebP but has less consistent support and slower encoding. Stick with WebP unless you're running a high-traffic site with advanced infrastructure." },
+      { q: "How large should my hero image be?", a: "For a full-width desktop hero, max 1440–1600px wide at 80% WebP quality, targeting under 250 KB. For mobile (which loads far more traffic), consider a separate smaller version served with srcset." },
+      { q: "Do I need to compress SVGs?", a: "SVGs are already text-based and often small. If your SVG is over 20 KB, it likely has unnecessary paths or metadata — an SVG optimizer can help. ToolsHub currently focuses on raster formats (JPEG, PNG, WebP)." },
+    ],
+  },
+
+  {
+    slug: "sign-documents-free-without-docusign",
+    title: "How to Sign Documents Online for Free — Without DocuSign or Adobe",
+    metaDescription: "DocuSign costs $15/month. Adobe Sign costs $13/month. You can sign contracts, forms, and agreements online for free in your browser — with no account, no upload, and full legal validity.",
+    excerpt: "Electronic signatures are legally binding in most countries without any paid subscription. Here's how to sign any document for free using nothing but your browser.",
+    category: "pdf",
+    toolHref: "/e-signature",
+    relatedSlugs: ["sign-pdf-free-online", "annotate-pdf-free-online", "pdf-tools-compress-merge-split"],
+    publishDate: "2025-03-06",
+    readMinutes: 5,
+    sections: [
+      {
+        paragraphs: [
+          "DocuSign's cheapest plan costs $15/month. Adobe Acrobat Sign starts at $13/month. HelloSign is $15/month. For most individuals and freelancers who sign a contract every few weeks, paying for a subscription makes no economic sense — especially when browser-based e-signature tools provide identical legal standing at zero cost.",
+          "The misconception is that e-signatures require a platform like DocuSign to be 'official'. They don't. What makes an electronic signature legally binding is consent and intent — not the platform used to create it.",
+        ],
+      },
+      {
+        heading: "Are free e-signatures legally valid?",
+        paragraphs: [
+          "In most jurisdictions, yes — unambiguously. The US ESIGN Act (2000) and UETA established that electronic signatures have the same legal status as handwritten ones, provided both parties consent to electronic signing. The EU's eIDAS regulation takes a similar position. The UK, Australia, Canada, India, and most other major economies have equivalent legislation.",
+          "A signature created by drawing in a browser, typing your name, or uploading an image of your signature meets the legal definition of an electronic signature in these jurisdictions. What does NOT meet the standard: simply typing your name in an email (without explicit consent to sign), screenshots, or images added without intent to sign.",
+          "For high-stakes documents — mortgage deeds, court filings, notarized documents — check jurisdiction-specific requirements. For the vast majority of everyday documents (freelance contracts, NDAs, rental agreements, business proposals), a browser-based e-signature is fully enforceable.",
+        ],
+      },
+      {
+        heading: "Three ways to sign with ToolsHub E-Signature",
+        paragraphs: [
+          "ToolsHub's e-signature tool runs entirely in your browser — your PDF is never uploaded to any server. Three signing methods are available:",
+        ],
+        list: [
+          "Draw: Use your mouse, trackpad, or finger (on touch screens) to draw your signature directly on the document. Best for a natural-looking signature.",
+          "Type: Type your name and choose a handwriting-style font. Quick and clean — suitable for internal documents and approvals.",
+          "Upload: Upload an image of your physical signature (a scan or photo). Best for maintaining consistency with official documents.",
+        ],
+      },
+      {
+        heading: "How to sign a PDF in under 2 minutes",
+        numberedList: [
+          "Go to ToolsHub E-Signature and open the tool.",
+          "Upload the PDF you need to sign (it stays in your browser — nothing is sent anywhere).",
+          "Choose your signing method: draw, type, or upload.",
+          "Click where you want to place your signature on the document.",
+          "Resize and position it precisely.",
+          "Click Download to save the signed PDF with your signature embedded.",
+        ],
+      },
+      {
+        heading: "When to use a paid platform instead",
+        paragraphs: [
+          "Paid e-signature platforms add value in specific scenarios: when you need audit trails with timestamped access logs, when you're requesting signatures from multiple parties, when you need certified (qualified) signatures for regulated industries, or when your workflow requires CRM integrations.",
+          "For most individuals and small teams, none of these apply. If you're a freelancer sending a contract, a landlord signing a lease, or a small business approving a supplier agreement, ToolsHub E-Signature handles it completely — free, private, and instant.",
+        ],
+      },
+    ],
+    faq: [
+      { q: "Is a drawn e-signature as valid as a typed one?", a: "Yes. Neither drawing nor typing is inherently more valid — what matters legally is the signer's intent and consent to sign electronically. Both methods are covered under the ESIGN Act and eIDAS." },
+      { q: "Can the other party see if I used a free tool?", a: "No. The finished PDF looks identical regardless of which tool was used to add the signature. There is no metadata identifying ToolsHub as the signing platform." },
+      { q: "Does ToolsHub store my signed document?", a: "No. The entire process happens in your browser using JavaScript. Your PDF never touches a server. When you close the tab, the document is gone from ToolsHub's perspective — it only exists in your download." },
+      { q: "Can I sign on mobile?", a: "Yes. ToolsHub E-Signature works on mobile browsers. The draw method works well with a finger on touch screens." },
+    ],
+  },
+
+  {
+    slug: "how-to-protect-privacy-selling-online",
+    title: "How to Protect Your Privacy When Selling Secondhand Online",
+    metaDescription: "Photos taken on your phone expose your home address, the date and time you're away, and the exact GPS coordinates where items are stored. Here's how to sell safely on eBay, Facebook Marketplace, and Craigslist.",
+    excerpt: "Every photo you take on a smartphone contains hidden GPS data. When you list items for sale online, you may be broadcasting your home address to strangers without knowing it.",
+    category: "image",
+    toolHref: "/exif-stripper",
+    relatedSlugs: ["remove-exif-metadata-from-photos", "remove-background-from-image-free", "blur-faces-in-photos-privacy"],
+    publishDate: "2025-03-07",
+    readMinutes: 5,
+    sections: [
+      {
+        paragraphs: [
+          "If you've ever listed something for sale on Facebook Marketplace, eBay, or Craigslist using photos taken on your phone, there's a good chance those photos contained your precise GPS coordinates — down to a few metres. This data is embedded silently by your camera in the file's EXIF metadata, invisible to the naked eye but readable by anyone who downloads the image and checks the metadata.",
+          "Most platforms strip EXIF data server-side before displaying images. Facebook, eBay, and Instagram all do this. But not all do — and even on platforms that strip it, you often share photos via WhatsApp, email, or direct download links where the original file is transferred intact. The habit of stripping EXIF before sharing is simply safer.",
+        ],
+      },
+      {
+        heading: "What EXIF metadata reveals",
+        list: [
+          "GPS coordinates: The latitude and longitude where the photo was taken — typically your home address.",
+          "Timestamp: The exact date and time, revealing when you were home or away.",
+          "Device model: Your phone make and model — minor, but fingerprinting data.",
+          "Camera settings: Focal length, ISO, aperture — irrelevant for most listings but unnecessary.",
+        ],
+      },
+      {
+        heading: "Your background can expose as much as your metadata",
+        paragraphs: [
+          "Even with EXIF stripped, photos can reveal location. A distinctive view from a window, a street sign reflected in a mirror, a neighbour's house visible through a door — all of these provide context a motivated viewer can use to identify your address. High-profile cases of stalking and theft have started with exactly this kind of visual intelligence gathered from online listings.",
+          "The practical solution: remove the background from your product photos entirely. ToolsHub Background Remover uses AI to detect and remove the background, leaving just the item on a transparent (or white) background. This makes your listing look more professional and eliminates any location-identifying visual context in one step.",
+        ],
+      },
+      {
+        heading: "A privacy checklist for online selling",
+        list: [
+          "Strip EXIF metadata from all photos before uploading (use ToolsHub EXIF Stripper — free, browser-based).",
+          "Remove or blur your background to eliminate location-identifying visual context.",
+          "Don't include mirrors, windows with distinctive views, or visible street details.",
+          "Use the platform's messaging system — don't give out your phone number until you've verified buyer intent.",
+          "For in-person meetups, choose a public place (a café, a supermarket car park) rather than your home.",
+          "If selling high-value items, consider photographing them in a neutral rented space or a friend's home.",
+        ],
+      },
+      {
+        heading: "How to strip EXIF data in 30 seconds",
+        paragraphs: [
+          "ToolsHub EXIF Stripper removes all metadata from JPEG and PNG files directly in your browser. Drop in multiple photos, click Strip EXIF, and download the clean versions as a ZIP. Nothing is uploaded — the processing happens locally using the Canvas API, which re-encodes the image without the metadata block.",
+          "Check your work by right-clicking a downloaded image and viewing its Properties (Windows) or Get Info (Mac) — the Location field should be empty after stripping.",
+        ],
+      },
+    ],
+    faq: [
+      { q: "Does Facebook strip EXIF from my listing photos?", a: "Yes, Facebook Marketplace and most major platforms strip EXIF on their servers. However, if you share the original photo file via WhatsApp, email, or a direct link before uploading, the metadata travels with it. Stripping before you share is the safest habit." },
+      { q: "Will removing EXIF change how my photo looks?", a: "No. EXIF is invisible metadata stored alongside the image data. Removing it has zero effect on the visual content — the photo looks identical." },
+      { q: "Is it illegal to strip EXIF from photos?", a: "No, stripping EXIF from your own photos is completely legal. Copyright metadata in EXIF is a separate consideration from privacy-protective stripping, and there's no legal obligation to preserve it for personal photos." },
+      { q: "Do Android phones embed GPS by default?", a: "Most do, unless you've specifically disabled location access for your camera app. Check Settings → Apps → Camera → Permissions to see if location is enabled." },
+    ],
+  },
+
+  {
+    slug: "social-media-image-size-guide-2025",
+    title: "Social Media Image Size Guide 2025 — Every Platform, Every Format",
+    metaDescription: "Instagram, X (Twitter), LinkedIn, Facebook, YouTube — every platform has different image dimension requirements. Get the exact sizes, and learn how to resize any image for free in your browser.",
+    excerpt: "Wrong image dimensions mean cropped profile photos, stretched banners, and posts that get less engagement. Here are the exact sizes every platform uses in 2025.",
+    category: "image",
+    toolHref: "/image-resizer",
+    relatedSlugs: ["resize-images-online-free", "how-to-compress-images", "convert-images-between-formats"],
+    publishDate: "2025-03-08",
+    readMinutes: 7,
+    sections: [
+      {
+        paragraphs: [
+          "Every social platform displays images differently — different aspect ratios, different maximum resolutions, and different compression algorithms that aggressively degrade images that aren't properly prepared. A 1200×630px image that looks crisp on LinkedIn will appear stretched or cropped on Instagram. A profile photo that fills the circle on Facebook might be cut to a square on X.",
+          "Getting dimensions right before uploading takes two minutes with a resizer. Getting it wrong costs you image quality, engagement, and first impressions — especially for profile and cover images where your brand identity is on the line.",
+        ],
+      },
+      {
+        heading: "Instagram",
+        list: [
+          "Square post: 1080×1080px (1:1)",
+          "Portrait post: 1080×1350px (4:5) — takes more vertical screen space, typically higher reach",
+          "Landscape post: 1080×566px (1.91:1)",
+          "Stories and Reels: 1080×1920px (9:16)",
+          "Profile photo: 320×320px (displays as circle)",
+          "Note: Instagram compresses aggressively. Upload at 80% quality JPEG minimum to avoid visible degradation.",
+        ],
+      },
+      {
+        heading: "X (Twitter)",
+        list: [
+          "Single image post: 1200×675px (16:9) recommended; up to 5120×5120px accepted",
+          "Profile photo: 400×400px (displays as circle)",
+          "Header/banner: 1500×500px",
+          "Note: X compresses JPEG heavily. Use PNG for graphics with text; JPEG at 85%+ for photos.",
+        ],
+      },
+      {
+        heading: "LinkedIn",
+        list: [
+          "Post image: 1200×627px (1.91:1) for link previews; 1080×1080px for image posts",
+          "Profile photo: 400×400px (minimum); 800×800px recommended",
+          "Cover photo: 1584×396px (4:1)",
+          "Company logo: 300×300px",
+          "Note: LinkedIn is the most lenient platform for image quality — less aggressive compression than Instagram or X.",
+        ],
+      },
+      {
+        heading: "Facebook",
+        list: [
+          "Post image: 1200×630px",
+          "Profile photo: 320×320px (displays as circle)",
+          "Cover photo: 851×315px (desktop); 640×360px (mobile)",
+          "Event cover: 1920×1080px",
+          "Story: 1080×1920px",
+        ],
+      },
+      {
+        heading: "YouTube",
+        list: [
+          "Channel banner: 2560×1440px (safe area for all devices: 1546×423px centre)",
+          "Thumbnail: 1280×720px (16:9) — this is one of the highest-impact creative assets on the platform",
+          "Profile photo: 800×800px",
+        ],
+      },
+      {
+        heading: "How to resize for any platform in seconds",
+        paragraphs: [
+          "ToolsHub Image Resizer includes presets for the most common social media dimensions — Instagram square, Instagram portrait, Twitter post, LinkedIn post, YouTube thumbnail, and more. Select a preset, upload your image, and download the correctly sized version. Custom dimensions are also supported if your use case isn't covered by the presets.",
+          "For profile photos that appear as circles, note that the image itself is square — the platform applies the circular crop. Upload a square image (equal width and height) with the subject centred to avoid the circle cutting off important content.",
+        ],
+      },
+    ],
+    faq: [
+      { q: "Why does my image look blurry after uploading to Instagram?", a: "Instagram recompresses every image on upload. To minimise quality loss: use JPEG at 80–85% quality, ensure dimensions match exactly (1080×1080 for square), and upload in sRGB colour space, not Adobe RGB." },
+      { q: "What's the best format to upload to social media?", a: "JPEG for photos (Instagram, X, Facebook). PNG for graphics with text or logos where you need sharp edges. Most platforms don't yet support WebP directly for posts, though this is slowly changing." },
+      { q: "Do I need to resize if I upload a larger image?", a: "Platforms will scale it down, but they often do this with worse results than a purposeful resize. Uploading at the exact recommended dimensions gives you control over how the image is sampled — you get a sharper result." },
+      { q: "Can I use one image for all platforms?", a: "Not easily. The safe middle-ground for a post image is 1200×675px, which works adequately on most platforms. But for profile photos and banners, each platform has distinct requirements that need individual attention." },
+    ],
+  },
+
+  {
+    slug: "batch-convert-images-webp-jpg-png",
+    title: "How to Batch Convert Images to WebP, JPG, or PNG — Free, No Upload",
+    metaDescription: "Convert dozens of images between JPG, PNG, and WebP formats at once — free, directly in your browser. Download all converted files as a single ZIP. No upload, no account, no limit.",
+    excerpt: "Batch conversion turns a task that would take hours of manual work into something that takes 60 seconds. Here's how to convert entire folders of images in your browser.",
+    category: "image",
+    toolHref: "/image-converter",
+    relatedSlugs: ["convert-images-between-formats", "how-to-compress-images", "convert-heic-to-jpg-guide"],
+    publishDate: "2025-03-09",
+    readMinutes: 5,
+    sections: [
+      {
+        paragraphs: [
+          "Converting images one by one is something most people do until the moment they realize they have 50 to convert. At that point, a batch converter becomes essential. The alternative — opening each file in an image editor, exporting, naming, and saving — is a time sink that adds up to hours for large sets.",
+          "The most common batch conversion scenarios: converting a folder of JPEG photos to WebP before publishing to a website, converting iPhone HEIC files to JPG for Windows compatibility, converting PNG screenshots to JPEG to reduce size, or migrating legacy GIF assets to WebP for better compression.",
+        ],
+      },
+      {
+        heading: "When to convert to each format",
+        list: [
+          "Convert to WebP: When publishing images on a website or web app. WebP gives you 25–35% smaller files than JPEG at equivalent quality. All modern browsers support it.",
+          "Convert to JPEG: When sharing photos via email, SMS, or any system with inconsistent WebP support. JPEG is the universal format for photos.",
+          "Convert to PNG: When you need a transparent background — logos, icons, UI elements. PNG is lossless but large; only use it when transparency is required.",
+          "Convert from HEIC: iPhone photos use HEIC by default. Convert to JPG or PNG for compatibility with Windows, Android, and most online platforms.",
+        ],
+      },
+      {
+        heading: "How batch conversion works in ToolsHub",
+        paragraphs: [
+          "ToolsHub Image Converter runs entirely in your browser using the Canvas API and WebAssembly — no server, no upload, no account. Drop in any number of images (JPG, PNG, WebP, GIF, or HEIC), select your target format, choose a quality level if applicable, and click Convert.",
+          "Each file is converted independently in the browser. When all are done, you can download them individually or as a single ZIP file. There's no file size limit imposed by ToolsHub — the only constraint is your browser's available memory, which handles hundreds of images comfortably on modern hardware.",
+        ],
+      },
+      {
+        heading: "Quality settings for each format",
+        list: [
+          "JPEG to WebP: Use 80–85% quality. WebP compresses more efficiently, so 82% WebP typically looks equivalent to 90% JPEG.",
+          "PNG to JPEG: Use 85–90% quality to preserve fine detail. PNG is lossless, so any JPEG compression introduces some degradation — stay high.",
+          "Any format to PNG: PNG is lossless, so there's no quality setting — the output is always a perfect representation of the source.",
+          "HEIC to JPEG: Use 85%+ quality to retain the high quality that iPhone cameras capture.",
+        ],
+      },
+      {
+        heading: "Naming and organisation after conversion",
+        paragraphs: [
+          "ToolsHub preserves original filenames during conversion, changing only the extension (e.g. photo.jpg → photo.webp). This makes batch conversion safe for large sets where you need to maintain naming conventions — no manual renaming required.",
+          "The ZIP download maintains original filenames as well, so dropping the contents back into your project folder after conversion is straightforward. For websites, this means you can replace JPEG assets with WebP equivalents without updating any references, provided your web server or CMS handles extension-agnostic routing.",
+        ],
+      },
+    ],
+    faq: [
+      { q: "Is there a limit on how many images I can convert at once?", a: "ToolsHub imposes no artificial limit. Practical limits depend on your device's RAM — modern laptops handle hundreds of images comfortably. If you're converting thousands at once, batching into groups of 100–200 is advisable." },
+      { q: "Does conversion change the image dimensions?", a: "No. Format conversion preserves the original pixel dimensions unless you explicitly use the resizer. The only changes are file format and (for lossy formats) compression level." },
+      { q: "Can I convert transparent PNGs to WebP without losing transparency?", a: "Yes. WebP supports transparency (alpha channel), so a PNG with a transparent background converts to WebP with the transparency intact. If you convert to JPEG, transparency is lost — JPEG doesn't support it." },
+      { q: "Why is my WebP file larger than the original JPEG?", a: "This happens when you convert a heavily compressed JPEG (e.g. 60% quality) to WebP at a higher quality setting (e.g. 85%). The WebP is storing more detail than the JPEG was. Either lower the WebP quality setting or accept the larger size as a quality improvement." },
+    ],
+  },
 ];
 
 export const BLOG_POST_MAP = new Map(BLOG_POSTS.map((p) => [p.slug, p]));

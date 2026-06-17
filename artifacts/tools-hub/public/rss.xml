@@ -8,13 +8,58 @@
     <copyright>© 2025 ToolsHub</copyright>
     <managingEditor>hello@toolshub.app (ToolsHub)</managingEditor>
     <webMaster>hello@toolshub.app (ToolsHub)</webMaster>
-    <lastBuildDate>Sat, 01 Mar 2025 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 09 Mar 2025 00:00:00 GMT</lastBuildDate>
     <atom:link href="https://toolshub.app/rss.xml" rel="self" type="application/rss+xml"/>
     <image>
       <url>https://toolshub.app/opengraph.jpg</url>
       <title>ToolsHub Blog</title>
       <link>https://toolshub.app/blog</link>
     </image>
+
+    <item>
+      <title>How to Batch Convert Images to WebP, JPG, or PNG — Free, No Upload</title>
+      <link>https://toolshub.app/blog/batch-convert-images-webp-jpg-png</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/batch-convert-images-webp-jpg-png</guid>
+      <pubDate>Sun, 09 Mar 2025 00:00:00 GMT</pubDate>
+      <description>Convert dozens of images between JPG, PNG, and WebP formats at once — free, directly in your browser. Download all converted files as a single ZIP. No upload, no account, no limit.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>Social Media Image Size Guide 2025 — Every Platform, Every Format</title>
+      <link>https://toolshub.app/blog/social-media-image-size-guide-2025</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/social-media-image-size-guide-2025</guid>
+      <pubDate>Sat, 08 Mar 2025 00:00:00 GMT</pubDate>
+      <description>Instagram, X (Twitter), LinkedIn, Facebook, YouTube — every platform has different image dimension requirements. Get the exact sizes, and learn how to resize any image for free in your browser.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Protect Your Privacy When Selling Secondhand Online</title>
+      <link>https://toolshub.app/blog/how-to-protect-privacy-selling-online</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/how-to-protect-privacy-selling-online</guid>
+      <pubDate>Fri, 07 Mar 2025 00:00:00 GMT</pubDate>
+      <description>Photos taken on your phone expose your home address, the date and time you're away, and the exact GPS coordinates where items are stored. Here's how to sell safely on eBay, Facebook Marketplace, and Craigslist.</description>
+      <category>Image Tools</category>
+    </item>
+
+    <item>
+      <title>How to Sign Documents Online for Free — Without DocuSign or Adobe</title>
+      <link>https://toolshub.app/blog/sign-documents-free-without-docusign</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/sign-documents-free-without-docusign</guid>
+      <pubDate>Thu, 06 Mar 2025 00:00:00 GMT</pubDate>
+      <description>DocuSign costs $15/month. Adobe Sign costs $13/month. You can sign contracts, forms, and agreements online for free in your browser — with no account, no upload, and full legal validity.</description>
+      <category>PDF Tools</category>
+    </item>
+
+    <item>
+      <title>How to Optimize Images for the Web — Core Web Vitals Guide</title>
+      <link>https://toolshub.app/blog/optimize-images-for-web-core-web-vitals</link>
+      <guid isPermaLink="true">https://toolshub.app/blog/optimize-images-for-web-core-web-vitals</guid>
+      <pubDate>Wed, 05 Mar 2025 00:00:00 GMT</pubDate>
+      <description>Slow images hurt SEO rankings and drive visitors away. Learn exactly how to compress, resize, and format images for fast page loads — free, no upload, browser-based.</description>
+      <category>Image Tools</category>
+    </item>
 
     <item>
       <title>Base64 Encoder and Decoder — Free Online Tool for Developers</title>
