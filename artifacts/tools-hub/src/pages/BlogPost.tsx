@@ -1,6 +1,8 @@
 import { Link, useParams } from "wouter";
 import { useSEO } from "@/hooks/useSEO";
 import { BLOG_POST_MAP, BLOG_POSTS, type BlogSection } from "@/lib/blogData";
+import { BLOG_COVER_IMAGES } from "@/lib/blogImages";
+import { BLOG_EXTENSIONS } from "@/lib/blogExtensions";
 import { Clock, Calendar, ArrowRight, ExternalLink, ChevronRight } from "lucide-react";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -238,8 +240,26 @@ export default function BlogPost() {
       </nav>
 
       {/* Hero image */}
-      <div className="w-full rounded-2xl overflow-hidden h-52 sm:h-64 mb-8 border border-border">
-        <BlogHeroSvg category={post.category} className="w-full h-full" />
+      <div className="w-full rounded-2xl overflow-hidden h-52 sm:h-64 mb-8 border border-border bg-muted">
+        {BLOG_COVER_IMAGES[post.slug] ? (
+          <img
+            src={BLOG_COVER_IMAGES[post.slug]}
+            alt={post.title}
+            className="w-full h-full object-cover"
+            loading="eager"
+            onError={(e) => {
+              const el = e.currentTarget;
+              el.style.display = "none";
+              const parent = el.parentElement;
+              if (parent) {
+                const svg = parent.querySelector("svg");
+                if (svg) (svg as HTMLElement).style.display = "";
+              }
+            }}
+          />
+        ) : (
+          <BlogHeroSvg category={post.category} className="w-full h-full" />
+        )}
       </div>
 
       {/* Meta */}
@@ -285,6 +305,9 @@ export default function BlogPost() {
       <div className="prose-content">
         {post.sections.map((section, i) => (
           <SectionBlock key={i} section={section} />
+        ))}
+        {(BLOG_EXTENSIONS[post.slug] ?? []).map((section, i) => (
+          <SectionBlock key={`ext-${i}`} section={section} />
         ))}
       </div>
 
