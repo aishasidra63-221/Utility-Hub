@@ -365,13 +365,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1">
         {location !== "/" && (
           <div className="max-w-6xl mx-auto px-4 pt-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group"
+            <button
+              onClick={() => window.history.length > 1 ? window.history.back() : (window.location.href = "/")}
+              aria-label="Go back"
+              className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-sm shadow-primary/30 hover:opacity-85 active:scale-95 transition-all"
             >
-              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-              {t("nav.back")}
-            </Link>
+              <ArrowLeft className="w-4 h-4 text-primary-foreground" />
+            </button>
           </div>
         )}
         {children}
