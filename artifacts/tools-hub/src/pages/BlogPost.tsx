@@ -277,13 +277,7 @@ export default function BlogPost() {
             className="w-full h-full object-cover"
             loading="eager"
             onError={(e) => {
-              const el = e.currentTarget;
-              el.style.display = "none";
-              const parent = el.parentElement;
-              if (parent) {
-                const svg = parent.querySelector("svg");
-                if (svg) (svg as HTMLElement).style.display = "";
-              }
+              (e.currentTarget as HTMLImageElement).style.display = "none";
             }}
           />
         ) : (
