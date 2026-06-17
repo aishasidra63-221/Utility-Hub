@@ -12,7 +12,6 @@ import type { LangCode } from "@/lib/i18n";
 import { TOOL_BY_HREF, NON_TOOL_PATHS } from "@/lib/toolsData";
 import { ToolAEOSection } from "@/components/ToolAEOSection";
 import { RelatedTools } from "@/components/RelatedTools";
-import { addRecentTool } from "@/hooks/useRecentTools";
 
 // ─── Language list ───────────────────────────────────────────────────────────
 const LANGUAGES: { code: LangCode; label: string; flag: string }[] = [
@@ -112,11 +111,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   // ── Close drawer on navigation ──
   useEffect(() => { setDrawerOpen(false); setLangOpen(false); }, [location]);
 
-  // ── Track recently used tools ──
   const toolData = NON_TOOL_PATHS.has(location) ? null : (TOOL_BY_HREF.get(location) ?? null);
-  useEffect(() => {
-    if (toolData) addRecentTool(location);
-  }, [location, toolData]);
 
   // ── Close drawer on outside click ──
   useEffect(() => {

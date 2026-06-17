@@ -1,7 +1,6 @@
 import { Link } from "wouter";
-import { ArrowRight, TrendingUp, Clock, Sparkles } from "lucide-react";
+import { ArrowRight, TrendingUp, Sparkles } from "lucide-react";
 import { TOOL_BY_HREF, POPULAR_TOOL_HREFS } from "@/lib/toolsData";
-import { useRecentTools } from "@/hooks/useRecentTools";
 
 function ToolMiniCard({ href, currentHref }: { href: string; currentHref?: string }) {
   const tool = TOOL_BY_HREF.get(href);
@@ -29,8 +28,6 @@ interface RelatedToolsProps {
 }
 
 export function RelatedTools({ currentHref, relatedHrefs }: RelatedToolsProps) {
-  const recents = useRecentTools().filter((h) => h !== currentHref);
-
   const validRelated = relatedHrefs.filter(
     (h) => h !== currentHref && TOOL_BY_HREF.has(h)
   );
@@ -39,11 +36,10 @@ export function RelatedTools({ currentHref, relatedHrefs }: RelatedToolsProps) {
     (h) => h !== currentHref && !validRelated.includes(h)
   ).slice(0, 4);
 
-  const hasRecents  = recents.length > 0;
   const hasRelated  = validRelated.length > 0;
   const hasPopular  = popularHrefs.length > 0;
 
-  if (!hasRelated && !hasRecents && !hasPopular) return null;
+  if (!hasRelated && !hasPopular) return null;
 
   return (
     <div className="border-t border-border bg-card/30">
@@ -57,20 +53,6 @@ export function RelatedTools({ currentHref, relatedHrefs }: RelatedToolsProps) {
             </div>
             <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1" role="list">
               {validRelated.map((href) => (
-                <ToolMiniCard key={href} href={href} currentHref={currentHref} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {hasRecents && (
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold text-foreground">Recently Used</h2>
-            </div>
-            <div className="flex gap-3 overflow-x-auto scrollbar-none pb-1" role="list">
-              {recents.slice(0, 6).map((href) => (
                 <ToolMiniCard key={href} href={href} currentHref={currentHref} />
               ))}
             </div>
