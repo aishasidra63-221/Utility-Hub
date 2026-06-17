@@ -210,7 +210,7 @@ export default function Base64Tool() {
                 value={input}
                 onChange={e => { setInputType("text"); handleInput(e.target.value); }}
                 placeholder={mode === "encode" ? "Type or paste text here, or drop a file…" : "Paste Base64 string here…"}
-                className={`w-full min-h-[180px] rounded-xl border border-input bg-background px-4 py-3 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-y transition-all ${dragging ? "border-primary bg-primary/5" : ""}`}
+                className={`w-full min-h-[180px] rounded-xl border-2 bg-background px-4 py-3 text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-y transition-all ${dragging ? "border-primary bg-primary/5" : "border-border"}`}
                 spellCheck={false}
               />
             </div>
@@ -272,7 +272,7 @@ export default function Base64Tool() {
               readOnly
               value={output}
               placeholder={mode === "encode" ? "Base64 output appears here…" : "Decoded text appears here…"}
-              className="w-full min-h-[180px] rounded-xl border border-input bg-muted/20 px-4 py-3 text-sm font-mono placeholder:text-muted-foreground focus:outline-none resize-y text-foreground"
+              className="w-full min-h-[180px] rounded-xl border-2 border-border bg-muted/20 px-4 py-3 text-sm font-mono placeholder:text-muted-foreground focus:outline-none resize-y text-foreground"
             />
           )}
 
