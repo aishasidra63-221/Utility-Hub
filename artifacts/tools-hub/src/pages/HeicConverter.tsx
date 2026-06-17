@@ -222,7 +222,7 @@ export default function HeicConverter() {
                 {zipping ? "Creating ZIP…" : `Download All (${doneCount}) as ZIP`}
               </Button>
             )}
-            <Button variant="ghost" onClick={() => setFiles([])} className="gap-1.5">
+            <Button onClick={() => setFiles([])} className="bg-red-500 hover:bg-red-600 text-white gap-2">
               <X className="w-4 h-4" />
               Clear All
             </Button>

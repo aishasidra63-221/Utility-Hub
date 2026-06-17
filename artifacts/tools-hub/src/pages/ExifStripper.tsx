@@ -214,7 +214,7 @@ export default function ExifStripper() {
             </div>
           ))}
 
-          <Button variant="ghost" onClick={() => setEntries([])} className="gap-2">
+          <Button onClick={() => setEntries([])} className="bg-red-500 hover:bg-red-600 text-white gap-2">
             <X className="w-4 h-4" />
             Clear All
           </Button>

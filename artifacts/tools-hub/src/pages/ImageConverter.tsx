@@ -412,8 +412,8 @@ export default function ImageConverter() {
                 )}
               </Button>
             )}
-            <Button variant="ghost" onClick={reset}>
-              <X className="w-4 h-4 mr-2" />
+            <Button onClick={reset} className="bg-red-500 hover:bg-red-600 text-white gap-2">
+              <X className="w-4 h-4" />
               Clear All
             </Button>
           </div>
