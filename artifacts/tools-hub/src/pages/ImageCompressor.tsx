@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import imageCompression from "browser-image-compression";
 import JSZip from "jszip";
 import { Upload, Download, ImageIcon, X, RefreshCw, Zap, Archive, SlidersHorizontal, Share2 } from "lucide-react";
 import { SpeedBadge } from "@/components/SpeedBadge";
@@ -43,12 +42,23 @@ let _idCounter = 0;
 const nextId = () => ++_idCounter;
 
 async function compressFile(file: File, quality: number): Promise<File> {
-  return imageCompression(file, {
-    maxSizeMB: 50,
-    useWebWorker: true,
-    initialQuality: quality / 100,
-    alwaysKeepResolution: true,
+  const mime =
+    file.type === "image/png" ? "image/png" :
+    file.type === "image/webp" ? "image/webp" : "image/jpeg";
+  const bitmap = await createImageBitmap(file);
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  const ctx = canvas.getContext("2d")!;
+  if (mime === "image/jpeg") {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, bitmap.width, bitmap.height);
+  }
+  ctx.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  const blob = await canvas.convertToBlob({
+    type: mime,
+    quality: mime === "image/png" ? undefined : quality / 100,
   });
+  return new File([blob], file.name, { type: mime });
 }
 
 export default function ImageCompressor() {

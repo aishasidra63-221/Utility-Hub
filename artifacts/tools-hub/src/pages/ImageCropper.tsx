@@ -55,7 +55,7 @@ function clamp(b: Box, cw: number, ch: number): Box {
 
 function drawCanvas(
   ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
+  img: ImageBitmap,
   b: Box,
   cw: number,
   ch: number,
@@ -65,7 +65,7 @@ function drawCanvas(
   ctx.clearRect(0, 0, cw, ch);
 
   // Full image dim
-  ctx.drawImage(img, ox, oy, img.naturalWidth * sx, img.naturalHeight * sy);
+  ctx.drawImage(img, ox, oy, img.width * sx, img.height * sy);
   ctx.fillStyle = "rgba(0,0,0,0.52)";
   ctx.fillRect(0, 0, cw, ch);
 
@@ -114,7 +114,7 @@ export default function ImageCropper() {
   const canvasRef  = useRef<HTMLCanvasElement>(null);
   const wrapRef    = useRef<HTMLDivElement>(null);
   const inputRef   = useRef<HTMLInputElement>(null);
-  const imgRef     = useRef<HTMLImageElement | null>(null);
+  const imgRef     = useRef<ImageBitmap | null>(null);
   const fileRef    = useRef<File | null>(null);
   const scaleRef   = useRef({ sx: 1, sy: 1, ox: 0, oy: 0 });
   const cropRef    = useRef<Box>({ x: 0, y: 0, w: 0, h: 0 });
@@ -147,40 +147,38 @@ export default function ImageCropper() {
     return { x: (src.clientX - rect.left) * sx, y: (src.clientY - rect.top) * sy };
   };
 
-  const loadImage = useCallback((file: File) => {
+  const loadImage = useCallback(async (file: File) => {
     if (!file.type.match(/image\/(jpeg|png|webp)/)) return;
     fileRef.current = file;
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      imgRef.current = img;
-      URL.revokeObjectURL(url);
+    // Close previous bitmap to free GPU memory
+    if (imgRef.current) { imgRef.current.close(); imgRef.current = null; }
 
-      const wrap = wrapRef.current!;
-      const maxW = wrap.clientWidth || 640;
-      const maxH = Math.min(520, maxW * 0.7);
-      const s    = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
-      const cw   = Math.round(img.naturalWidth  * s);
-      const ch   = Math.round(img.naturalHeight * s);
+    const bitmap = await createImageBitmap(file);
+    imgRef.current = bitmap;
 
-      const canvas = canvasRef.current!;
-      canvas.width  = cw;
-      canvas.height = ch;
-      sizeRef.current  = { cw, ch };
-      scaleRef.current = { sx: s, sy: s, ox: 0, oy: 0 };
+    const wrap = wrapRef.current!;
+    const maxW = wrap.clientWidth || 640;
+    const maxH = Math.min(520, maxW * 0.7);
+    const s    = Math.min(maxW / bitmap.width, maxH / bitmap.height, 1);
+    const cw   = Math.round(bitmap.width  * s);
+    const ch   = Math.round(bitmap.height * s);
 
-      const m  = 0.1;
-      const bx = Math.round(cw * m);
-      const by = Math.round(ch * m);
-      const bw = Math.round(cw * (1 - 2 * m));
-      const bh = Math.round(ch * (1 - 2 * m));
-      cropRef.current = { x: bx, y: by, w: bw, h: bh };
-      arRef.current   = null;
-      setAspectRatio(null);
-      setLoaded(true);
-      requestAnimationFrame(redraw);
-    };
-    img.src = url;
+    const canvas = canvasRef.current!;
+    canvas.width  = cw;
+    canvas.height = ch;
+    sizeRef.current  = { cw, ch };
+    scaleRef.current = { sx: s, sy: s, ox: 0, oy: 0 };
+
+    const m  = 0.1;
+    const bx = Math.round(cw * m);
+    const by = Math.round(ch * m);
+    const bw = Math.round(cw * (1 - 2 * m));
+    const bh = Math.round(ch * (1 - 2 * m));
+    cropRef.current = { x: bx, y: by, w: bw, h: bh };
+    arRef.current   = null;
+    setAspectRatio(null);
+    setLoaded(true);
+    requestAnimationFrame(redraw);
   }, [redraw]);
 
   useEffect(() => {
@@ -271,9 +269,9 @@ export default function ImageCropper() {
   }, [increment]);
 
   const reset = () => {
-    setLoaded(false);
-    imgRef.current  = null;
+    if (imgRef.current) { imgRef.current.close(); imgRef.current = null; }
     fileRef.current = null;
+    setLoaded(false);
   };
 
   const imgW = loaded ? Math.round(cropDisplay.w / scaleRef.current.sx) : 0;

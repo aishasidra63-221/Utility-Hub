@@ -58,31 +58,22 @@ function getExt(file: File, fmt: OutFormat): string {
 }
 
 async function getDims(file: File): Promise<Dims> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => { URL.revokeObjectURL(url); resolve({ w: img.naturalWidth, h: img.naturalHeight }); };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(); };
-    img.src = url;
-  });
+  const bitmap = await createImageBitmap(file);
+  const dims = { w: bitmap.width, h: bitmap.height };
+  bitmap.close();
+  return dims;
 }
 
 async function resizeFile(file: File, targetW: number, targetH: number, mime: string, quality: number): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const canvas = document.createElement("canvas");
-      canvas.width  = targetW;
-      canvas.height = targetH;
-      const ctx = canvas.getContext("2d")!;
-      if (mime === "image/jpeg") { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, targetW, targetH); }
-      ctx.drawImage(img, 0, 0, targetW, targetH);
-      canvas.toBlob((b) => b ? resolve(b) : reject(new Error("Canvas export failed")), mime, quality / 100);
-    };
-    img.onerror = reject;
-    img.src = url;
+  const bitmap = await createImageBitmap(file);
+  const canvas = new OffscreenCanvas(targetW, targetH);
+  const ctx = canvas.getContext("2d")!;
+  if (mime === "image/jpeg") { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, targetW, targetH); }
+  ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+  bitmap.close();
+  return canvas.convertToBlob({
+    type: mime,
+    quality: mime === "image/jpeg" || mime === "image/webp" ? quality / 100 : undefined,
   });
 }
 
@@ -124,34 +115,57 @@ export default function ImageResizer() {
     setActivePreset(p.label);
   };
 
-  const loadEntries = useCallback(async (files: File[]) => {
+  const loadEntries = useCallback(async (files: File[], autoW: number, autoH: number, autoFmt: OutFormat, autoQ: number) => {
     const valid = files.filter((f) => f.type.match(/image\/(jpeg|png|webp|gif|bmp|svg\+xml)/));
     if (!valid.length) return;
     const isFirstBatch = entries.length === 0;
     const news: FileEntry[] = valid.map((f) => ({
       id: uid(), file: f, preview: URL.createObjectURL(f),
-      origDims: null, result: null, loading: false, error: null,
+      origDims: null, result: null, loading: true, error: null,
     }));
     setEntries((prev) => [...prev, ...news]);
-    let isFirst = true;
-    for (const entry of news) {
-      try {
-        const dims = await getDims(entry.file);
-        setEntries((prev) => prev.map((e) => e.id === entry.id ? { ...e, origDims: dims } : e));
-        if (isFirst && isFirstBatch) {
-          ratioRef.current = dims.w / dims.h;
-          setWidth(dims.w);
-          setHeight(dims.h);
-          setActivePreset(null);
-        }
-        isFirst = false;
-      } catch {
-        setEntries((prev) => prev.map((e) => e.id === entry.id ? { ...e, error: "Could not read image dimensions" } : e));
-      }
+
+    // Phase 1: get all dims in parallel
+    const dimsResults = await Promise.all(
+      news.map(async (entry) => { try { return await getDims(entry.file); } catch { return null; } })
+    );
+
+    // Determine target — if first batch, use first image's native size
+    let targetW = autoW;
+    let targetH = autoH;
+    if (isFirstBatch && dimsResults[0]) {
+      ratioRef.current = dimsResults[0].w / dimsResults[0].h;
+      targetW = dimsResults[0].w;
+      targetH = dimsResults[0].h;
+      setWidth(dimsResults[0].w);
+      setHeight(dimsResults[0].h);
+      setActivePreset(null);
     }
+
+    // Phase 2: resize all in parallel with the settled target
+    await Promise.all(news.map(async (entry, idx) => {
+      const dims = dimsResults[idx];
+      if (!dims) {
+        setEntries((prev) => prev.map((e) => e.id === entry.id ? { ...e, loading: false, error: "Could not read dimensions" } : e));
+        return;
+      }
+      setEntries((prev) => prev.map((e) => e.id === entry.id ? { ...e, origDims: dims } : e));
+      try {
+        const mime = getMime(entry.file, autoFmt);
+        const blob = await resizeFile(entry.file, targetW, targetH, mime, autoQ);
+        const url  = URL.createObjectURL(blob);
+        setEntries((prev) => prev.map((e) => e.id === entry.id ? { ...e, result: { blob, url }, loading: false } : e));
+        incrementRef.current();
+      } catch {
+        setEntries((prev) => prev.map((e) => e.id === entry.id ? { ...e, loading: false, error: "Resize failed" } : e));
+      }
+    }));
   }, [entries.length]);
 
-  const handleFiles = useCallback((fl: FileList | File[]) => loadEntries(Array.from(fl)), [loadEntries]);
+  const handleFiles = useCallback(
+    (fl: FileList | File[]) => loadEntries(Array.from(fl), width, height, format, quality),
+    [loadEntries, width, height, format, quality]
+  );
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);

@@ -44,34 +44,20 @@ function formatBytes(bytes: number): string {
 }
 
 async function convertImage(file: File, toFormat: Format, quality: number): Promise<{ blob: Blob; url: string }> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const srcUrl = URL.createObjectURL(file);
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d")!;
-
-      if (toFormat === "image/jpeg") {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-      ctx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(srcUrl);
-
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) { reject(new Error("Conversion failed")); return; }
-          resolve({ blob, url: URL.createObjectURL(blob) });
-        },
-        toFormat,
-        toFormat === "image/png" ? undefined : quality / 100
-      );
-    };
-    img.onerror = () => { URL.revokeObjectURL(srcUrl); reject(new Error("Failed to load image")); };
-    img.src = srcUrl;
+  const bitmap = await createImageBitmap(file);
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  const ctx = canvas.getContext("2d")!;
+  if (toFormat === "image/jpeg") {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, bitmap.width, bitmap.height);
+  }
+  ctx.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  const blob = await canvas.convertToBlob({
+    type: toFormat,
+    quality: toFormat === "image/png" ? undefined : quality / 100,
   });
+  return { blob, url: URL.createObjectURL(blob) };
 }
 
 export default function ImageConverter() {
@@ -188,7 +174,9 @@ export default function ImageConverter() {
     if (entries.length) reconvertAll(fmt, quality);
   };
 
-  const changeQuality = (q: number) => {
+  const [localQuality, setLocalQuality] = useState(90);
+
+  const commitQuality = (q: number) => {
     setQuality(q);
     if (entries.length) reconvertAll(targetFormat, q);
   };
@@ -287,11 +275,12 @@ export default function ImageConverter() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <label className="text-sm font-medium text-foreground">Quality</label>
-              <span className="text-sm font-mono font-semibold text-primary">{quality}%</span>
+              <span className="text-sm font-mono font-semibold text-primary">{localQuality}%</span>
             </div>
             <Slider
-              value={[quality]}
-              onValueChange={([v]) => changeQuality(v)}
+              value={[localQuality]}
+              onValueChange={([v]) => setLocalQuality(v)}
+              onValueCommit={([v]) => commitQuality(v)}
               min={10}
               max={100}
               step={5}
